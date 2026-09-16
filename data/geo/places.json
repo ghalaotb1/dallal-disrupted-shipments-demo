@@ -1,0 +1,8 @@
+{
+  "hub-dmm": { "kind": "hub", "name": "Dammam Distribution Hub", "short": "DMM Hub", "district": "First Industrial City", "city": "Dammam", "coord": [50.13842, 26.39813] },
+  "br-dmm-central": { "kind": "branch", "name": "Dammam Central Branch", "short": "Dammam Central", "district": "Al Adamah", "city": "Dammam", "coord": [50.1017, 26.43279] },
+  "br-khobar": { "kind": "branch", "name": "Khobar Branch", "short": "Khobar Branch", "district": "Ath Thuqbah", "city": "Al Khobar", "coord": [50.19277, 26.27303] },
+  "pp-rawabi": { "kind": "pickup", "name": "Ar Rawabi Pickup Point", "short": "Ar Rawabi PUP", "district": "Ar Rawabi", "city": "Al Khobar", "coord": [50.20786, 26.33211] },
+  "lk-aqrabiyah": { "kind": "locker", "name": "Al Aqrabiyah Parcel Lockers", "short": "Aqrabiyah Lockers", "district": "Al Aqrabiyah", "city": "Al Khobar", "coord": [50.19247, 26.29506] },
+  "pp-faisaliyah": { "kind": "pickup", "name": "Al Faisaliyah Pickup Point", "short": "Faisaliyah PUP", "district": "Al Faisaliyah", "city": "Dammam", "coord": [50.06353, 26.39315] }
+}
