@@ -53,7 +53,7 @@ export function fmtDuration(ms: number) {
 export function fmtRelative(t: DemoTime, now: DemoTime) {
   const diff = t - now;
   const abs = Math.abs(diff);
-  if (abs < MIN) return diff <= 0 ? "just now" : "in <1 min";
+  if (abs < MIN) return "just now";
   const d = fmtDuration(abs);
   return diff < 0 ? `${d} ago` : `in ${d}`;
 }

@@ -81,6 +81,7 @@ export function clockNow(clock: Clock, realNow = Date.now()): DemoTime {
 }
 
 export const demoNow = () => clockNow(getWorld().clock);
+export const SCENARIO_START_TIME = SCENARIO_START;
 
 let idCounter = 0;
 export const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36).slice(-4)}${(idCounter++).toString(36)}`;

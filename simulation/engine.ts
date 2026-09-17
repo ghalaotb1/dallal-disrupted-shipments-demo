@@ -107,19 +107,11 @@ export function fireBeat(id: string) {
   beat.run();
 }
 
-/** Fire the next pending beat, advancing the clock to its time if needed. */
+/** Fire the next pending beat now (presenter control). The clock is not jumped, so traffic never teleports. */
 export function nextBeat() {
   const w = getWorld();
   const pending = BEATS.find((b) => !w.scenario.firedBeats.includes(b.id));
   if (!pending) return;
-  const now = clockNow(w.clock);
-  const due = beatDueAt(pending);
-  if (now < due) {
-    updateWorld((d) => {
-      d.clock.baseDemo = due;
-      d.clock.baseReal = Date.now();
-    });
-  }
   fireBeat(pending.id);
 }
 
