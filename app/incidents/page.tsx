@@ -1,3 +1,7 @@
-export default function Page() {
-  return <div className="p-6 text-ink-3">incidents</div>;
+import { IncidentsList } from "@/components/incidents/IncidentsList";
+
+export const metadata = { title: "Incidents" };
+
+export default function IncidentsPage() {
+  return <IncidentsList />;
 }

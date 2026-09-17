@@ -140,3 +140,13 @@ export function resetScenario() {
 export const pendingBeats = () => BEATS.filter((b) => !getWorld().scenario.firedBeats.includes(b.id));
 export const scenarioElapsedMin = () => Math.round((clockNow(getWorld().clock) - SCENARIO_START) / 60_000);
 export { addLedger };
+
+/** Presenter safety net: fire every pending beat up to and including `beatId`. */
+export function advanceTo(beatId: string) {
+  for (const beat of BEATS) {
+    fireBeat(beat.id);
+    if (beat.id === beatId) break;
+  }
+  // Keep only the latest toast so a fast-forward doesn't bury the screen.
+  useUi.setState((s) => ({ toasts: s.toasts.slice(-1) }));
+}

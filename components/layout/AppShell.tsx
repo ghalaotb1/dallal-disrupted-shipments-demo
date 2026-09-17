@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Toaster } from "@/components/layout/Toaster";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { GroupResponseDialog } from "@/components/incidents/GroupResponseDialog";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <CommandPalette />
+      <GroupResponseDialog />
       <Toaster />
     </div>
   );

@@ -219,7 +219,10 @@ export default function NetworkMap({
         if (r) pts.push(...r.coords);
       } else if (o.variant === "incident") {
         for (const inc of o.visibleIncidents) {
-          pts.push(inc.sharedFactor.coord);
+          const [lon, lat] = inc.sharedFactor.coord;
+          const dLat = inc.sharedFactor.radiusM / 111_320;
+          const dLon = dLat / Math.cos((lat * Math.PI) / 180);
+          pts.push([lon - dLon, lat - dLat], [lon + dLon, lat + dLat]);
           for (const id of [...inc.affected, ...inc.exposed]) {
             const s = w.shipments[id];
             if (s) pts.push(shipmentPosition(s, clockNow(w.clock)));

@@ -90,7 +90,7 @@ export const demoIncidentService: IncidentService = {
       },
       signals: [
         { label: "Same corridor", value: `${corridor.code} · ${corridor.name}`, detail: `All ${affected.length} failures on vans routed via ${corridor.name}` },
-        { label: "Same time window", value: `${fmtTime(firstAt)}–${fmtTime(now)}`, detail: "Failures clustered within the last 30 minutes" },
+        { label: "Same time window", value: now - firstAt < 2 * 60_000 ? "Last 30 min" : `${fmtTime(firstAt)}–${fmtTime(now)}`, detail: "Failures clustered inside one detector window" },
         { label: "Same pattern", value: "Vans stationary > 20 min", detail: "Held before the Ar Rakah segment" },
         { label: "Corridor speed", value: "7 km/h", detail: "52 km/h typical at this hour" },
         ...(conflicts ? [{ label: "Code conflicts", value: String(conflicts), detail: "RNA codes contradicted by GPS — symptoms, not causes" }] : []),
