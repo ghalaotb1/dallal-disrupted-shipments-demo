@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Popover } from "radix-ui";
 import { Bell } from "lucide-react";
@@ -12,7 +13,8 @@ import { hrefFor, NotificationItem } from "@/components/notifications/Notificati
 
 export function NotificationBell() {
   const router = useRouter();
-  const notifications = useWorld((w) => w.notifications);
+  const raw = useWorld((w) => w.notifications);
+  const notifications = useMemo(() => [...raw].sort((a, b) => b.at - a.at), [raw]);
   const open = useUi((s) => s.notificationsOpen);
   const set = useUi((s) => s.set);
   const now = useDemoNow(15_000);

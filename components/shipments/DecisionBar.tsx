@@ -8,6 +8,9 @@ import { cn } from "@/lib/cn";
 import { fmtTime } from "@/lib/time";
 import { useUi } from "@/store/ui";
 import { Button } from "@/components/common/Button";
+import { SimTag } from "@/components/common/Badges";
+import { simulateSupervisorApproval } from "@/services/demo/supervisorSimulator";
+import { useState } from "react";
 import type { AgentRun, Escalation, RecoveryAction, Shipment } from "@/types/domain";
 
 type Tone = "neutral" | "brand" | "ok" | "review" | "crit";
@@ -67,9 +70,14 @@ export function DecisionBar({
     title = `Awaiting ${people.supervisor.name} · ${people.supervisor.role}`;
     body = escalation ? `Escalated ${fmtTime(escalation.at)} — “${escalation.question}”` : "Escalated for supervisor review.";
     actions = escalation ? (
-      <Button size="md" variant="secondary" onClick={() => set({ emailPreviewId: escalation.emailId })}>
-        <Mail /> View escalation email
-      </Button>
+      <>
+        {escalation.emailId ? (
+          <Button size="md" variant="secondary" onClick={() => set({ emailPreviewId: escalation.emailId ?? null })}>
+            <Mail /> View escalation email
+          </Button>
+        ) : null}
+        {escalation.status === "awaiting" ? <SupervisorSimButton escalationId={escalation.id} /> : null}
+      </>
     ) : null;
   } else if (s.health === "prevented" || s.health === "recovered" || s.agent.state === "resolved") {
     tone = "ok";
@@ -156,5 +164,26 @@ export function DecisionBar({
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </motion.section>
+  );
+}
+
+function SupervisorSimButton({ escalationId }: { escalationId: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <span className="flex items-center gap-1.5">
+      <Button
+        size="md"
+        variant="review"
+        loading={busy}
+        onClick={async () => {
+          setBusy(true);
+          await simulateSupervisorApproval(escalationId);
+          setBusy(false);
+        }}
+      >
+        Simulate supervisor approval
+      </Button>
+      <SimTag label="demo" tip="Stands in for the supervisor approving from their own inbox or phone." />
+    </span>
   );
 }

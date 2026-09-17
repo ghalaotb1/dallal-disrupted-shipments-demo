@@ -67,6 +67,8 @@ export interface EscalationInput {
   recommendation: string;
   summary: { label: string; value: string }[];
   note?: string;
+  /** Also send the (simulated) email notification. Defaults to true. */
+  sendEmail?: boolean;
 }
 
 export interface NotificationService {

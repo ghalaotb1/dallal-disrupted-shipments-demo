@@ -26,7 +26,8 @@ export const demoNotificationService: NotificationService = {
     await new Promise((r) => setTimeout(r, 900));
     const now = demoNow();
     const escalationId = nextId("ESC");
-    const emailId = nextId("EM");
+    const withEmail = input.sendEmail !== false;
+    const emailId = withEmail ? nextId("EM") : undefined;
     const isShipment = input.target.type === "shipment";
     const href = isShipment ? `/shipments/${input.target.id}` : `/incidents/${input.target.id}`;
     const subject = isShipment
@@ -34,7 +35,7 @@ export const demoNotificationService: NotificationService = {
       : `Action required: Incident ${input.target.id} requires supervisor attention`;
 
     const email: SimulatedEmail = {
-      id: emailId,
+      id: emailId ?? "",
       at: now,
       from: "Dallal Alerts <alerts@dallal.example>",
       to: `${people.supervisor.name} <${people.supervisor.email}>`,
@@ -66,7 +67,7 @@ export const demoNotificationService: NotificationService = {
     };
 
     updateWorld((d) => {
-      d.emails[emailId] = email;
+      if (emailId) d.emails[emailId] = email;
       d.escalations.unshift(escalation);
       notify(d, {
         at: now,
@@ -91,7 +92,7 @@ export const demoNotificationService: NotificationService = {
             source: "analyst",
             tone: "review",
           });
-          addEvent(d, s.id, { at: now, title: "Supervisor notified in-app and by email (simulated)", detail: subject, source: "system", tone: "neutral" });
+          addEvent(d, s.id, { at: now, title: withEmail ? "Supervisor notified in-app and by email (simulated)" : "Supervisor notified in-app", detail: subject, source: "system", tone: "neutral" });
           addLedger(d, { at: now, shipmentId: s.id, decision: "Escalate for supervisor approval", decidedBy: "Agent → Supervisor", basis: input.reason, outcome: "escalated" });
           if (s.id === "DL-20481") completeStep(d, "escalated");
         }
@@ -103,7 +104,7 @@ export const demoNotificationService: NotificationService = {
         }
       }
     });
-    pushToast({ tone: "review", title: "Escalation sent to shift supervisor", body: `${people.supervisor.name} · in-app + email (simulated)`, href });
+    pushToast({ tone: "review", title: "Escalation sent to shift supervisor", body: `${people.supervisor.name} · in-app${withEmail ? " + email (simulated)" : ""}`, href });
     return escalation;
   },
 };

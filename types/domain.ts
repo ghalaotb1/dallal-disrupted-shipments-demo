@@ -482,7 +482,7 @@ export interface Escalation {
   options: string[];
   note?: string;
   status: "awaiting" | "approved" | "resolved";
-  emailId: string;
+  emailId?: string;
 }
 
 export interface LedgerEntry {

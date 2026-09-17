@@ -1,3 +1,7 @@
-export default function Page() {
-  return <div className="p-6 text-ink-3">notifications</div>;
+import { NotificationsScreen } from "@/components/notifications/NotificationsScreen";
+
+export const metadata = { title: "Notifications" };
+
+export default function NotificationsPage() {
+  return <NotificationsScreen />;
 }
