@@ -3,7 +3,7 @@
 import { Popover, Switch } from "radix-ui";
 import { Check, Clapperboard, Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { DEMO_TIME_SCALE, fmtDate, fmtTime } from "@/lib/time";
+import { at, DEMO_TIME_SCALE, fmtDate, fmtTime } from "@/lib/time";
 import { useDemoNow } from "@/hooks/useDemoNow";
 import { nextBeat, resetScenario, setAutoplay, setRunning } from "@/simulation/engine";
 import { BEATS, STORY_STEPS } from "@/simulation/scenario";
@@ -16,6 +16,8 @@ export function DemoClock() {
   const scenario = useWorld((w) => w.scenario);
   const done = STORY_STEPS.filter((s) => scenario.completedSteps.includes(s.id)).length;
   const pending = BEATS.filter((b) => !scenario.firedBeats.includes(b.id));
+  // The scenario clock runs fast; after a long unattended session, nudge toward a fresh run.
+  const shiftEnding = now >= at("19:30");
 
   return (
     <Popover.Root>
@@ -32,8 +34,8 @@ export function DemoClock() {
             <span className="text-15 font-semibold text-ink tabular">{fmtTime(now)}</span>
             <span className="mt-0.5 text-[10.5px] whitespace-nowrap text-ink-3">{fmtDate(now)}</span>
           </span>
-          <span className="ml-0.5 rounded-md bg-muted px-1.5 py-0.5 text-2xs font-semibold whitespace-nowrap text-ink-2 group-hover:bg-line-soft">
-            {running ? `Live demo · ×${DEMO_TIME_SCALE}` : "Paused"}
+          <span className={cn("ml-0.5 rounded-md px-1.5 py-0.5 text-2xs font-semibold whitespace-nowrap", shiftEnding ? "bg-warn-100 text-warn-700" : "bg-muted text-ink-2 group-hover:bg-line-soft")}>
+            {shiftEnding ? "Shift ending · restart demo" : running ? `Live demo · ×${DEMO_TIME_SCALE}` : "Paused"}
           </span>
         </button>
       </Popover.Trigger>

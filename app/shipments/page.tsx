@@ -1,3 +1,12 @@
-export default function Page() {
-  return <div className="p-6 text-ink-3">shipments</div>;
+import { Suspense } from "react";
+import { ShipmentsScreen } from "@/components/shipments/ShipmentsScreen";
+
+export const metadata = { title: "Shipments" };
+
+export default function ShipmentsPage() {
+  return (
+    <Suspense fallback={<div className="skeleton m-4 h-96 rounded-xl" />}>
+      <ShipmentsScreen />
+    </Suspense>
+  );
 }
