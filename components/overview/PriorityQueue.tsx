@@ -126,9 +126,11 @@ export function PriorityQueue() {
         <LayoutGroup>
           {sections.incidents.length ? (
             <QueueSection label="Incidents" count={sections.incidents.length}>
-              {sections.incidents.map((inc) => (
-                <IncidentGroupCard key={inc.id} incident={inc} now={now} />
-              ))}
+              <AnimatePresence initial={false}>
+                {sections.incidents.map((inc) => (
+                  <IncidentGroupCard key={inc.id} incident={inc} now={now} />
+                ))}
+              </AnimatePresence>
             </QueueSection>
           ) : null}
           <ShipmentSection label="Needs a decision" list={sections.decision} selectedId={selectedId} onSelect={select} now={now} />

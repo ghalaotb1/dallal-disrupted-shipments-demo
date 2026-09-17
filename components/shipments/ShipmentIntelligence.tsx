@@ -63,7 +63,7 @@ export function ShipmentIntelligence({ id }: { id: string }) {
           <JourneyTimeline events={c.journey} now={now} />
           <ShipmentDetails s={s} ctx={c.context} />
         </div>
-        <div className="xl:sticky xl:top-[72px] xl:flex xl:max-h-[calc(100dvh-88px)] xl:flex-col">
+        <div className="order-first xl:sticky xl:top-[72px] xl:order-none xl:flex xl:max-h-[calc(100dvh-88px)] xl:flex-col">
           <AgentPanel investigation={c.investigation} execution={c.execution} running={c.running} onInvestigate={investigate} canInvestigate={!busy && !s.closed} incidentMode={!!s.incident} />
         </div>
       </div>

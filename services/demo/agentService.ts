@@ -275,7 +275,6 @@ export const demoAgentService: AgentService = {
           setHealth(d, shipmentId, "recovered");
           s.stage = "at_pickup_point";
           s.headline = `Redirected to ${pickup.name}`;
-          s.destination = { ...s.destination, label: pickup.name };
           s.outcome = { kind: "recovered", label: `Redirected to ${pickup.short}`, at: now };
           rescore(d, shipmentId, now);
           notify(d, { at: now, kind: "outcome", tone: "ok", title: `${shipmentId} redirected to pickup point`, body: `${pickup.name} · return to sender cancelled`, target: { type: "shipment", id: shipmentId }, actor: people.analyst.name });

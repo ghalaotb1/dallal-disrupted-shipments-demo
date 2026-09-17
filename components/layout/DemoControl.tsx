@@ -34,7 +34,7 @@ export function DemoClock() {
             <span className="text-15 font-semibold text-ink tabular">{fmtTime(now)}</span>
             <span className="mt-0.5 text-[10.5px] whitespace-nowrap text-ink-3">{fmtDate(now)}</span>
           </span>
-          <span className={cn("ml-0.5 rounded-md px-1.5 py-0.5 text-2xs font-semibold whitespace-nowrap", shiftEnding ? "bg-warn-100 text-warn-700" : "bg-muted text-ink-2 group-hover:bg-line-soft")}>
+          <span className={cn("ml-0.5 hidden rounded-md px-1.5 py-0.5 text-2xs font-semibold whitespace-nowrap lg:inline", shiftEnding ? "bg-warn-100 text-warn-700" : "bg-muted text-ink-2 group-hover:bg-line-soft")}>
             {shiftEnding ? "Shift ending · restart demo" : running ? `Live demo · ×${DEMO_TIME_SCALE}` : "Paused"}
           </span>
         </button>

@@ -20,8 +20,8 @@ export function DetectorChart({ detector, height = 168 }: { detector: Incident["
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 18, right: 8, bottom: 0, left: -18 }} barCategoryGap={4}>
             <CartesianGrid vertical={false} stroke="#e8edf3" />
-            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "#e2e8f0" }} tick={{ fill: "#8a97aa", fontSize: 10.5 }} interval="preserveStartEnd" minTickGap={10} />
-            <YAxis allowDecimals={false} domain={[0, Math.ceil(max)]} tickLine={false} axisLine={false} tick={{ fill: "#8a97aa", fontSize: 10.5 }} width={36} />
+            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "#e2e8f0" }} tick={{ fill: "#637186", fontSize: 10.5 }} interval="preserveStartEnd" minTickGap={10} />
+            <YAxis allowDecimals={false} domain={[0, Math.ceil(max)]} tickLine={false} axisLine={false} tick={{ fill: "#637186", fontSize: 10.5 }} width={36} />
             <Tooltip cursor={{ fill: "rgba(15,30,54,0.05)" }} content={<DetectorTooltip mean={detector.baselineMean} />} />
             <ReferenceLine
               y={threshold}

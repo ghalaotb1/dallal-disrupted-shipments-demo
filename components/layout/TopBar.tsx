@@ -20,8 +20,8 @@ export function TopBar() {
           Eastern Region
           <span className="hidden font-normal text-ink-3 2xl:inline">· Dammam–Khobar desk</span>
         </div>
-        <span className="h-4 w-px bg-line" aria-hidden />
-        <div className="text-13 text-ink-3">
+        <span className="hidden h-4 w-px bg-line xl:block" aria-hidden />
+        <div className="hidden text-13 text-ink-3 xl:block">
           {SHIFT.name} <span className="tabular">{SHIFT.start}–{SHIFT.end}</span>
         </div>
       </div>

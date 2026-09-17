@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Bell, Info, LayoutDashboard, Package, PanelLeftClose, PanelLeftOpen, Siren, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
@@ -15,7 +16,18 @@ import { Kbd } from "@/components/common/Badges";
 import { Tooltip } from "@/components/common/Tooltip";
 import { Wordmark } from "@/components/layout/Logo";
 
+function useAutoCollapse() {
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1279px)");
+    const apply = () => useUi.setState({ sidebarCollapsed: mq.matches });
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+}
+
 export function Sidebar() {
+  useAutoCollapse();
   const pathname = usePathname();
   const collapsed = useUi((s) => s.sidebarCollapsed);
   const set = useUi((s) => s.set);

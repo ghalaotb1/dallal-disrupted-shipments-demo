@@ -22,12 +22,12 @@ export function assessRisk(s: Shipment, ctx: ShipmentContext, now: DemoTime): Ri
   );
   if (ctx.address.firstDeliveryToAddress) add("First delivery to this address", 4, "Delivery history");
 
+  const resolved = s.health === "recovered" || s.health === "prevented" || s.health === "recovering";
   const missed = ctx.recipient.missedWindows.length;
-  if (missed > 0) add(`${missed} missed delivery window${missed > 1 ? "s" : ""}`, Math.min(44, missed * 19), "Attempt history");
-  if (ctx.recipient.responsiveness === "low") add("Recipient rarely responds", 10, "Contact history");
+  if (missed > 0 && !resolved) add(`${missed} missed delivery window${missed > 1 ? "s" : ""}`, Math.min(44, missed * 19), "Attempt history");
+  if (ctx.recipient.responsiveness === "low" && !resolved) add("Recipient rarely responds", 10, "Contact history");
   if (ctx.recipient.confirmedWindow) add("Recipient confirmed today's window", -9, "Contact history");
 
-  const resolved = s.health === "recovered" || s.health === "prevented" || s.health === "recovering";
   if (s.exception && !resolved) add(`Recorded exception ${s.exception.code}`, 18, "Journey scans");
   if (s.movement.stationarySince && s.movement.mode === "route" && !resolved) {
     const min = Math.round((now - s.movement.stationarySince) / 60_000);

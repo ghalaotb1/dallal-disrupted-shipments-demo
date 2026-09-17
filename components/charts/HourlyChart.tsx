@@ -24,8 +24,8 @@ export function HourlyChart({ data }: { data: { hour: string; exceptions: number
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 6, right: 6, bottom: 0, left: -22 }} barCategoryGap="28%">
             <CartesianGrid vertical={false} stroke="#e8edf3" />
-            <XAxis dataKey="hour" tickLine={false} axisLine={{ stroke: "#e2e8f0" }} tick={{ fill: "#8a97aa", fontSize: 10.5 }} tickFormatter={(h: string) => h.slice(0, 2)} />
-            <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#8a97aa", fontSize: 10.5 }} width={34} />
+            <XAxis dataKey="hour" tickLine={false} axisLine={{ stroke: "#e2e8f0" }} tick={{ fill: "#637186", fontSize: 10.5 }} tickFormatter={(h: string) => h.slice(0, 2)} />
+            <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#637186", fontSize: 10.5 }} width={34} />
             <Tooltip cursor={{ fill: "rgba(15,30,54,0.05)" }} content={<HourTooltip />} />
             <Bar dataKey="exceptions" fill={SERIES.exceptions.color} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={false} />
             <Line dataKey="recovered" stroke={SERIES.recovered.color} strokeWidth={2} dot={{ r: 3.5, fill: SERIES.recovered.color, stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }} isAnimationActive={false} />
