@@ -174,7 +174,7 @@ export function DestinationPin({ s }: { s: Shipment }) {
   return (
     <div className="pointer-events-none flex flex-col items-center">
       <span className="rounded-lg border border-line bg-surface px-2 py-1 text-left shadow-float">
-        <span className="block text-[10.5px] font-medium text-ink-3">Drop-off{eta ? ` · ETA ${fmtTime(eta)}` : ""}</span>
+        <span className="block text-[10.5px] font-medium text-ink-3">{s.closed ? `Delivered${s.outcome ? ` · ${fmtTime(s.outcome.at)}` : ""}` : `Drop-off${eta ? ` · ETA ${fmtTime(eta)}` : ""}`}</span>
         <span className="block text-xs font-semibold whitespace-nowrap text-ink">{s.destination.label}</span>
       </span>
       <MapPin className="mt-0.5 size-6 fill-ink text-white" strokeWidth={1.8} aria-hidden />

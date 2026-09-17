@@ -9,6 +9,7 @@ import { fmtTime, fmtWindow } from "@/lib/time";
 import { useDemoNow } from "@/hooks/useDemoNow";
 import { estimateEta, progressOf, remainingM } from "@/services/logic/movement";
 import { useUi } from "@/store/ui";
+import { useShallow } from "zustand/react/shallow";
 import { useWorld } from "@/store/world";
 import { AgentBadge, PriorityBadge, RiskMeter, StatusBadge } from "@/components/common/Badges";
 import { HEALTH } from "@/components/common/status";
@@ -112,7 +113,7 @@ function ShipmentCard({ id }: { id: string }) {
 function FacilityCard({ id }: { id: string }) {
   const place = places[id];
   const set = useUi((x) => x.set);
-  const held = useWorld((w) => Object.values(w.shipments).filter((s) => !s.closed && s.movement.mode === "facility" && s.movement.facilityId === id));
+  const held = useWorld(useShallow((w) => Object.values(w.shipments).filter((s) => !s.closed && s.movement.mode === "facility" && s.movement.facilityId === id)));
   const incident = useWorld((w) => Object.values(w.incidents).find((i) => i.sharedFactor.placeId === id && i.status !== "resolved"));
   return (
     <div className="rounded-xl border border-line bg-surface shadow-pop">

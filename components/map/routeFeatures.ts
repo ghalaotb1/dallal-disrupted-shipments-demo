@@ -40,9 +40,13 @@ export function buildRouteFeatures(shipments: Record<string, Shipment>, o: Route
 
   for (const id of o.visibleIds) {
     const s = shipments[id];
-    if (!s || s.closed) continue;
+    if (!s || (s.closed && o.variant !== "shipment")) continue;
     const route = getRoute(s.routeKey);
     if (!route) continue;
+    if (s.closed) {
+      push(id, "traveled", route.coords, { color: TRAVELED_COLOR, width: 4, opacity: 0.95, dashed: false, flow: false });
+      continue;
+    }
     const selected = o.selectedId === id;
     const dim = o.highlightIds ? !o.highlightIds.has(id) : false;
     const normal = s.health === "on_track";

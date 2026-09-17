@@ -197,13 +197,6 @@ export default function NetworkMap({
   }, []);
 
   useEffect(() => {
-    if (!map || !containerRef.current) return;
-    const ro = new ResizeObserver(() => map.resize());
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [map]);
-
-  useEffect(() => {
     if (!map) return;
     const onClick = () => {
       onSelectShipment?.(null);
@@ -243,9 +236,32 @@ export default function NetworkMap({
     },
     [map, reducedMotion],
   );
+  const frameSubjectRef = useRef(frameSubject);
+  useLayoutEffect(() => {
+    frameSubjectRef.current = frameSubject;
+  });
   useEffect(() => {
     if (map) frameSubject(false);
   }, [map, frameSubject]);
+
+  // Keep the subject framed while the layout settles, until the user moves the map.
+  const userMoved = useRef(false);
+  useEffect(() => {
+    if (!map || !containerRef.current) return;
+    const markMoved = (e: { originalEvent?: unknown }) => {
+      if (e.originalEvent) userMoved.current = true;
+    };
+    map.on("movestart", markMoved);
+    const ro = new ResizeObserver(() => {
+      map.resize();
+      if (!userMoved.current) frameSubjectRef.current(false);
+    });
+    ro.observe(containerRef.current);
+    return () => {
+      ro.disconnect();
+      map.off("movestart", markMoved);
+    };
+  }, [map]);
 
   // ── Programmatic focus (queue click, assistant "Show on map", incident) ─
   useEffect(() => {
@@ -338,7 +354,7 @@ export default function NetworkMap({
 
   const markerScale = zoom < 11.2 ? 0.9 : zoom < 12.2 ? 0.96 : 1.04;
   const pinShipment = pinTarget ? shipments[pinTarget] : undefined;
-  const pinRoute = pinShipment && !pinShipment.closed ? getRoute(pinShipment.routeKey) : undefined;
+  const pinRoute = pinShipment && (!pinShipment.closed || variant === "shipment") ? getRoute(pinShipment.routeKey) : undefined;
 
   return (
     <div className={cn("relative isolate overflow-hidden bg-[#eef2f7]", className)} style={{ ["--mk" as string]: markerScale }}>
