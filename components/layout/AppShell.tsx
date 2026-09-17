@@ -8,6 +8,7 @@ import { CommandPalette } from "@/components/layout/CommandPalette";
 import { GroupResponseDialog } from "@/components/incidents/GroupResponseDialog";
 import { EscalationDrawer } from "@/components/escalation/EscalationDrawer";
 import { EmailPreviewDialog } from "@/components/escalation/EmailPreviewDialog";
+import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <CommandPalette />
       <GroupResponseDialog />
+      <AssistantDrawer />
       <EscalationDrawer />
       <EmailPreviewDialog />
       <Toaster />

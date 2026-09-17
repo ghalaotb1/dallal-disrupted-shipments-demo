@@ -19,7 +19,7 @@ export type AssistantBlock =
   | { type: "timeline"; id: string; limit?: number }
   | { type: "evidence"; id: string }
   | { type: "incident"; id: string }
-  | { type: "hourly_chart"; title: string; data: { hour: string; disruptions: number; atRisk: number; recovered: number }[] }
+  | { type: "hourly_chart"; title: string; data: { hour: string; exceptions: number; recovered: number }[] }
   | { type: "bar_chart"; title: string; unit: string; data: { label: string; value: number; tone?: "neutral" | "warn" | "crit" | "ok" | "brand" }[] }
   | { type: "agent_trace"; shipmentId: string; runId: string }
   | { type: "approvals"; items: { id: string; title: string; detail: string; since: number; target: { type: "shipment" | "incident"; id: string } }[] }

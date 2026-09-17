@@ -146,7 +146,7 @@ function dailySummary(w: WorldState, now: number): AssistantResponse {
 
   const startHour = 8;
   const endHour = Number(fmtTime(now).slice(0, 2));
-  const hourly = [];
+  const hourly: { hour: string; exceptions: number; recovered: number }[] = [];
   for (let h = startHour; h <= endHour; h++) {
     const from = at(`${String(h).padStart(2, "0")}:00`);
     const to = from + 3_600_000;
@@ -156,8 +156,7 @@ function dailySummary(w: WorldState, now: number): AssistantResponse {
       .filter((e) => e.source === "model" && e.tone === "warn" && inHour(e.at)).length;
     hourly.push({
       hour: `${String(h).padStart(2, "0")}:00`,
-      disruptions: all.filter((s) => inHour(s.exception?.recordedAt)).length,
-      atRisk: riskFlags,
+      exceptions: all.filter((s) => inHour(s.exception?.recordedAt)).length + riskFlags,
       recovered: all.filter((s) => (s.outcome?.kind === "recovered" || s.outcome?.kind === "prevented") && inHour(s.outcome.at)).length,
     });
   }
@@ -193,10 +192,11 @@ function dailySummary(w: WorldState, now: number): AssistantResponse {
           { label: "At risk", value: String(active.filter((s) => s.health === "at_risk").length), tone: "warn" },
           { label: "Disrupted", value: String(active.filter((s) => s.health === "disrupted").length), tone: "crit" },
           { label: "Incidents", value: String(openIncidents.length), tone: openIncidents.length ? "crit" : "neutral" },
-          { label: "Prevented / recovered", value: `${prevented.length} / ${recovered.length}`, tone: "ok" },
+          { label: "Prevented", value: String(prevented.length), tone: "ok" },
+          { label: "Recovered", value: String(recovered.length), tone: "ok" },
         ],
       },
-      { type: "hourly_chart", title: "Exceptions by hour", data: hourly },
+      { type: "hourly_chart", title: "Exceptions & risk flags vs. recoveries, by hour", data: hourly },
       { type: "bar_chart", title: "Top exception causes today", unit: "shipments", data: causes },
       ...(headline ? [{ type: "incident" as const, id: headline.id }] : []),
       { type: "actions", actions: [{ kind: "open_page", href: "/incidents", label: "Open incidents" }, { kind: "open_page", href: "/shipments?tab=ledger", label: "Outcome ledger" }] },
