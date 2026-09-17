@@ -10,7 +10,7 @@ import { getRoute, NETWORK_BOUNDS, places } from "@/data/network";
 import { cn } from "@/lib/cn";
 import { shipmentPosition } from "@/services/logic/movement";
 import { clockNow, getWorld, useWorld } from "@/store/world";
-import type { MapFocus } from "@/store/ui";
+import { useUi, type MapFocus } from "@/store/ui";
 import type { LngLat, Shipment } from "@/types/domain";
 import { loadBasemap, type BasemapSource } from "@/components/map/mapStyle";
 import { buildRouteFeatures, incidentZoneFeatures, type MapVariant } from "@/components/map/routeFeatures";
@@ -269,6 +269,8 @@ export default function NetworkMap({
   // ── Programmatic focus (queue click, assistant "Show on map", incident) ─
   useEffect(() => {
     if (!map || !focus) return;
+    // A requested focus wins over automatic re-framing while the layout settles.
+    userMoved.current = true;
     const w = getWorld();
     const now = clockNow(w.clock);
     const duration = reducedMotion ? 0 : 1200;
@@ -289,6 +291,8 @@ export default function NetworkMap({
       const b = pts.reduce((acc, p) => acc.extend(p), new LngLatBounds(pts[0], pts[0]));
       map.fitBounds(b, { padding: { top: 90, bottom: 60, left: 60, right: variant === "overview" ? 380 : 60 }, maxZoom: 13.5, duration });
     }
+    // Focus requests are one-shot: consume it so a later remount doesn't replay it.
+    useUi.setState({ mapFocus: null });
   }, [map, focus, variant, reducedMotion]);
 
   // ── Animation loop: marker positions every frame, routes at ~5 Hz ───────
