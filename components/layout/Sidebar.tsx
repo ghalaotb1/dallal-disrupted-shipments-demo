@@ -14,7 +14,7 @@ import { useWorld } from "@/store/world";
 import { Avatar } from "@/components/common/Card";
 import { Kbd } from "@/components/common/Badges";
 import { Tooltip } from "@/components/common/Tooltip";
-import { Wordmark } from "@/components/layout/Logo";
+import { LogoMark } from "@/components/layout/Logo";
 
 function useAutoCollapse() {
   useEffect(() => {
@@ -46,7 +46,7 @@ export function Sidebar() {
     <aside className={cn("sticky top-0 flex h-dvh shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-200", collapsed ? "w-[68px]" : "w-[232px]")} aria-label="Primary">
       <div className={cn("flex h-14 items-center border-b border-line-soft", collapsed ? "justify-center px-2" : "justify-between px-4")}>
         <Link href="/" className="rounded-lg" aria-label="Dallal — Operations overview">
-          <Wordmark collapsed={collapsed} />
+          <LogoMark size={collapsed ? 30 : 40} />
         </Link>
         {collapsed ? null : (
           <button onClick={() => set({ sidebarCollapsed: true })} className="rounded-md p-1 text-ink-4 hover:bg-hover hover:text-ink-2" aria-label="Collapse sidebar">
