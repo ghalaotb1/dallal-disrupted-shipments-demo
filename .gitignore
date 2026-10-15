@@ -42,3 +42,18 @@ next-env.d.ts
 
 # generated at dev/build time from node_modules
 /public/vendor/
+
+# ── Dallal backend (Python) ───────────────────────────────────────────────
+# raw + processed third-party data are reproduced from source, never committed
+/backend/.data/
+/backend/.venv/
+/backend/**/__pycache__/
+/backend/.pytest_cache/
+/backend/.ruff_cache/
+/backend/*.egg-info/
+/backend/evals/traces/_scratch/
+# model artifacts / large generated tables
+/backend/artifacts/
+*.parquet
+!/backend/tests/data/*.parquet
+/backend/.fetch*.log

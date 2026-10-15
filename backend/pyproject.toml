@@ -1,0 +1,39 @@
+[project]
+name = "dallal-backend"
+version = "0.1.0"
+description = "Dallal (دلّال) data foundation, ML tasks and agentic backend for disrupted-shipment handling"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.7",
+  "pyyaml>=6",
+  "requests>=2.31",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "pyarrow>=16",
+  "openpyxl>=3.1",
+  "scikit-learn>=1.5",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+api = ["fastapi>=0.110", "uvicorn>=0.29"]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+dallal-data = "dallal.data.cli:main"
+dallal-agent = "dallal.agent.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["dallal*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["realdata: needs downloaded datasets under backend/.data (skipped when absent)"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"

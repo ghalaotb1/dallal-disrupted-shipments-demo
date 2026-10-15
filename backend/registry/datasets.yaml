@@ -1,0 +1,272 @@
+# Dallal dataset registry — single source of truth for every external dataset we audited.
+#
+#   decision:       select | secondary | reject
+#   evidence_level: how deeply we actually inspected it
+#                     data   = downloaded and profiled (see docs/data/EDA_*.md)
+#                     schema = official schema / dataset card / data paper only
+#                     card   = landing page or search snippet only (NOT a verified conclusion)
+#   data_kind:      observed | derived_public | simulated | synthetic | reference
+#   files:          only for datasets we reproduce locally; url + expected size (+ sha256 when published).
+#                   Actual sha256 of what we downloaded is recorded in registry/datasets.lock.json.
+#
+# Raw data is never committed. `dallal-data fetch <id>` reproduces it under backend/.data/raw/<id>/.
+
+version: 1
+generated: "2026-10-15"
+
+datasets:
+
+  # ───────────────────────────── SELECTED ─────────────────────────────
+  - id: lade
+    name: "Cainiao LaDe (LaDe-D delivery + LaDe-P pickup)"
+    decision: select
+    evidence_level: data
+    data_kind: observed
+    homepage: https://huggingface.co/datasets/Cainiao-AI/LaDe
+    paper: https://arxiv.org/abs/2306.10675
+    license: "Apache-2.0 per HF metadata; README says research use only (see terms)"
+    redistribution: "Do not redistribute. Reproduce from source. Cite Wu et al., KDD 2024."
+    pinned_version: "huggingface:Cainiao-AI/LaDe@be2cec02775cafc8d52230303f32134382bcc50b"
+    scale: "10.7M packages, 21k couriers, 6 months, 5 Chinese cities"
+    supports: [journey_timing, task_duration_delay, stalled_detection, courier_workload, spatiotemporal_incident_baseline, pickup_window_violation]
+    does_not_support: [failed_delivery_attempts, failure_reasons, recipient_or_address_problems, recovery_actions]
+    caveats:
+      - "No failure/attempt label: delivery rows exist only for completed tasks."
+      - "LaDe-D has no promised time window; LaDe-P has time_window_start/end (real window-violation label for pickups only)."
+      - "Timestamps lack year (MM-DD HH:MM:SS); order within the 6-month span comes from `ds` (day index)."
+      - "Coordinates are projected/obfuscated; city labels are Chinese cities, not Saudi."
+    files:
+      - {name: delivery_yt.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_yt.csv", bytes: 31532960}
+      - {name: delivery_jl.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_jl.csv", bytes: 4736342}
+      - {name: delivery_cq.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_cq.csv", bytes: 145068417, group: large}
+      - {name: delivery_sh.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_sh.csv", bytes: 228069571, group: large}
+      - {name: delivery_hz.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_hz.csv", bytes: 286893611, group: large}
+      - {name: pickup_jl.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/pickup/pickup_jl.csv", bytes: 43801745}
+      - {name: pickup_yt.csv, url: "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/pickup/pickup_yt.csv", bytes: 190190713, group: large}
+
+  - id: amazon_lmrrc
+    name: "Amazon Last Mile Routing Research Challenge 2021 (training inputs)"
+    decision: select
+    evidence_level: data
+    data_kind: observed
+    homepage: https://registry.opendata.aws/amazon-last-mile-challenges
+    paper: https://doi.org/10.1287/trsc.2022.1173
+    license: "CC BY-NC 4.0 (Amazon.com, Inc.)"
+    redistribution: "Non-commercial only; attribution required; do not redistribute. Hackathon/research use is within terms; a commercial SPL deployment would need its own data."
+    pinned_version: "s3://amazon-last-mile-challenges/almrrc2021/almrrc2021-data-training (no object versioning; sizes recorded)"
+    scale: "6,112 training routes (+3,072 evaluation routes), 5 US metros, 2018"
+    supports: [stop_level_delivery_outcome, attempted_vs_delivered, time_window_context, route_sequence_behavior, zone_level_aggregation]
+    does_not_support: [failure_reason, attempt_count_per_package, recipient_contact, recovery_actions]
+    caveats:
+      - "scan_status in {DELIVERED, DELIVERY_ATTEMPTED, REJECTED}; no attempt timestamp/count and no reason."
+      - "Locations are obfuscated; package/route ids regenerated."
+      - "Eval routes lack actual_sequences; package_data only is usable from them."
+    files:
+      - {name: package_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/package_data.json", bytes: 375400000}
+      - {name: route_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/route_data.json", bytes: 79000000}
+      - {name: actual_sequences.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/actual_sequences.json", bytes: 9700000}
+      - {name: invalid_sequence_scores.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/invalid_sequence_scores.json", bytes: 400000}
+      - {name: eval_package_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_package_data.json", bytes: 166200000, group: large}
+      - {name: eval_route_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_route_data.json", bytes: 37800000, group: large}
+
+  - id: route_deviation
+    name: "Last-mile delivery route deviations: planned vs. actual routes (Molde / Norway+Denmark)"
+    decision: select
+    evidence_level: data
+    data_kind: observed
+    homepage: https://data.mendeley.com/datasets/kkwgfvmtxn/1
+    paper: https://www.sciencedirect.com/science/article/pii/S2352340926002970
+    license: "CC BY 4.0"
+    redistribution: "Redistribution allowed with attribution; still reproduced from source."
+    pinned_version: "mendeley:kkwgfvmtxn v1 (2024-12-13), file sha256 published"
+    scale: "single workbook, planned + actual stop sequences with arrival info and time windows"
+    supports: [route_deviation, planned_vs_actual_sequence, arrival_vs_time_window]
+    does_not_support: [failed_delivery, recipient_problems, recovery_actions]
+    caveats:
+      - "Time values are offsets from the earliest timestep of each route (no wall clock)."
+      - "Two countries, one company; domain differs from Saudi last-mile."
+    files:
+      - {name: routes_performance.xlsx, url: "https://data.mendeley.com/public-files/datasets/kkwgfvmtxn/files/388ea249-0830-4906-a39e-7bcbd5ee837a/file_downloaded", bytes: 19713337, sha256: "8f17d15e189c99a34f2446daeaaf1a65d1e79045a94c4d3c452391c96d9cee00"}
+
+  - id: olist
+    name: "Olist Brazilian E-Commerce Public Dataset (raw 9 tables, HF mirror)"
+    decision: select
+    evidence_level: data
+    data_kind: observed
+    homepage: https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+    license: "CC BY-NC-SA 4.0 (Olist) — mirror carries no license of its own"
+    redistribution: "Non-commercial, share-alike. Never commit; derived tables stay local."
+    pinned_version: "huggingface:bulutttt/olist-raw-data@5acf1f37d7197d4979e714721a1ec13a7c3da728 (mirror of Kaggle CSVs; row counts verified against the published 99,441 orders)"
+    scale: "99,441 orders, 2016-2018, one Brazilian marketplace"
+    supports: [order_level_late_delivery_risk, handoff_to_carrier_delay, estimated_vs_actual_delivery, seller_customer_geography]
+    does_not_support: [attempt_level_events, failure_reasons, route_events, recovery_actions]
+    caveats:
+      - "Only coarse milestones (purchase, approval, carrier handoff, delivered, estimated date) — no scan events."
+      - "Label (late) is derived from delivered > estimated; only features known at the prediction time may be used."
+      - "~8% late; strongly time-dependent (Black Friday 2017 and early 2018 spikes) -> time-aware split mandatory."
+    files:
+      - {name: olist_orders_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_orders_dataset.csv", bytes: 17654914}
+      - {name: olist_order_items_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_order_items_dataset.csv", bytes: 15438671}
+      - {name: olist_customers_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_customers_dataset.csv", bytes: 9033957}
+      - {name: olist_sellers_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_sellers_dataset.csv", bytes: 174703}
+      - {name: olist_products_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_products_dataset.csv", bytes: 2379446}
+      - {name: olist_geolocation_dataset.csv, url: "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_geolocation_dataset.csv", bytes: 61273883}
+
+  - id: spl_open_data
+    name: "Saudi Post (SPL) Open Data: areas, cities, post offices, office services"
+    decision: select
+    evidence_level: data
+    data_kind: reference
+    homepage: https://splonline.com.sa/en/open-data/
+    license: "SPL Open Data terms: free use with attribution to 'Saudi Post | SPL Open Data Platform'; do not distort data or source"
+    redistribution: "Attribution required. Small reference tables; still reproduced from source."
+    pinned_version: "splonline.com.sa/media/1875..1878 (no versioning; sha256 recorded in lock)"
+    scale: "four small xlsx reference tables"
+    supports: [saudi_network_reference, branch_and_hub_grounding, geography_vocabulary]
+    does_not_support: [shipments, events, delivery_performance, tracking]
+    caveats:
+      - "Reference geography only — contains NO shipment, tracking or performance data."
+    files:
+      - {name: area.xlsx, url: "https://splonline.com.sa/media/1875/area.xlsx", bytes: 8711}
+      - {name: cities.xlsx, url: "https://splonline.com.sa/media/1876/cities.xlsx"}
+      - {name: offices.xlsx, url: "https://splonline.com.sa/media/1877/offices.xlsx"}
+      - {name: services.xlsx, url: "https://splonline.com.sa/media/1878/services.xlsx"}
+
+  # ──────────────────────── SECONDARY / BENCHMARK ONLY ────────────────────────
+  - id: ocel_order_management
+    name: "OCEL 2.0 Order Management log (RWTH, simulated with CPN Tools)"
+    decision: secondary
+    evidence_level: data
+    data_kind: simulated
+    homepage: https://zenodo.org/records/8428112
+    license: "CC BY 4.0"
+    redistribution: "Allowed with attribution."
+    pinned_version: "zenodo:8428112 v2 (2023-09-12), md5 published"
+    scale: "21,008 events, 10,840 objects, 11 activities, 6 object types"
+    supports: [object_centric_schema_validation, repeated_failed_delivery_pattern_shape, process_mining_tooling_tests]
+    does_not_support: [real_world_rates, any_headline_metric]
+    caveats:
+      - "Artificial: produced by a Petri-net simulation. Contains 'failed delivery' loops but the rates reflect the model, not reality."
+      - "Used only to test that our canonical event/object model round-trips an OCEL 2.0 log and to shape synthetic attempt sequences. Never for evaluation claims."
+    files:
+      - {name: order-management.json, url: "https://zenodo.org/api/records/8428112/files/order-management.json/content", bytes: 12616758, md5: "0fbb063db34575c8b5b63a7c2ad5424f"}
+
+  - id: cargo2000
+    name: "Cargo 2000 freight tracking and tracing (S-Cube / UCI)"
+    decision: secondary
+    evidence_level: data
+    data_kind: observed
+    homepage: https://archive.ics.uci.edu/dataset/382/cargo+2000+freight+tracking+and+tracing
+    license: "CC BY 4.0 (UCI listing) — cite Metzger et al., SRII 2012"
+    redistribution: "Allowed with attribution; still reproduced from source."
+    pinned_version: "uci:382"
+    scale: "3,942 process instances, 7,932 legs, ~56k service invocations, 5 months (air freight)"
+    supports: [milestone_based_delay_prediction_benchmark, prefix_based_early_warning]
+    does_not_support: [last_mile, attempts, recipient_problems]
+    caveats:
+      - "Air freight between airports; airport codes masked. Domain mismatch with last-mile delivery."
+      - "Useful only as an independent benchmark of 'predict delay from the trace prefix' methodology."
+    files:
+      - {name: cargo2000.zip, url: "https://archive.ics.uci.edu/static/public/382/cargo+2000+freight+tracking+and+tracing.zip"}
+
+  - id: dataco
+    name: "DataCo Smart Supply Chain for Big Data Analysis"
+    decision: secondary
+    evidence_level: data
+    data_kind: derived_public
+    homepage: https://data.mendeley.com/datasets/8gx2fvg2k6/5
+    license: "CC BY 4.0"
+    redistribution: "Allowed with attribution."
+    pinned_version: "mendeley:8gx2fvg2k6 v5 (2019-03-12), sha256 published"
+    scale: "~180k order lines"
+    supports: [late_delivery_risk_benchmark_only]
+    does_not_support: [events, attempts, routes]
+    caveats:
+      - "Page does not state whether data is real or simulated; no collection methodology."
+      - "Late_delivery_risk is a near-deterministic function of 'Days for shipping (real)' vs 'scheduled' -> trivial/leaky if used naively."
+      - "No timestamps beyond order/ship dates, no events."
+    files:
+      - {name: DataCoSupplyChainDataset.csv, url: "https://data.mendeley.com/public-files/datasets/8gx2fvg2k6/files/72784be5-36d3-44fe-b75d-0edbf1999f65/file_downloaded", bytes: 95910149, sha256: "fa6d022ed437155e1a2f0378710602848703c8a7f203f7ff5d77805bf8480aa6"}
+      - {name: DescriptionDataCoSupplyChain.csv, url: "https://data.mendeley.com/public-files/datasets/8gx2fvg2k6/files/29dc7b05-dda6-4834-8354-5b5cc44430df/file_downloaded", bytes: 3444, sha256: "9828e34669bd6d77e3b4463364cc44a5d52446b5e246fc258758cfe592566c4b"}
+
+  - id: spl_national_address_api
+    name: "Saudi Post National Address API (developer portal)"
+    decision: secondary
+    evidence_level: schema
+    data_kind: reference
+    homepage: https://api.address.gov.sa/
+    license: "Proprietary API terms: non-exclusive, non-sublicenseable; starter tier 5 calls/min and 100 calls/week"
+    redistribution: "No bulk extraction or redistribution."
+    supports: [address_validation_adapter_at_runtime]
+    caveats:
+      - "Needs an API key (none provisioned). Not a training-data source; implemented as a swappable AddressProvider interface only."
+
+  # ─────────────────────────────── REJECTED ───────────────────────────────
+  - id: hf_olist_delivery_risk
+    name: "HF samuelalex37/olist-delivery-risk-data (pre-engineered Olist table)"
+    decision: reject
+    evidence_level: schema
+    data_kind: derived_public
+    homepage: https://huggingface.co/datasets/samuelalex37/olist-delivery-risk-data
+    license: "CC BY-NC-SA 4.0"
+    reason: "Third-party derivative of Olist with its own frozen split and opaque feature engineering (53 cols, distance_km derived from geolocation lookup). We rebuild from the raw tables so we control timestamps, leakage and the time-aware split. Its card is a useful cross-check of the ~8.1% late rate and the banned-column list."
+
+  - id: kaggle_delivery_logistics_india
+    name: "Kaggle 'Delivery Logistics Dataset (India, multi-partner)' and similar tabular delivery sets"
+    decision: reject
+    evidence_level: card
+    data_kind: synthetic
+    homepage: https://www.kaggle.com/datasets/kundanbedmutha/delivery-logistics-dataset-india-multi-partner
+    reason: "Dataset description states failed/delayed status is assigned 'with realistic probability' -> generated labels. Needs Kaggle login to download; not inspected beyond its card. Not usable as evidence of real failure behavior."
+
+  - id: kaggle_ayeshaseherr_delivery_logistics
+    name: "Kaggle 'Delivery Logistics dataset' (ayeshaseherr)"
+    decision: reject
+    evidence_level: card
+    data_kind: synthetic
+    homepage: https://www.kaggle.com/datasets/ayeshaseherr/delivery-logistics-dataset
+    reason: "Uploader notes placeholder 1970 timestamps, irregular ids and an incomplete final row; provenance unclear. Not inspected beyond its card."
+
+  - id: delhivery_trips
+    name: "Delhivery trip/segment dataset (Kaggle case-study copies)"
+    decision: reject
+    evidence_level: card
+    data_kind: observed
+    reason: "No license stated by the original source; hosted only on Kaggle (login required). Hub-to-hub transit legs (actual vs OSRM time) would be relevant to line-haul delay, so revisit if a clearly licensed copy appears."
+
+  - id: hf_synthetic_logistics
+    name: "HF synthetic/AI-generated logistics sets (ClarusC64/*, electricsheepafrica/africa-synth-*, 34data/ai-generated-ecommerce-fake-logistics, Shoriful025/*, Yuchiwang02/*)"
+    decision: reject
+    evidence_level: card
+    data_kind: synthetic
+    reason: "Self-described synthetic or generated; no real operational provenance. Our own tagged augmentation (docs/data/AUGMENTATION.md) is preferable because we control the scenario semantics and keep it out of evaluation."
+
+  - id: hf_aqx_salla_zid
+    name: "HF aqxlogistics/salla-zid-fulfillment-logistics-benchmark"
+    decision: reject
+    evidence_level: data
+    data_kind: unknown
+    homepage: https://huggingface.co/datasets/aqxlogistics/salla-zid-fulfillment-logistics-benchmark
+    reason: "Saudi-flavored by name, but the repository is empty (3.38 kB, no data files) and states no schema or provenance."
+
+  - id: ocel_container_logistics
+    name: "OCEL 2.0 Container Logistics log (RWTH, simulated)"
+    decision: reject
+    evidence_level: card
+    data_kind: simulated
+    homepage: https://zenodo.org/records/8428084
+    reason: "Simulated port/container handling; the order-management log is the closer parcel analogue and already covers schema testing."
+
+  - id: kaggle_misc_delivery_time_tables
+    name: "Food-delivery / quick-commerce / amazon-delivery-India Kaggle tables"
+    decision: reject
+    evidence_level: card
+    data_kind: unknown
+    reason: "Delivery-time regression tables with weather/traffic columns of unverified provenance; no failure events and no timestamps usable for leakage control."
+
+  - id: uplift_marketing_benchmarks
+    name: "CRITEO-UPLIFT v2, Meituan-LIFT, Alibaba-LIFT"
+    decision: reject
+    evidence_level: card
+    data_kind: observed
+    reason: "Real randomized-treatment uplift data, but for ad/marketing outcomes — not shipments. Would validate uplift-method code only; it must never be presented as evidence about delivery recovery actions."

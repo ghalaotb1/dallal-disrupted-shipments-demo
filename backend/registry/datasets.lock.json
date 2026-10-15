@@ -1,0 +1,142 @@
+{
+  "amazon_lmrrc/actual_sequences.json": {
+    "bytes": 9665078,
+    "sha256": "3de44067242e8fa841d4b852db8809afaa23fe852e452ee4a2f54f0f0fb77e3c",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/actual_sequences.json"
+  },
+  "amazon_lmrrc/eval_package_data.json": {
+    "bytes": 166201035,
+    "sha256": "612f9aae67df34e637b106a6e2b1cd627fee11fdc0107937bdb56f8c61ec7848",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_package_data.json"
+  },
+  "amazon_lmrrc/eval_route_data.json": {
+    "bytes": 37777768,
+    "sha256": "dfd8a198b9df5e3b194d3a268f6f442edcd77f028870d54a8d7397a7bc366466",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_route_data.json"
+  },
+  "amazon_lmrrc/invalid_sequence_scores.json": {
+    "bytes": 414742,
+    "sha256": "265c8603ea5e658bf733b5d32a6037415324f7edb8331499e7c51e0f8ababefa",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/invalid_sequence_scores.json"
+  },
+  "amazon_lmrrc/package_data.json": {
+    "bytes": 375437806,
+    "sha256": "9ac858358e9f43d34cb65198c03601c814328a06dec9b71ee88b40aaec7f0966",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/package_data.json"
+  },
+  "amazon_lmrrc/route_data.json": {
+    "bytes": 78972162,
+    "sha256": "da3a5d4e73b683d756111f0d9e6d3f20eb8e82adf7c89ee6ee0cb2239abd2f38",
+    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/route_data.json"
+  },
+  "cargo2000/cargo2000.zip": {
+    "bytes": 1145363,
+    "sha256": "6f21dcb4d3973a9a2daa651dba66e788764927da17c5bd452236f814d9f489e2",
+    "url": "https://archive.ics.uci.edu/static/public/382/cargo+2000+freight+tracking+and+tracing.zip"
+  },
+  "dataco/DataCoSupplyChainDataset.csv": {
+    "bytes": 95910149,
+    "sha256": "fa6d022ed437155e1a2f0378710602848703c8a7f203f7ff5d77805bf8480aa6",
+    "url": "https://data.mendeley.com/public-files/datasets/8gx2fvg2k6/files/72784be5-36d3-44fe-b75d-0edbf1999f65/file_downloaded"
+  },
+  "dataco/DescriptionDataCoSupplyChain.csv": {
+    "bytes": 3444,
+    "sha256": "9828e34669bd6d77e3b4463364cc44a5d52446b5e246fc258758cfe592566c4b",
+    "url": "https://data.mendeley.com/public-files/datasets/8gx2fvg2k6/files/29dc7b05-dda6-4834-8354-5b5cc44430df/file_downloaded"
+  },
+  "lade/delivery_cq.csv": {
+    "bytes": 145068417,
+    "sha256": "114a35e9a31f817a3c9efb8513924688706bcedfa85ccd69df696eb5e8eddea2",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_cq.csv"
+  },
+  "lade/delivery_hz.csv": {
+    "bytes": 286893611,
+    "sha256": "9969df2a5c79dadc6149c384e3632eccc0417d01a2575a74db2310e786541c22",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_hz.csv"
+  },
+  "lade/delivery_jl.csv": {
+    "bytes": 4736342,
+    "sha256": "12e2cf4664dd5b4475d39dddee8872f5a03b3082f08f0eece7f103baee6c6e73",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_jl.csv"
+  },
+  "lade/delivery_sh.csv": {
+    "bytes": 228069571,
+    "sha256": "da875abddbb01ac324106b9b9ce33181e5e8530e77359a12ee68567fd1cc3bbf",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_sh.csv"
+  },
+  "lade/delivery_yt.csv": {
+    "bytes": 31532960,
+    "sha256": "aa5bca7fdaa8c89d4ab50a2ed2b94fb09f608acc49fc1108a1a612e9c0f5a7ad",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/delivery/delivery_yt.csv"
+  },
+  "lade/pickup_jl.csv": {
+    "bytes": 43801745,
+    "sha256": "ac5b9f76605b544bd19d79703d137c8656c5395dfaeeb297e3b10ea6b30c3eb1",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/pickup/pickup_jl.csv"
+  },
+  "lade/pickup_yt.csv": {
+    "bytes": 190190713,
+    "sha256": "00c049925a41d92112795718021f348da07f1adb84002de3f5707aef6ac01e91",
+    "url": "https://huggingface.co/datasets/Cainiao-AI/LaDe/resolve/be2cec02775cafc8d52230303f32134382bcc50b/pickup/pickup_yt.csv"
+  },
+  "ocel_order_management/order-management.json": {
+    "bytes": 12616758,
+    "sha256": "af0ddc9c3f760b817e4ac407ef36d79f0f0cac56fac391da887887de52241b0f",
+    "url": "https://zenodo.org/api/records/8428112/files/order-management.json/content"
+  },
+  "olist/olist_customers_dataset.csv": {
+    "bytes": 9033957,
+    "sha256": "983a422239e1712ded753b3bf9ecf47dc73f144d306029dcfa99e70a226883d2",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_customers_dataset.csv"
+  },
+  "olist/olist_geolocation_dataset.csv": {
+    "bytes": 61273883,
+    "sha256": "b514f6fc991b9566aeba02aa5d67e2c3630f034b60a0e05aa0d082a3b66d88d6",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_geolocation_dataset.csv"
+  },
+  "olist/olist_order_items_dataset.csv": {
+    "bytes": 15438671,
+    "sha256": "0bc4d068c4fe38cbb01bd90e8746e3c613fe7b4baef75fab7b0e329701c3e279",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_order_items_dataset.csv"
+  },
+  "olist/olist_orders_dataset.csv": {
+    "bytes": 17654914,
+    "sha256": "8df58ef3d2d7e9944010f7beecd9b75367f5588ec6e3c91cec19ae3345ef9ecf",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_orders_dataset.csv"
+  },
+  "olist/olist_products_dataset.csv": {
+    "bytes": 2379446,
+    "sha256": "3e6569628a17fbc75fd206ee357b59e20364b9afa90f5b6cd5b4d624c58aa9cc",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_products_dataset.csv"
+  },
+  "olist/olist_sellers_dataset.csv": {
+    "bytes": 174703,
+    "sha256": "1f643d2b950373b85735e7794b20986f528d7a000432e7c6f9bcbb44d0846a0e",
+    "url": "https://huggingface.co/datasets/bulutttt/olist-raw-data/resolve/5acf1f37d7197d4979e714721a1ec13a7c3da728/olist_sellers_dataset.csv"
+  },
+  "route_deviation/routes_performance.xlsx": {
+    "bytes": 19713337,
+    "sha256": "8f17d15e189c99a34f2446daeaaf1a65d1e79045a94c4d3c452391c96d9cee00",
+    "url": "https://data.mendeley.com/public-files/datasets/kkwgfvmtxn/files/388ea249-0830-4906-a39e-7bcbd5ee837a/file_downloaded"
+  },
+  "spl_open_data/area.xlsx": {
+    "bytes": 8711,
+    "sha256": "edf34b23a7f40d76717860c67c4b13c0d8112f949de4bfc2cf4caba2ea7783ab",
+    "url": "https://splonline.com.sa/media/1875/area.xlsx"
+  },
+  "spl_open_data/cities.xlsx": {
+    "bytes": 122404,
+    "sha256": "fa024895d266d7210bb0aa3408dabf6bb3c5953133bf6001529542ceee72ee67",
+    "url": "https://splonline.com.sa/media/1876/cities.xlsx"
+  },
+  "spl_open_data/offices.xlsx": {
+    "bytes": 89691,
+    "sha256": "804c1756540d3cee58ccc5cefd824c085744cbf1fac3050a75078816eba96bd1",
+    "url": "https://splonline.com.sa/media/1877/offices.xlsx"
+  },
+  "spl_open_data/services.xlsx": {
+    "bytes": 184424,
+    "sha256": "354dc632d05f3a8aef6605bd198c6c837360e50fff8d2931c4d22134630cc424",
+    "url": "https://splonline.com.sa/media/1878/services.xlsx"
+  }
+}
