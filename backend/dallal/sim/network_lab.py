@@ -61,7 +61,7 @@ def regimes() -> dict[str, NetConfig]:
     }
 
 
-STRATS = ("independent_naive", "independent_strong", "desk_greedy", "independent_inquiry", "coordinated_no_inquiry", "coordinated_inquiry", "coordinated_always_ask",
+STRATS = ("independent_naive", "independent_strong", "desk_greedy", "independent_inquiry", "coordinated_no_inquiry", "coordinated_inquiry", "coordinated_inquiry_adaptive", "coordinated_always_ask",
           "coordinated_inquiry_no_recourse", "oracle")
 
 
@@ -183,7 +183,7 @@ def _plan_cost_belief(w: World) -> float:
     return iq.cost_sar(SPEC, {})  # what the PLANNER believes a question costs
 
 
-def run_incident(seed: int, cfg: NetConfig) -> list[dict[str, Any]]:
+def run_incident(seed: int, cfg: NetConfig, stats: Any = None) -> list[dict[str, Any]]:
     w = draw_world(seed, cfg)
     pr = w.pr
     out: list[dict[str, Any]] = []
@@ -231,6 +231,26 @@ def run_incident(seed: int, cfg: NetConfig) -> list[dict[str, Any]]:
 
     r, asked = coordinated_with_answer(True, True)
     add("coordinated_inquiry", r, asked)
+    if stats is not None:  # learned responsiveness + reliability (carried across incidents of one environment)
+        from dallal.agent.v2.response_stats import ResponseStats
+
+        rs, rel = stats
+        ov = rs.overrides().get("ask_corridor_status", {})
+        p_resp_l, lat_l = ov.get("p", P_RESP_BELIEF), (ov["latency_median"] * float(np.exp(SPEC.raw["response"]["latency_sigma"] ** 2 / 2)) if "latency_median" in ov else LAT_BELIEF)
+        v = N.cluster_inquiry_value(pr, PRIOR, p_response=p_resp_l, latency_min=lat_l, cost_sar=_plan_cost_belief(w), reliability=rel.reliability)
+        if v["net"] < 0.4:
+            add("coordinated_inquiry_adaptive", realise(w, co.assignments, set(co.reroute_vans), {}, 0.0, 0), False)
+        else:
+            a, lat = dispatcher_answer(w, "coord")
+            commit = N.robust_commit(pr)
+            shift = {p.id: (0.0 if p.id in commit else lat) for p in pr.parcels}
+            post = N.posterior_long(PRIOR, a, rel.reliability) if a else PRIOR
+            plan = N.solve(pr, post, slack_shift=shift, fixed=commit)
+            add("coordinated_inquiry_adaptive", realise(w, plan.assignments, set(plan.reroute_vans), shift, cost_true, 1), True)
+            rs.update("ask_corridor_status", a is not None, lat if a is not None else None)
+            if a is not None and a != "dont_know":
+                rel.update((a == "blocked_long") == w.is_long)  # outcome feedback: the blockage's duration is observed afterwards
+        _ = ResponseStats
     r, _ = coordinated_with_answer(True, False)
     add("coordinated_always_ask", r, True)
     r, asked = coordinated_with_answer(False, True)
@@ -239,18 +259,23 @@ def run_incident(seed: int, cfg: NetConfig) -> list[dict[str, Any]]:
 
 
 def _task(args: tuple) -> list[dict[str, Any]]:
-    return run_incident(args[0], args[1])
+    """One environment's incidents in order, so the adaptive strategy can learn from the incidents before it."""
+    from dallal.agent.v2.response_stats import ReliabilityStats, ResponseStats
+
+    cfg, seeds = args
+    stats = (ResponseStats(), ReliabilityStats())
+    return [r for sd in seeds for r in run_incident(sd, cfg, stats)]
 
 
 def run_suite(cfgs: dict[str, NetConfig], n: int, start: int = 0, workers: int = 1) -> pd.DataFrame:
-    tasks = [(start + i, c) for c in cfgs.values() for i in range(n)]
+    tasks = [(c, list(range(start, start + n))) for c in cfgs.values()]
     if workers <= 1:
         rows = [r for t in tasks for r in _task(t)]
     else:
         import multiprocessing as mp
 
         with mp.get_context("spawn").Pool(workers) as pool:
-            rows = [r for chunk in pool.map(_task, tasks, chunksize=20) for r in chunk]
+            rows = [r for chunk in pool.map(_task, tasks, chunksize=1) for r in chunk]
     df = pd.DataFrame(rows)
     orc = df[df.strategy == "oracle"].set_index(["regime", "seed"])["utility"]
     df["regret"] = [orc[(a, b)] - u for a, b, u in zip(df.regime, df.seed, df.utility, strict=True)]

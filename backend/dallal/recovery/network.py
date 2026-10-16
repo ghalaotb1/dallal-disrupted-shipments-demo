@@ -345,10 +345,18 @@ ANSWERS = ("clear", "slow_short", "blocked_long", "dont_know")
 LIK = {"short": (0.10, 0.75, 0.05, 0.10), "long": (0.02, 0.08, 0.83, 0.07)}
 
 
-def posterior_long(p_long: float, answer: str) -> float:
+def lik(reliability: float = 1.0) -> dict[str, tuple[float, ...]]:
+    """Answer likelihoods when the responder reports the truth-driven answer only with probability `reliability` (otherwise uninformative). reliability=1 is the catalogue table."""
+    r = float(min(1.0, max(0.0, reliability)))
+    u = 1.0 / len(ANSWERS)
+    return {k: tuple(r * x + (1 - r) * u for x in v) for k, v in LIK.items()}
+
+
+def posterior_long(p_long: float, answer: str, reliability: float = 1.0) -> float:
     a = ANSWERS.index(answer)
-    num = p_long * LIK["long"][a]
-    den = num + (1 - p_long) * LIK["short"][a]
+    L = lik(reliability)
+    num = p_long * L["long"][a]
+    den = num + (1 - p_long) * L["short"][a]
     return float(num / den) if den > 0 else p_long
 
 
@@ -358,7 +366,7 @@ def robust_commit(pr: Problem) -> dict[str, str]:
     return {pid: o for pid, o in a.items() if b[pid] == o and o != "wait" and o != "defer"}
 
 
-def cluster_inquiry_value(pr: Problem, p_long: float, *, p_response: float, latency_min: float, cost_sar: float, n_asked: int = 1) -> dict[str, Any]:
+def cluster_inquiry_value(pr: Problem, p_long: float, *, p_response: float, latency_min: float, cost_sar: float, n_asked: int = 1, reliability: float = 1.0) -> dict[str, Any]:
     """Net value of asking the dispatcher once, with RECOURSE.
 
     Without asking: one joint plan on the prior, executed now. With asking: parcels whose best option is the same under both extremes are
@@ -371,8 +379,9 @@ def cluster_inquiry_value(pr: Problem, p_long: float, *, p_response: float, late
     shift_silent = {p.id: (0.0 if p.id in commit else latency_min * 1.6) for p in pr.parcels}
     exp_u, detail = 0.0, {}
     for a in ANSWERS:
-        pa = p_long * LIK["long"][ANSWERS.index(a)] + (1 - p_long) * LIK["short"][ANSWERS.index(a)]
-        pl = posterior_long(p_long, a)
+        L = lik(reliability)
+        pa = p_long * L["long"][ANSWERS.index(a)] + (1 - p_long) * L["short"][ANSWERS.index(a)]
+        pl = posterior_long(p_long, a, reliability)
         plan = solve(pr, pl, slack_shift=shift, fixed=commit)
         detail[a] = {"p": round(pa * p_response, 4), "posterior_long": round(pl, 3), "objective": round(plan.objective, 2)}
         exp_u += p_response * pa * plan.objective

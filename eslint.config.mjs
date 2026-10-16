@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Python backend: its virtualenv ships JS/CSS (matplotlib, torch) that is not ours to lint.
+    "backend/**",
+    "docs/**",
   ]),
 ]);
 

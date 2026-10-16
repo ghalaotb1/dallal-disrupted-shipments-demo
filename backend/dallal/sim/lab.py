@@ -43,7 +43,7 @@ from dallal.sim.process import (
 from dallal.sim.world import sim_registry
 from dallal.tools.builtin import build_registry
 
-AGENTS = ("v1_legacy", "v2_no_inquiry", "v2_infogain", "v2_value")
+AGENTS = ("v1_legacy", "v2_no_inquiry", "v2_infogain", "v2_value", "v2_value_adaptive")
 ABLATIONS = ("v2_value", "abl_point_belief", "abl_no_tempering", "abl_no_lookahead", "abl_asks_before_looking", "abl_mean_autonomy", "v2_no_inquiry")
 
 
@@ -130,7 +130,7 @@ def run_episode(agent: str, seed: int, cfg: ProcessConfig, *, policy: dict[str, 
             "false_resolve": bool(dtype == "resolved" and ep.truth.value != "none" and o_name != "wait"), "n_tools": sum(1 for s in run.steps if not s["tool"].startswith("ask:")),
             "n_questions": len(inquiries), "n_answered": sum(1 for i in inquiries if i["status"] == "answered"), "n_timeouts": sum(1 for i in inquiries if i["status"] == "timed_out"),
             "inquiry_relevance": float(np.mean(relevant)) if relevant else np.nan, "elapsed_min": float(elapsed), "comm_cost": comm, "slack_min": ep.slack_min, "stake": V_F[0], "escalated": dtype == "escalate",
-            "recommended": dtype == "recommend", "claimed_eff": d.get("robust_effectiveness"), "posterior": d.get("posterior"), "stability": d.get("decision_stability"), "n_support": d.get("n_support"), "p_unknown": d.get("p_unknown"), "true_p_action": tp, "oracle_option": o_name, "answers": [a.get("answer") for a in env.answers_given]}
+            "recommended": dtype == "recommend", "claimed_eff": d.get("robust_effectiveness"), "posterior": d.get("posterior"), "stability": d.get("decision_stability"), "n_support": d.get("n_support"), "p_unknown": d.get("p_unknown"), "true_p_action": tp, "oracle_option": o_name, "answers": [a.get("answer") for a in env.answers_given], "ask_log": [(a["spec"], a["answer"] is not None, a.get("lat")) for a in env.answers_given]}
 
 
 def _task(args: tuple) -> dict[str, Any]:
@@ -141,6 +141,41 @@ def _task(args: tuple) -> dict[str, Any]:
 def _task_pol(args: tuple) -> dict[str, Any]:
     agent, seed, cfg, pol = args
     return run_episode(agent, seed, cfg, policy=pol)
+
+
+def run_sequence(agent: str, cfg: ProcessConfig, seeds: list[int]) -> list[dict[str, Any]]:
+    """Episodes of one environment in order. `v2_value_adaptive` carries learned response statistics from episode to episode (the others are memoryless)."""
+    from dallal.agent.v2.response_stats import ResponseStats
+
+    stats = ResponseStats()
+    rows = []
+    for sd in seeds:
+        if agent == "v2_value_adaptive":
+            with stats.apply():
+                r = run_episode("v2_value", sd, cfg)
+            for spec, ok, lat in r["ask_log"]:
+                stats.update(spec, ok, lat)
+            r["agent"] = agent
+        else:
+            r = run_episode(agent, sd, cfg)
+        rows.append(r)
+    return rows
+
+
+def _seq_task(args: tuple) -> list[dict[str, Any]]:
+    return run_sequence(*args)
+
+
+def run_suite_seq(agents, regimes: dict[str, ProcessConfig], n: int, start: int = 0, workers: int = 1) -> pd.DataFrame:
+    tasks = [(a, cfg, list(range(start, start + n))) for cfg in regimes.values() for a in agents]
+    if workers <= 1:
+        rows = [r for t in tasks for r in _seq_task(t)]
+    else:
+        import multiprocessing as mp
+
+        with mp.get_context("spawn").Pool(workers) as pool:
+            rows = [r for chunk in pool.map(_seq_task, tasks, chunksize=1) for r in chunk]
+    return pd.DataFrame(rows)
 
 
 def run_suite(agents, regimes: dict[str, ProcessConfig], n: int, start: int = 0, workers: int = 1) -> pd.DataFrame:
@@ -155,8 +190,8 @@ def run_suite(agents, regimes: dict[str, ProcessConfig], n: int, start: int = 0,
 
 def paired_effect(df: pd.DataFrame, a: str, b: str, col: str = "utility", n_boot: int = 2000, seed: int = 0) -> dict[str, Any]:
     """Mean paired difference (a - b) with a bootstrap 95% CI, Cohen's d_z, win/loss shares."""
-    x = df[df.agent == a].set_index("seed")[col]
-    y = df[df.agent == b].set_index("seed")[col]
+    x = df[df.agent == a].set_index("seed")[col].astype(float)
+    y = df[df.agent == b].set_index("seed")[col].astype(float)
     d = (x - y.reindex(x.index)).dropna().to_numpy(dtype=float)
     rng = np.random.default_rng(seed)
     boots = np.array([rng.choice(d, len(d)).mean() for _ in range(n_boot)])

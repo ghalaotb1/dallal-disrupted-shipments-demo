@@ -54,7 +54,8 @@ class PlanOps:
         pr = problem_from_snapshot(snap)
         p_long = float(snap.get("belief", {}).get("pLong", 0.35))
         spec = iq.spec("ask_corridor_status")
-        p_resp, lat, cost = iq.response_prob(spec, {}), iq.expected_latency_min(spec), iq.cost_sar(spec, {})
+        with self.svc.response_stats().apply():  # learned responsiveness (catalogue values are only the prior)
+            p_resp, lat, cost = iq.response_prob(spec, {}), iq.expected_latency_min(spec), iq.cost_sar(spec, {})
         voi = N.cluster_inquiry_value(pr, p_long, p_response=p_resp, latency_min=lat, cost_sar=cost)
         contactable = bool(snap.get("dispatcherContactable", True))
         ask = contactable and voi["net"] >= params()["autonomy"]["min_net_voi_sar"]

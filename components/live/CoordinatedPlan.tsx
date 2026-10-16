@@ -31,17 +31,20 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
   const before = useLive((s) => s.planBefore[incidentId]);
   const changed = plan && plan.status !== "awaiting_evidence" && before ? Object.entries(plan.solution.per_parcel).filter(([k, v]) => before[k] !== v.option) : [];
 
+  const [altRoute, setAltRoute] = useState(false);
+  const [tight, setTight] = useState(false);
+
   const create = useCallback(async () => {
     setBusy(true);
     setErr(null);
     try {
-      setPlan(incidentId, await planApi.create(buildPlanSnapshot(incidentId)));
+      setPlan(incidentId, await planApi.create(buildPlanSnapshot(incidentId, { altRoute, promiseScale: tight ? 0.5 : 1 })));
     } catch (e) {
       setErr(e instanceof Error ? e.message : "request failed");
     } finally {
       setBusy(false);
     }
-  }, [incidentId]);
+  }, [incidentId, altRoute, tight]);
 
   const refresh = useCallback(async () => {
     if (plan) setPlan(incidentId, await planApi.get(plan.plan_id));
@@ -99,9 +102,19 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
 
       <div className="space-y-3 px-5 py-3">
         {!plan ? (
-          <Button size="sm" variant="primary" disabled={busy} onClick={create}>
-            <RefreshCw className={cn(busy && "animate-spin")} /> Plan with the backend
-          </Button>
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+              <label className="flex items-center gap-1.5">
+                <input type="checkbox" checked={altRoute} onChange={(e) => setAltRoute(e.target.checked)} /> Alternative corridor usable <SimTag />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input type="checkbox" checked={tight} onChange={(e) => setTight(e.target.checked)} /> Tight promises (half the remaining window) <SimTag />
+              </label>
+            </div>
+            <Button size="sm" variant="primary" disabled={busy} onClick={create}>
+              <RefreshCw className={cn(busy && "animate-spin")} /> Plan with the backend
+            </Button>
+          </div>
         ) : (
           <>
             <p className="text-xs text-ink-2">
@@ -139,7 +152,7 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
             {cmp ? (
               <div className="rounded-lg border border-line bg-subtle px-3 py-2 text-xs text-ink-2">
                 <p>
-                  Expected utility <b>{sar(cmp.coordinated_utility)}</b> coordinated vs <b>{sar(cmp.independent_utility)}</b> if each shipment were handled independently
+                  Expected utility <b>{sar(cmp.coordinated_utility)}</b> coordinated vs <b>{sar(cmp.independent_utility)}</b> if each shipment were handled on its own with no capacity awareness (naive baseline; against a strong desk heuristic the gain is smaller, see the evaluation report)
                   (<b>{cmp.gain >= 0 ? "+" : ""}{sar(cmp.gain)}</b> SAR-eq).
                 </p>
                 <p className="mt-0.5 text-ink-3">

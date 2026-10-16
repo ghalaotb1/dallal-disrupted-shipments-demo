@@ -29,11 +29,18 @@ from dallal.tools.bundle import Bundle
 from dallal.tools.providers import DefaultProviders, HeuristicRiskModel
 
 
-def _auc(y, p) -> dict:
+def _auc(y, p, boot: int = 300) -> dict:
     y, p = np.asarray(y), np.asarray(p)
     if len(set(y.tolist())) < 2:
         return {"n": int(len(y))}
-    return {"n": int(len(y)), "prevalence": round(float(y.mean()), 4), "roc_auc": round(float(roc_auc_score(y, p)), 4), "pr_auc": round(float(average_precision_score(y, p)), 4)}
+    rng = np.random.default_rng(0)
+    bs = []
+    for _ in range(boot):
+        i = rng.integers(0, len(y), len(y))
+        if y[i].min() != y[i].max():
+            bs.append(roc_auc_score(y[i], p[i]))
+    return {"n": int(len(y)), "prevalence": round(float(y.mean()), 4), "roc_auc": round(float(roc_auc_score(y, p)), 4), "roc_auc_95ci": [round(float(np.quantile(bs, 0.025)), 4), round(float(np.quantile(bs, 0.975)), 4)],
+            "pr_auc": round(float(average_precision_score(y, p)), 4)}
 
 
 def demo_coverage(models: dict) -> dict:
@@ -74,7 +81,7 @@ def _operating_points(y, p, thresholds: dict) -> dict:
     return out
 
 
-def lade_part(models: dict, n: int, seed: int = 0, agent_cases: int = 150) -> dict:
+def lade_part(models: dict, n: int, seed: int = 0, agent_cases: int = 600) -> dict:
     from dallal.ml.adapters import ADAPTERS
 
     m = models["lade_slow_task_v1"]
@@ -193,10 +200,35 @@ def amazon_part(models: dict, n_routes: int = 120, seed: int = 0) -> dict:
             "trained_model_via_bridge": _auc(sc.y, sc.p), "max_abs_feature_diff_vs_training_frame": {c: round(v, 6) for c, v in maxdiff.items()}}
 
 
+def latency_clean(models: dict, n: int = 600) -> dict:
+    """Per-case inference latency on an IDLE machine: bridge (feature build + point-in-time store) + calibrated prediction, warm store; and predict-only."""
+    m = models["lade_slow_task_v1"]
+    cases, _ = lade_replay(n, 1, 10.0, m.card.split["cuts"]["test_start"], m.card.extra["slow_threshold_min"])
+    rm = TrainedRiskModel({"lade_slow_task_v1": m})
+    rm._store("lade_slow_task_v1", m)
+    bundles = [lade_bundle(r) for _, r in cases.iterrows()]
+    lat = []
+    for b in bundles:
+        t = time.perf_counter()
+        rm.score(b, b.subject_id, {})
+        lat.append((time.perf_counter() - t) * 1000)
+    from dallal.ml.adapters import ADAPTERS
+
+    feats = [ADAPTERS["lade_slow_task_v1"].build(b, b.subject_id, m.card, rm._store("lade_slow_task_v1", m)).features for b in bundles[:200]]
+    feats = [f for f in feats if f]
+    t = time.perf_counter()
+    for f in feats:
+        m.predict(f)
+    pred_ms = (time.perf_counter() - t) * 1000 / max(len(feats), 1)
+    return {"cases": n, "bridge_plus_predict_ms": {"p50": round(float(np.percentile(lat, 50)), 2), "p95": round(float(np.percentile(lat, 95)), 2), "p99": round(float(np.percentile(lat, 99)), 2), "mean": round(float(np.mean(lat)), 2)},
+            "predict_only_ms_mean": round(pred_ms, 3), "note": "measured with nothing else running; adapter + calibrated model only (no agent runtime, no HTTP)"}
+
+
 def main() -> None:
     models = {i: registry.load(i) for i in registry.available()}
     rep = {"generated": pd.Timestamp.now().isoformat(timespec="seconds"), "origin": "real public data replays (LaDe, Amazon) + synthetic demo scenarios", "demo_scenarios": demo_coverage(models),
            "lade_replay": lade_part(models, 2000), "amazon_replay": amazon_part(models)}
+    rep["latency_idle_machine"] = latency_clean(models)
     (PATHS.docs / "experiments").mkdir(parents=True, exist_ok=True)
     (PATHS.docs / "experiments" / "model_bridge.json").write_text(json.dumps(rep, indent=2, default=str) + "\n")
     print(json.dumps(rep, indent=1, default=str)[:4000])

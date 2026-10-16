@@ -92,3 +92,11 @@ def test_regimes_are_valid_configs(cause):
     for name, cfg in regime_set().items():
         ep, h, d = draw_process_episode(1, cfg)
         assert ep.slack_min >= 15.0 and name == cfg.name
+
+
+def test_common_mode_fault_makes_family_tools_fail_together():
+    cfg = ProcessConfig(shared_fault_prob=1.0, data_gap=0.0)
+    ep, h, d = draw_process_episode(2, cfg)
+    env = P.ProcessEnv(ep, h, d, cfg, np.random.default_rng(0))
+    assert env.sample_tool("get_journey") == "stalled" and env.sample_tool("get_facility_context") == "scan_gap"
+    assert env.sample_tool("get_address_context") == "address_weak" and env.sample_tool("get_recipient_context") == "history_of_missed_windows"

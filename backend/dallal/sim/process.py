@@ -64,6 +64,7 @@ class ProcessConfig:
     action_scale: float = 1.0  # multiplies TRUE action success (sensitivity)
     comm_scale: float = 1.0  # multiplies the true cost/friction of a message (sensitivity)
     systemic_share: float = 0.0  # fraction of episodes that belong to a shared-cause incident (corridor failures high)
+    shared_fault_prob: float = 0.0  # per episode and evidence family: a common-mode fault (stale feed) makes every tool of the family report the same misleading outcome (correlated errors)
 
 
 def regime_set() -> dict[str, ProcessConfig]:
@@ -78,6 +79,7 @@ def regime_set() -> dict[str, ProcessConfig]:
         "prior_shift_route_heavy": ProcessConfig("prior_shift_route_heavy", prior_shift={C.ROUTE_DISRUPTION: 3.5, C.FACILITY_BACKLOG: 2.0, C.NONE: 0.6}),
         "unseen_behaviour_and_outage": ProcessConfig("unseen_behaviour_and_outage", unseen_behaviour=True, tool_outage=("get_route_context", "get_journey")),
         "systemic_incidents": ProcessConfig("systemic_incidents", systemic_share=0.5),
+        "correlated_evidence": ProcessConfig("correlated_evidence", shared_fault_prob=0.30),
     }
 
 
@@ -177,6 +179,10 @@ def tool_outcome(name: str, h: Hidden, engine: str) -> str:
     raise KeyError(name)
 
 
+FAULT_FAMILIES = {"get_journey": "scans", "get_facility_context": "scans", "get_address_context": "context", "get_recipient_context": "context"}
+FAULT_OUTCOME = {"get_journey": "stalled", "get_facility_context": "scan_gap", "get_address_context": "address_weak", "get_recipient_context": "history_of_missed_windows"}
+
+
 # ── people ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
 COURIER = {C.NONE: {"on_route_normal": .80, "delivered_handed": .15, "at_address_no_answer": .05}, C.ADDRESS_ISSUE: {"cannot_find_address": .75, "at_address_no_answer": .20, "never_reached": .05},
            C.RECIPIENT_UNAVAILABLE: {"at_address_no_answer": .85, "on_route_normal": .10, "cannot_find_address": .05}, C.ATTEMPT_NOT_COMPLETED: {"never_reached": .50, "at_address_no_answer": .30, "on_route_normal": .20},
@@ -223,6 +229,9 @@ class ProcessEnv(SimEnv):
         return self._streams[key]
 
     def sample_tool(self, name: str) -> str:
+        fam = FAULT_FAMILIES.get(name)
+        if fam and self.cfg.shared_fault_prob > 0 and self._rng(f"fault:{fam}").random() < self.cfg.shared_fault_prob:
+            return FAULT_OUTCOME[name]  # common-mode fault: the family's tools fail TOGETHER and agree on a misleading story
         outs = (RISK_BAND_MODEL if (name == "predict_risk" and self.engine == "v2") else OBSERVATION_MODELS[name]).outcomes
         if name in self.cfg.tool_outage or (name != "check_incident_context" and self._rng(f"gap:{name}").random() < self.cfg.data_gap):
             return outs[0]
@@ -237,7 +246,7 @@ class ProcessEnv(SimEnv):
         lat = float(np.exp(np.log(LAT_MEDIAN_TRUE[tgt] * self.cfg.latency_scale) + 0.7 * r.normal()))
         u_resp, u_noise, u_pick, u_stale = r.random(), r.random(), r.random(), r.random()
         if u_resp > min(p, 0.99) or lat > spec.raw["response"]["timeout_min"]:
-            self.answers_given.append({"spec": spec.id, "answer": None})
+            self.answers_given.append({"spec": spec.id, "answer": None, "lat": None})
             return InquiryTimeout(pend.inquiry_id)
         table = BEHAVIOUR[spec.id]
         dist = table.get(self.ep.truth, table.get("default"))
@@ -250,7 +259,7 @@ class ProcessEnv(SimEnv):
             keys = list(dist)
             cum = np.cumsum([dist[k] for k in keys]) / sum(dist.values())
             ans = keys[int(np.searchsorted(cum, u_pick))]
-        self.answers_given.append({"spec": spec.id, "answer": ans, "truth": self.ep.truth.value})
+        self.answers_given.append({"spec": spec.id, "answer": ans, "truth": self.ep.truth.value, "lat": lat})
         return InquiryResponse(pend.inquiry_id, ans, lat, {"sim": True})
 
 

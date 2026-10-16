@@ -15,6 +15,7 @@ export function Capabilities() {
     ["Language model", meta.llm ? (meta.llm.available ? `${meta.llm.backend} available${meta.llm.interpreter_active ? `, reply suggestions by ${meta.llm.interpreter_model}` : ", reply suggestions off"}` : "none in this environment - replies are read by rules only; planning is the deterministic EVOI planner") : "unknown"],
     ["Trained models", meta.ml ? `${meta.ml.models.length} loaded. ${meta.ml.agent_scoring}` : "unknown"],
     ["Persistence", meta.persistence ? `${meta.persistence.db}${meta.persistence.backups ? `, backups on${meta.persistence.last_backup ? " (last: " + meta.persistence.last_backup.split("/").pop() + ")" : ""}` : ", backups off"}${meta.persistence.backup_error ? " - backup error " + meta.persistence.backup_error : ""}` : "unknown"],
+    ["Learned responsiveness", meta.response_learning ? (Object.keys(meta.response_learning.learned).length ? Object.entries(meta.response_learning.learned).map(([k, v]) => `${k.replace("ask_", "")}: ${Math.round(v.p_response * 100)}% answer, ~${Math.round(v.median_latency_min)} min`).join(" · ") : "no inquiries closed yet - using the catalogue's assumed response rates as the prior") : "unknown"],
     ["Access", meta.auth ? `${meta.auth.api_key_required ? "API key required" : "open (dev)"}. ${meta.auth.roles}` : "unknown"],
   ];
   return (

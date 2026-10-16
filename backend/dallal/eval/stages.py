@@ -61,14 +61,25 @@ def paired_table(df: pd.DataFrame, pairs: list[tuple[str, str]], cols: list[str]
     return pd.DataFrame(rows)
 
 
-def stage_single(n: int, workers: int) -> dict[str, Any]:
-    regs = {k: v for k, v in regime_set().items() if k in SINGLE_REGIMES}
-    df = lab.run_suite(lab.AGENTS, regs, n, start=SEEDS["single"], workers=workers)
+def _merge(name: str, new: pd.DataFrame, regimes: list[str]) -> pd.DataFrame:
+    """Replace the rows of `regimes` in an existing results table (used to add a regime without rerunning the others)."""
+    f = RESULTS / f"{name}.csv"
+    if f.exists():
+        old = pd.read_csv(f)
+        new = pd.concat([old[~old.regime.isin(regimes)], new], ignore_index=True)
+    return new
+
+
+def stage_single(n: int, workers: int, only: list[str] | None = None) -> dict[str, Any]:
+    regs = {k: v for k, v in regime_set().items() if k in SINGLE_REGIMES and (only is None or k in only)}
+    df = lab.run_suite_seq(lab.AGENTS, regs, n, start=SEEDS["single"], workers=workers)
     _raw(df, "single")
     summ = summarise_single(df)
-    _save("single_summary", summ)
-    pairs = [("v2_value", "v2_no_inquiry"), ("v2_infogain", "v2_no_inquiry"), ("v2_value", "v2_infogain"), ("v2_no_inquiry", "v1_legacy"), ("v2_value", "v1_legacy")]
+    pairs = [("v2_value", "v2_no_inquiry"), ("v2_value_adaptive", "v2_no_inquiry"), ("v2_value_adaptive", "v2_value"), ("v2_infogain", "v2_no_inquiry"), ("v2_value", "v2_infogain"), ("v2_no_inquiry", "v1_legacy"), ("v2_value", "v1_legacy")]
     pt = paired_table(df, pairs, ["utility", "regret", "protected_prob"])
+    if only:
+        summ, pt = _merge("single_summary", summ, only), _merge("single_paired", pt, only)
+    _save("single_summary", summ)
     _save("single_paired", pt)
     return {"episodes_per_regime_per_agent": n, "regimes": list(regs), "seed_start": SEEDS["single"]}
 
@@ -77,12 +88,13 @@ def _raw(df: pd.DataFrame, name: str) -> None:
     out = PATHS.data / "eval_raw"
     out.mkdir(parents=True, exist_ok=True)
     d = df.copy()
-    if "answers" in d:
-        d["answers"] = d["answers"].astype(str)
+    for c in d.columns:
+        if d[c].dtype == object and c not in ("regime", "agent", "strategy", "truth", "decision", "option", "named_cause", "oracle_option", "policy"):
+            d[c] = d[c].astype(str)  # list-valued diagnostics (answers, ask_log)
     d.to_parquet(out / f"{name}.parquet")  # git-ignored (.data); the committed results are the aggregated tables
 
 
-ABLATION_REGIMES = ["baseline", "high_uncertainty", "contradictory_evidence", "urgent_deadlines"]
+ABLATION_REGIMES = ["baseline", "high_uncertainty", "contradictory_evidence", "urgent_deadlines", "correlated_evidence"]
 
 
 def stage_ablation(n: int, workers: int) -> dict[str, Any]:
@@ -92,7 +104,7 @@ def stage_ablation(n: int, workers: int) -> dict[str, Any]:
     summ = summarise_single(df)
     _save("ablation_summary", summ)
     pairs = [("v2_value", a) for a in lab.ABLATIONS if a != "v2_value"]
-    _save("ablation_paired", paired_table(df, pairs, ["utility", "regret", "n_questions"]))
+    _save("ablation_paired", paired_table(df, pairs, ["utility", "regret", "n_questions", "harmful_auto", "auto", "false_resolve"]))
     return {"episodes_per_regime_per_variant": n, "regimes": ABLATION_REGIMES, "variants": list(lab.ABLATIONS)}
 
 
@@ -109,13 +121,14 @@ def random_env(rng: np.random.Generator, i: int) -> ProcessConfig:
 def stage_sensitivity(n_envs: int, n: int, workers: int) -> dict[str, Any]:
     rng = np.random.default_rng(SEEDS["sensitivity"])
     envs = {f"env{i:03d}": random_env(rng, i) for i in range(n_envs)}
-    df = lab.run_suite(("v2_no_inquiry", "v2_infogain", "v2_value"), envs, n, start=SEEDS["sensitivity"], workers=workers)
+    df = lab.run_suite_seq(("v2_no_inquiry", "v2_infogain", "v2_value", "v2_value_adaptive"), envs, n, start=SEEDS["sensitivity"], workers=workers)
     rows = []
     for name, g in df.groupby("regime"):
         e = lab.paired_effect(g, "v2_value", "v2_no_inquiry", "utility", n_boot=500)
         e2 = lab.paired_effect(g, "v2_infogain", "v2_no_inquiry", "utility", n_boot=500)
+        e3 = lab.paired_effect(g, "v2_value_adaptive", "v2_no_inquiry", "utility", n_boot=500)
         c = envs[name]
-        rows.append({"env": name, "value_minus_dbonly": e["mean_diff"], "ci_lo": e["ci95"][0], "ci_hi": e["ci95"][1], "infogain_minus_dbonly": e2["mean_diff"], "questions_value": g[g.agent == "v2_value"].n_questions.mean(),
+        rows.append({"env": name, "value_minus_dbonly": e["mean_diff"], "ci_lo": e["ci95"][0], "ci_hi": e["ci95"][1], "infogain_minus_dbonly": e2["mean_diff"], "adaptive_minus_dbonly": e3["mean_diff"], "adaptive_ci_lo": e3["ci95"][0], "adaptive_ci_hi": e3["ci95"][1], "questions_adaptive": g[g.agent == "v2_value_adaptive"].n_questions.mean(), "questions_value": g[g.agent == "v2_value"].n_questions.mean(),
                      "questions_infogain": g[g.agent == "v2_infogain"].n_questions.mean(), "data_gap": c.data_gap, "signal_noise": c.signal_noise, "slack_scale": c.slack_scale, "p_resp_scale": c.p_resp_scale,
                      "latency_scale": c.latency_scale, "answer_noise": c.answer_noise, "util_scale": c.util_scale, "action_scale": c.action_scale, "comm_scale": c.comm_scale})
     t = pd.DataFrame(rows)
@@ -127,6 +140,9 @@ def stage_sensitivity(n_envs: int, n: int, workers: int) -> dict[str, Any]:
                                                                                   "share_significantly_negative": round(float((t.ci_hi < 0).mean()), 3), "p10": round(float(t.value_minus_dbonly.quantile(.1)), 3),
                                                                                   "p90": round(float(t.value_minus_dbonly.quantile(.9)), 3)},
             "infogain_minus_dbonly": {"median": round(float(t.infogain_minus_dbonly.median()), 3), "share_positive": round(float((t.infogain_minus_dbonly > 0).mean()), 3)},
+            "adaptive_minus_dbonly": {"median": round(float(t.adaptive_minus_dbonly.median()), 3), "mean": round(float(t.adaptive_minus_dbonly.mean()), 3), "share_positive": round(float((t.adaptive_minus_dbonly > 0).mean()), 3),
+                                      "share_significantly_positive": round(float((t.adaptive_ci_lo > 0).mean()), 3), "share_significantly_negative": round(float((t.adaptive_ci_hi < 0).mean()), 3),
+                                      "p10": round(float(t.adaptive_minus_dbonly.quantile(.1)), 3), "p90": round(float(t.adaptive_minus_dbonly.quantile(.9)), 3)},
             "spearman_of_benefit_with_knob": corr, "seed_start": SEEDS["sensitivity"]}
     _save("sensitivity_summary", summ)
     return summ
@@ -146,7 +162,8 @@ def stage_network(n: int, workers: int) -> dict[str, Any]:
         rows.append(r)
     _save("network_summary", pd.DataFrame(rows))
     pairs = [("independent_strong", "independent_naive"), ("coordinated_no_inquiry", "desk_greedy"), ("coordinated_no_inquiry", "independent_strong"), ("coordinated_inquiry", "desk_greedy"),
-             ("coordinated_inquiry", "independent_inquiry"), ("coordinated_inquiry", "coordinated_no_inquiry"), ("coordinated_inquiry", "coordinated_always_ask"), ("coordinated_inquiry", "coordinated_inquiry_no_recourse")]
+             ("coordinated_inquiry", "independent_inquiry"), ("coordinated_inquiry", "coordinated_no_inquiry"), ("coordinated_inquiry", "coordinated_always_ask"), ("coordinated_inquiry", "coordinated_inquiry_no_recourse"),
+             ("coordinated_inquiry_adaptive", "coordinated_no_inquiry"), ("coordinated_inquiry_adaptive", "coordinated_inquiry"), ("coordinated_inquiry_adaptive", "desk_greedy")]
     prow = []
     for reg, g in df.groupby("regime"):
         for a, b in pairs:
@@ -204,3 +221,27 @@ def stage_safety(n: int, workers: int) -> dict[str, Any]:
             "policy_violations_total": int(t.policy_violations.sum())}
     _save("safety_summary", summ)
     return summ
+
+
+def stage_inquiry_effect() -> dict[str, Any]:
+    """What did asking change? Paired with the same agent's database-only twin on the same episodes (reads the raw single-shipment results written by stage_single)."""
+    df = pd.read_parquet(PATHS.data / "eval_raw" / "single.parquet")
+    rows = []
+    for reg, g in df.groupby("regime"):
+        base = g[g.agent == "v2_no_inquiry"].set_index("seed")
+        for ag in ("v2_infogain", "v2_value", "v2_value_adaptive"):
+            v = g[g.agent == ag].set_index("seed")
+            idx = v.index.intersection(base.index)
+            v, b = v.loc[idx], base.loc[idx]
+            asked = v.n_questions > 0
+            changed = (v.option != b.option) & asked
+            gain = v.utility - b.utility
+            r = {"regime": reg, "agent": ag, "n": len(v), "asked_share": float(asked.mean()), "questions_per_case": float(v.n_questions.mean()), "answered_per_asked_question": float(v.n_answered.sum() / max(v.n_questions.sum(), 1)),
+                 "timeout_per_asked_question": float(v.n_timeouts.sum() / max(v.n_questions.sum(), 1)), "inquiry_target_relevant_share": float(v.loc[asked, "inquiry_relevance"].mean()) if asked.any() else np.nan,
+                 "decision_changed_share_of_asked": float(changed.sum() / max(asked.sum(), 1)), "mean_gain_when_decision_changed": float(gain[changed].mean()) if changed.any() else np.nan,
+                 "mean_gain_when_asked_but_unchanged": float(gain[asked & ~changed].mean()) if (asked & ~changed).any() else np.nan, "mean_gain_all": float(gain.mean()),
+                 "minutes_to_decision_with_asking": float(v.elapsed_min.mean()), "minutes_to_decision_db_only": float(b.elapsed_min.mean()), "comm_cost": float(v.comm_cost.mean())}
+            rows.append(r)
+    t = pd.DataFrame(rows)
+    _save("inquiry_effect", t)
+    return {"rows": len(t)}

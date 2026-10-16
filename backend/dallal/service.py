@@ -60,6 +60,12 @@ class OpsService:
         with self._glock:
             return self.locks.setdefault(run_id, threading.Lock())
 
+    def response_stats(self):
+        """Learned responsiveness from this deployment's own closed inquiries (catalogue values are only the prior)."""
+        from dallal.agent.v2.response_stats import ResponseStats
+
+        return ResponseStats.from_store(self.store, self.time_scale)
+
     def _guard(self) -> _Guard:
         return _Guard(self.channel, self.store, hold_for_approval=self.provider.mode == "cloud" and self.settings.require_send_approval)
 
@@ -100,7 +106,8 @@ class OpsService:
         run_id = f"run-{uuid.uuid4().hex[:8]}"
         with self._lock(run_id):
             self.store.emit("run_started", bundle.subject_id, run_id, {"scenario": bundle.scenario_id, "trigger": bundle.trigger})
-            res = self._runtime().start(bundle, run_id, lang)
+            with self.response_stats().apply():
+                res = self._runtime().start(bundle, run_id, lang)
             return self._persist(res, bundle, new=True)
 
     def _persist(self, res: RunResult, bundle: Bundle, new: bool = False) -> dict[str, Any]:
@@ -141,7 +148,8 @@ class OpsService:
             return self.plans.resume(run_id, ev)  # a shared incident-level question resumes the PLAN, not a single-shipment run
         rec = self.store.get_run(run_id)
         bundle = bundle or Bundle.from_dict(json.loads(rec["bundle_json"]))
-        res = self._runtime().resume(bundle, rec["checkpoint"], ev, run_id)
+        with self.response_stats().apply():
+            res = self._runtime().resume(bundle, rec["checkpoint"], ev, run_id)
         return self._persist(res, bundle)
 
     def view_run(self, run_id: str) -> dict[str, Any]:

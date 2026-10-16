@@ -20,6 +20,7 @@ export interface LiveMeta {
   ml?: { models: string[]; agent_scoring: string };
   persistence?: { db: string; backups: boolean; last_backup?: string | null; backup_error?: string | null };
   auth?: { api_key_required: boolean; roles: string };
+  response_learning?: { enabled: boolean; prior_strength: number; learned: Record<string, { p_response: number; median_latency_min: number }> };
 }
 
 export interface LiveMessage {

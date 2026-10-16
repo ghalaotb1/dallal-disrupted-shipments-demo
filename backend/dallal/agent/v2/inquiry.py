@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import math
 from dataclasses import dataclass
 from functools import lru_cache
@@ -17,6 +18,10 @@ from dallal.agent.belief import CAUSES, Cause, ObservationModel
 SPEC = Path(__file__).with_name("inquiries.yaml")
 NO_RESPONSE = "no_response"
 RECIPIENT_RESPONSIVENESS = {"high": 1.25, "medium": 1.0, "low": 0.6}
+
+
+# Learned replacements for the catalogue's response probability / median latency (see response_stats.py). A ContextVar: safe under a threaded server.
+OVERRIDES: contextvars.ContextVar[dict[str, dict[str, float]]] = contextvars.ContextVar("dallal_response_overrides", default={})  # noqa: B039
 
 
 @lru_cache(maxsize=1)
@@ -81,7 +86,7 @@ def applicable(s: InquirySpec, facts: dict[str, Any], now: pd.Timestamp) -> bool
 
 
 def response_prob(s: InquirySpec, facts: dict[str, Any]) -> float:
-    base = s.raw["response"]["p"]
+    base = OVERRIDES.get().get(s.id, {}).get("p", s.raw["response"]["p"])
     if s.target == "recipient":
         base *= RECIPIENT_RESPONSIVENESS.get(facts.get("recipient_responsiveness") or "medium", 1.0)
     return float(min(0.97, max(0.03, base)))
@@ -89,7 +94,8 @@ def response_prob(s: InquirySpec, facts: dict[str, Any]) -> float:
 
 def expected_latency_min(s: InquirySpec) -> float:
     r = s.raw["response"]
-    return float(r["latency_median_min"] * math.exp(r["latency_sigma"] ** 2 / 2))
+    med = OVERRIDES.get().get(s.id, {}).get("latency_median", r["latency_median_min"])
+    return float(med * math.exp(r["latency_sigma"] ** 2 / 2))
 
 
 def cost_sar(s: InquirySpec, facts: dict[str, Any]) -> float:

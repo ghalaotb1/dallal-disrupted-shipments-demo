@@ -11,7 +11,14 @@ const CRUISE_MPS = 8.5;
  * RESOURCES (spare couriers, pickup capacity, the alternative corridor's extra time) and the prior on blockage duration are
  * ASSUMPTIONS of this demo (the frontend has no dispatch capacity data); the UI labels them SIM.
  */
-export function buildPlanSnapshot(incidentId: string): PlanSnapshot {
+export interface PlanAssumptions {
+  /** Is the alternative corridor usable right now? (SIM: the demo has no live road-closure feed) */
+  altRoute: boolean;
+  /** Multiplier on the remaining promise time (<1 = tighter promises) */
+  promiseScale: number;
+}
+
+export function buildPlanSnapshot(incidentId: string, a: PlanAssumptions = { altRoute: false, promiseScale: 1 }): PlanSnapshot {
   const w = getWorld();
   const inc = w.incidents[incidentId];
   if (!inc) throw new Error(`Unknown incident ${incidentId}`);
@@ -24,7 +31,7 @@ export function buildPlanSnapshot(incidentId: string): PlanSnapshot {
       id: s.id,
       van: s.courier?.vehicle ?? s.id,
       value: s.valueSar,
-      slackMin: Math.max(5, (s.window.end - now) / 60_000),
+      slackMin: Math.max(5, ((s.window.end - now) / 60_000) * a.promiseScale),
       remainingMin: Math.max(5, remainingM(s, now) / CRUISE_MPS / 60),
       service: s.service,
       exposed: inc.exposed.includes(s.id),
@@ -43,6 +50,6 @@ export function buildPlanSnapshot(incidentId: string): PlanSnapshot {
     belief: { pLong: 0.3 },
     dispatcherContactable: true,
     parcels,
-    resources: { spares: [{ id: "S1", etaMin: 20, capacity: 3 }, { id: "S2", etaMin: 28, capacity: 2 }], pickups, alt: { available: true, extraMin: 55 } },
+    resources: { spares: [{ id: "S1", etaMin: 20, capacity: 3 }, { id: "S2", etaMin: 28, capacity: 2 }], pickups, alt: { available: a.altRoute, extraMin: 55 } },
   };
 }

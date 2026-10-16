@@ -22,9 +22,9 @@ OUT = PATHS.docs / "experiments" / "charts"
 BLUE, ORANGE, AQUA, VIOLET, RED, GRAY, INK, INK2 = "#2a78d6", "#eb6834", "#1baf7a", "#4a3aa7", "#e34948", "#9a9a94", "#0b0b0b", "#52514e"
 AGENT_COLOR = {"v1_legacy": GRAY, "v2_no_inquiry": BLUE, "v2_infogain": ORANGE, "v2_value": AQUA}
 AGENT_LABEL = {"v1_legacy": "Legacy agent (v1)", "v2_no_inquiry": "Database-only (v2)", "v2_infogain": "Information-gain asking", "v2_value": "Decision-value asking"}
-STRAT_COLOR = {"independent_naive": GRAY, "independent_strong": ORANGE, "desk_greedy": VIOLET, "independent_inquiry": RED, "coordinated_no_inquiry": BLUE, "coordinated_inquiry": AQUA}
+STRAT_COLOR = {"independent_naive": GRAY, "independent_strong": ORANGE, "desk_greedy": VIOLET, "independent_inquiry": RED, "coordinated_no_inquiry": BLUE, "coordinated_inquiry": AQUA, "coordinated_inquiry_adaptive": "#0b0b0b"}
 STRAT_LABEL = {"independent_naive": "Per-shipment, naive", "independent_strong": "Per-shipment, strong", "desk_greedy": "Human-desk heuristic", "independent_inquiry": "Per-shipment + own questions",
-               "coordinated_no_inquiry": "Coordinated", "coordinated_inquiry": "Coordinated + one inquiry"}
+               "coordinated_no_inquiry": "Coordinated", "coordinated_inquiry": "Coordinated + one inquiry", "coordinated_inquiry_adaptive": "Coordinated + inquiry, learned responsiveness"}
 
 plt.rcParams.update({"figure.facecolor": "#fcfcfb", "axes.facecolor": "#fcfcfb", "axes.edgecolor": "#c9c8c2", "axes.labelcolor": INK2, "text.color": INK, "xtick.color": INK2, "ytick.color": INK2,
                      "axes.spines.top": False, "axes.spines.right": False, "font.size": 9.5, "axes.titlesize": 11, "axes.titleweight": "bold", "axes.titlelocation": "left", "grid.color": "#e6e5df", "grid.linewidth": 0.7,
@@ -119,13 +119,13 @@ def chart_network() -> None:
     t = _rd("network_summary")
     regs = ["baseline", "low_capacity", "high_capacity", "urgent_deadlines", "flexible_deadlines", "small_incident", "large_incident", "missing_or_delayed_response", "contradictory_answers", "prior_wrong_long", "prior_wrong_short"]
     regs = [r for r in regs if r in set(t.regime)]
-    strats = ["independent_naive", "independent_strong", "desk_greedy", "independent_inquiry", "coordinated_no_inquiry", "coordinated_inquiry"]
+    strats = ["independent_naive", "independent_strong", "desk_greedy", "independent_inquiry", "coordinated_no_inquiry", "coordinated_inquiry", "coordinated_inquiry_adaptive"]
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.2), sharey=True)
     for ax, m, lab in ((axes[0], "protected_share", "Share of shipments delivered on time"), (axes[1], "regret", "Utility shortfall vs oracle per incident (lower is better)")):
         h = 0.13
         for j, s in enumerate(strats):
             d = t[t.strategy == s].set_index("regime").reindex(regs)
-            y = np.arange(len(regs)) + (j - 2.5) * h
+            y = np.arange(len(regs)) + (j - 3.0) * h
             ax.errorbar(d[m], y, xerr=[d[m] - d[m + "_lo"], d[m + "_hi"] - d[m]], fmt="o", color=STRAT_COLOR[s], ms=4.5, elinewidth=1.2, mec="#fcfcfb", label=STRAT_LABEL[s])
         ax.set_xlabel(lab)
         ax.grid(axis="x")
@@ -142,8 +142,8 @@ def chart_network_gain() -> None:
     p = _rd("network_paired")
     p = p[p.metric == "utility"]
     regs = list(dict.fromkeys(p.regime))
-    pairs = [("coordinated_no_inquiry", "desk_greedy", BLUE, "Coordinated vs human-desk heuristic"), ("coordinated_inquiry", "desk_greedy", AQUA, "Coordinated + inquiry vs human-desk heuristic"),
-             ("coordinated_inquiry", "coordinated_no_inquiry", VIOLET, "Value of the one shared question (on top of coordination)")]
+    pairs = [("coordinated_no_inquiry", "desk_greedy", BLUE, "Coordinated vs human-desk heuristic"), ("coordinated_inquiry", "coordinated_no_inquiry", VIOLET, "One shared question, fixed assumptions (on top of coordination)"),
+             ("coordinated_inquiry_adaptive", "coordinated_no_inquiry", AQUA, "One shared question, learned responsiveness (on top of coordination)")]
     fig, ax = plt.subplots(figsize=(9, 5.2))
     h = 0.25
     for j, (a, b, col, lab) in enumerate(pairs):
