@@ -30,6 +30,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["dallal*"]
 
+[tool.setuptools.package-data]
+"dallal.recovery" = ["actions.yaml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["realdata: needs downloaded datasets under backend/.data (skipped when absent)"]
@@ -37,3 +40,7 @@ markers = ["realdata: needs downloaded datasets under backend/.data (skipped whe
 [tool.ruff]
 line-length = 110
 target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501", "B905"]

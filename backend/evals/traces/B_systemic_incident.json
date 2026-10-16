@@ -1,0 +1,702 @@
+{
+  "run_id": "case-B_systemic_incident",
+  "subject_id": "DL-ROU-001",
+  "scenario_id": "route_blockage-seed7",
+  "data_origin": "synthetic",
+  "planner": "evidence-driven-evoi-v1",
+  "trigger": {
+    "kind": "exception_recorded"
+  },
+  "as_of": "2026-03-10T14:00:00",
+  "steps": [
+    {
+      "index": 0,
+      "tool": "get_shipment",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "bootstrap: shipment facts are needed to form a prior",
+      "phase": "bootstrap",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "DL-ROU-001 loaded",
+      "facts": [
+        "Standard \u00b7 COD SAR 2,450 \u00b7 value SAR 2,450",
+        "recorded exception: RECIPIENT_NOT_AVAILABLE",
+        "0 failed attempt(s) so far"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "recipient_unavailable",
+            0.5404
+          ],
+          [
+            "address_issue",
+            0.1081
+          ],
+          [
+            "route_disruption",
+            0.0946
+          ],
+          [
+            "unknown",
+            0.0946
+          ]
+        ],
+        "p_systemic": 0.1003,
+        "entropy_bits": 2.52
+      },
+      "candidates": [],
+      "duration_ms": 1.415,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7"
+      }
+    },
+    {
+      "index": 1,
+      "tool": "get_recipient_context",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "largest information gain per cost (0.41 bits, cost 1.0); 46% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "No recipient-side problem signal",
+      "facts": [
+        "responsiveness high",
+        "preferred channel WhatsApp"
+      ],
+      "outcome": "no_signal",
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.2202
+          ],
+          [
+            "recipient_unavailable",
+            0.1943
+          ],
+          [
+            "route_disruption",
+            0.1927
+          ],
+          [
+            "facility_backlog",
+            0.1457
+          ]
+        ],
+        "p_systemic": 0.18,
+        "entropy_bits": 3.2279
+      },
+      "candidates": [
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.4108,
+          "cost": 1.0,
+          "eig_per_cost": 0.4108,
+          "p_decision_change": 0.4608
+        },
+        {
+          "tool": "predict_risk",
+          "eig_bits": 0.1924,
+          "cost": 0.5,
+          "eig_per_cost": 0.3847,
+          "p_decision_change": 0.231
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.2758,
+          "cost": 1.0,
+          "eig_per_cost": 0.2758,
+          "p_decision_change": 0.6546
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.3392,
+          "cost": 1.5,
+          "eig_per_cost": 0.2261,
+          "p_decision_change": 0.8228
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.214,
+          "cost": 1.0,
+          "eig_per_cost": 0.214,
+          "p_decision_change": 0.9241
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.2112,
+          "cost": 1.0,
+          "eig_per_cost": 0.2112,
+          "p_decision_change": 0.7723
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.3008,
+          "cost": 1.5,
+          "eig_per_cost": 0.2006,
+          "p_decision_change": 0.854
+        }
+      ],
+      "duration_ms": 0.25,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7"
+      }
+    },
+    {
+      "index": 2,
+      "tool": "predict_risk",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "largest information gain per cost (0.25 bits, cost 0.5); 39% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Risk 0.74 (high) \u2014 prototype-heuristic",
+      "facts": [
+        "\u2191 corridor at 16% of typical speed",
+        "\u2191 recorded exception RECIPIENT_NOT_AVAILABLE"
+      ],
+      "outcome": "driver_route",
+      "belief_after": {
+        "top": [
+          [
+            "route_disruption",
+            0.5094
+          ],
+          [
+            "address_issue",
+            0.1214
+          ],
+          [
+            "recipient_unavailable",
+            0.1065
+          ],
+          [
+            "facility_backlog",
+            0.1027
+          ]
+        ],
+        "p_systemic": 0.2925,
+        "entropy_bits": 2.9439
+      },
+      "candidates": [
+        {
+          "tool": "predict_risk",
+          "eig_bits": 0.2537,
+          "cost": 0.5,
+          "eig_per_cost": 0.5073,
+          "p_decision_change": 0.3862
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.3788,
+          "cost": 1.0,
+          "eig_per_cost": 0.3788,
+          "p_decision_change": 0.3048
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.3582,
+          "cost": 1.0,
+          "eig_per_cost": 0.3582,
+          "p_decision_change": 0.265
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.334,
+          "cost": 1.0,
+          "eig_per_cost": 0.334,
+          "p_decision_change": 0.2595
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.4457,
+          "cost": 1.5,
+          "eig_per_cost": 0.2971,
+          "p_decision_change": 0.1432
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.4288,
+          "cost": 1.5,
+          "eig_per_cost": 0.2859,
+          "p_decision_change": 0.2589
+        }
+      ],
+      "duration_ms": 4.146,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7",
+        "model_id": "heuristic-noisy-or-v1",
+        "model_basis": "prototype-heuristic"
+      }
+    },
+    {
+      "index": 3,
+      "tool": "check_incident_context",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "largest information gain per cost (0.58 bits, cost 1.5); 84% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "6 related failures on corridor DK-04",
+      "facts": [
+        "6 in last 30 min vs baseline 0.4\u00b10.6 \u00b7 z=9.3 (threshold 3)",
+        "members: DL-ROU-001, DL-ROU-002, DL-ROU-003, DL-ROU-004, DL-ROU-005, DL-ROU-006 \u00b7 3 exposed"
+      ],
+      "outcome": "incident_confirmed",
+      "belief_after": {
+        "top": [
+          [
+            "route_disruption",
+            0.7717
+          ],
+          [
+            "facility_backlog",
+            0.1555
+          ],
+          [
+            "unknown",
+            0.0326
+          ],
+          [
+            "address_issue",
+            0.0133
+          ]
+        ],
+        "p_systemic": 0.9688,
+        "entropy_bits": 1.3027
+      },
+      "candidates": [
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.5768,
+          "cost": 1.5,
+          "eig_per_cost": 0.3845,
+          "p_decision_change": 0.8425
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.526,
+          "cost": 1.5,
+          "eig_per_cost": 0.3507,
+          "p_decision_change": 1.0
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.2675,
+          "cost": 1.0,
+          "eig_per_cost": 0.2675,
+          "p_decision_change": 1.0
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.2481,
+          "cost": 1.0,
+          "eig_per_cost": 0.2481,
+          "p_decision_change": 0.675
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.2382,
+          "cost": 1.0,
+          "eig_per_cost": 0.2382,
+          "p_decision_change": 0.7699
+        }
+      ],
+      "duration_ms": 13.071,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7",
+        "detector": "rolling-window z-score"
+      }
+    },
+    {
+      "index": 4,
+      "tool": "get_facility_context",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "largest information gain per cost (0.29 bits, cost 1.0); 100% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "Branch operating normally",
+      "facts": [
+        "backlog 25 parcels"
+      ],
+      "outcome": "normal",
+      "belief_after": {
+        "top": [
+          [
+            "route_disruption",
+            0.9097
+          ],
+          [
+            "unknown",
+            0.0294
+          ],
+          [
+            "address_issue",
+            0.0172
+          ],
+          [
+            "recipient_unavailable",
+            0.0152
+          ]
+        ],
+        "p_systemic": 0.9657,
+        "entropy_bits": 0.8353
+      },
+      "candidates": [
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.2913,
+          "cost": 1.0,
+          "eig_per_cost": 0.2913,
+          "p_decision_change": 1.0
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.341,
+          "cost": 1.5,
+          "eig_per_cost": 0.2273,
+          "p_decision_change": 1.0
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.0835,
+          "cost": 1.0,
+          "eig_per_cost": 0.0835,
+          "p_decision_change": 0.3252
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0432,
+          "cost": 1.0,
+          "eig_per_cost": 0.0432,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 0.38,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7"
+      }
+    },
+    {
+      "index": 5,
+      "tool": "get_route_context",
+      "args": {
+        "shipment_id": "DL-ROU-001"
+      },
+      "why": "largest information gain per cost (0.15 bits, cost 1.5); 21% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Vehicle held in a corridor slowdown",
+      "facts": [
+        "corridor 10 km/h vs 62 typical (16%)",
+        "vehicle stationary 50 min"
+      ],
+      "outcome": "blocked_stationary",
+      "belief_after": {
+        "top": [
+          [
+            "route_disruption",
+            0.9874
+          ],
+          [
+            "unknown",
+            0.0087
+          ],
+          [
+            "attempt_not_completed",
+            0.002
+          ],
+          [
+            "address_issue",
+            0.0007
+          ]
+        ],
+        "p_systemic": 0.9823,
+        "entropy_bits": 0.2411
+      },
+      "candidates": [
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.1549,
+          "cost": 1.5,
+          "eig_per_cost": 0.1033,
+          "p_decision_change": 0.2122
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0531,
+          "cost": 1.0,
+          "eig_per_cost": 0.0531,
+          "p_decision_change": 0.101
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.049,
+          "cost": 1.0,
+          "eig_per_cost": 0.049,
+          "p_decision_change": 0.0239
+        }
+      ],
+      "duration_ms": 2.019,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "route_blockage-seed7"
+      }
+    }
+  ],
+  "decision": {
+    "policy_version": "policy-v1",
+    "p_systemic": 0.982,
+    "top_cause": "route_disruption",
+    "posterior": 0.987,
+    "type": "incident",
+    "headline": "Handle as incident on corridor DK-04",
+    "rationale": "6 related failures in 30 min vs baseline 0.4 (z=9.3); 3 more shipments exposed. One incident response is faster and safer than case-by-case fixes.",
+    "members": [
+      "DL-ROU-001",
+      "DL-ROU-002",
+      "DL-ROU-003",
+      "DL-ROU-004",
+      "DL-ROU-005",
+      "DL-ROU-006"
+    ],
+    "exposed": [
+      "DL-ROU-007",
+      "DL-ROU-008",
+      "DL-ROU-009"
+    ],
+    "scope": "corridor",
+    "scope_id": "DK-04",
+    "stop_reason": "incident confirmed \u2014 handle at incident level; individual diagnosis would duplicate it",
+    "last_candidate_table": [
+      {
+        "tool": "get_journey",
+        "eig_bits": 0.0048,
+        "cost": 1.0,
+        "eig_per_cost": 0.0048,
+        "p_decision_change": 0.0
+      },
+      {
+        "tool": "get_address_context",
+        "eig_bits": 0.0037,
+        "cost": 1.0,
+        "eig_per_cost": 0.0037,
+        "p_decision_change": 0.0
+      }
+    ]
+  },
+  "belief_trajectory": [
+    {
+      "after": "get_shipment",
+      "top": [
+        [
+          "recipient_unavailable",
+          0.5404
+        ],
+        [
+          "address_issue",
+          0.1081
+        ],
+        [
+          "route_disruption",
+          0.0946
+        ],
+        [
+          "unknown",
+          0.0946
+        ]
+      ],
+      "p_systemic": 0.1003,
+      "entropy_bits": 2.52
+    },
+    {
+      "after": "get_recipient_context",
+      "top": [
+        [
+          "address_issue",
+          0.2202
+        ],
+        [
+          "recipient_unavailable",
+          0.1943
+        ],
+        [
+          "route_disruption",
+          0.1927
+        ],
+        [
+          "facility_backlog",
+          0.1457
+        ]
+      ],
+      "p_systemic": 0.18,
+      "entropy_bits": 3.2279
+    },
+    {
+      "after": "predict_risk",
+      "top": [
+        [
+          "route_disruption",
+          0.5094
+        ],
+        [
+          "address_issue",
+          0.1214
+        ],
+        [
+          "recipient_unavailable",
+          0.1065
+        ],
+        [
+          "facility_backlog",
+          0.1027
+        ]
+      ],
+      "p_systemic": 0.2925,
+      "entropy_bits": 2.9439
+    },
+    {
+      "after": "check_incident_context",
+      "top": [
+        [
+          "route_disruption",
+          0.7717
+        ],
+        [
+          "facility_backlog",
+          0.1555
+        ],
+        [
+          "unknown",
+          0.0326
+        ],
+        [
+          "address_issue",
+          0.0133
+        ]
+      ],
+      "p_systemic": 0.9688,
+      "entropy_bits": 1.3027
+    },
+    {
+      "after": "get_facility_context",
+      "top": [
+        [
+          "route_disruption",
+          0.9097
+        ],
+        [
+          "unknown",
+          0.0294
+        ],
+        [
+          "address_issue",
+          0.0172
+        ],
+        [
+          "recipient_unavailable",
+          0.0152
+        ]
+      ],
+      "p_systemic": 0.9657,
+      "entropy_bits": 0.8353
+    },
+    {
+      "after": "get_route_context",
+      "top": [
+        [
+          "route_disruption",
+          0.9874
+        ],
+        [
+          "unknown",
+          0.0087
+        ],
+        [
+          "attempt_not_completed",
+          0.002
+        ],
+        [
+          "address_issue",
+          0.0007
+        ]
+      ],
+      "p_systemic": 0.9823,
+      "entropy_bits": 0.2411
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev1",
+      "label": "No recipient-side problem signal",
+      "detail": "responsiveness high; preferred channel WhatsApp",
+      "stance": "context",
+      "source_tool": "get_recipient_context",
+      "cause": "address_issue"
+    },
+    {
+      "id": "ev2",
+      "label": "Risk 0.74 (high) \u2014 prototype-heuristic",
+      "detail": "\u2191 corridor at 16% of typical speed; \u2191 recorded exception RECIPIENT_NOT_AVAILABLE",
+      "stance": "supports",
+      "source_tool": "predict_risk",
+      "cause": "route_disruption"
+    },
+    {
+      "id": "ev3",
+      "label": "6 related failures on corridor DK-04",
+      "detail": "6 in last 30 min vs baseline 0.4\u00b10.6 \u00b7 z=9.3 (threshold 3); members: DL-ROU-001, DL-ROU-002, DL-ROU-003, DL-ROU-004, DL-ROU-005, DL-ROU-006 \u00b7 3 exposed",
+      "stance": "context",
+      "source_tool": "check_incident_context",
+      "cause": "route_disruption"
+    },
+    {
+      "id": "ev4",
+      "label": "Branch operating normally",
+      "detail": "backlog 25 parcels",
+      "stance": "context",
+      "source_tool": "get_facility_context",
+      "cause": "route_disruption"
+    },
+    {
+      "id": "ev5",
+      "label": "Vehicle held in a corridor slowdown",
+      "detail": "corridor 10 km/h vs 62 typical (16%); vehicle stationary 50 min",
+      "stance": "supports",
+      "source_tool": "get_route_context",
+      "cause": "route_disruption"
+    }
+  ],
+  "diagnosis": null,
+  "actions": [],
+  "escalation": null,
+  "deviations": [],
+  "model_basis": "expert_assumption_v1",
+  "tool_path": [
+    "get_shipment",
+    "get_recipient_context",
+    "predict_risk",
+    "check_incident_context",
+    "get_facility_context",
+    "get_route_context"
+  ]
+}

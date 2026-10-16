@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 
-import numpy as np
 import pandas as pd
 
 from dallal.data.adapters.base import raw, with_provenance, write_tables

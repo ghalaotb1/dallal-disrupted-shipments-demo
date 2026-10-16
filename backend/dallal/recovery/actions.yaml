@@ -1,0 +1,142 @@
+# Recovery action catalogue and policy bounds (version recovery-policy-v1).
+#
+# EVERY number here is an EXPERT ASSUMPTION or an operational rule — not learned from outcomes. No public dataset pairs a
+# last-mile recovery action with its result (see docs/data/DATASET_DECISION_REPORT.md §5), so the ranking below is an
+# evidence-weighted policy, labelled causal_claim=false. The catalogue mirrors ActionKind in types/domain.ts.
+#
+# suitability: how well the action addresses each root cause (0..1), as a prior judgement.
+# requires:    named predicates evaluated from case facts; an unmet predicate makes the action ineligible.
+# approval:    base approval level (none < analyst < supervisor); `escalate_if` raises it for high-stakes parcels.
+# friction:    recipient/ops disruption cost (0..1) subtracted from the score.
+version: recovery-policy-v1
+
+limits:
+  auto_confidence_min: 0.80      # posterior of the diagnosed cause required for automated action
+  auto_value_max_sar: 1500       # above this, a human approves even reversible actions
+  auto_max_prior_failures: 2     # after this many failed attempts a human takes over
+  diagnose_min_posterior: 0.55   # below this the agent will not name a cause (it escalates instead)
+  decisive_margin_min: 0.15      # lead over runner-up needed to name a cause
+  repeat_failure_threshold: 2    # from this many failed attempts, re-contact is down-weighted and redirection up-weighted
+  min_action_fit: 0.30           # an action that fits the diagnosed cause less than this is not offered at all
+
+actions:
+  verify_address:
+    title: Ask recipient to confirm the delivery pin
+    tool: contact_recipient
+    reversible: true
+    impact: low
+    approval: none
+    automatable: true
+    friction: 0.10
+    minutes_to_effect: 20
+    requires: [recipient_reachable]
+    suitability: {address_issue: 0.95, recipient_unavailable: 0.15}
+
+  contact_recipient:
+    title: Contact recipient to confirm availability
+    tool: contact_recipient
+    reversible: true
+    impact: low
+    approval: none
+    automatable: true
+    friction: 0.10
+    minutes_to_effect: 20
+    requires: [recipient_reachable]
+    suitability: {recipient_unavailable: 0.85, attempt_not_completed: 0.40}
+
+  offer_window:
+    title: Offer the recipient a new delivery window
+    tool: reschedule_delivery
+    reversible: true
+    impact: low
+    approval: none
+    automatable: true
+    friction: 0.20
+    minutes_to_effect: 30
+    requires: [recipient_reachable]
+    suitability: {recipient_unavailable: 0.80, attempt_not_completed: 0.55, address_issue: 0.20}
+
+  retry_delivery:
+    title: Re-attempt delivery on the next route
+    tool: reschedule_delivery
+    reversible: true
+    impact: medium
+    approval: analyst
+    automatable: false
+    friction: 0.25
+    minutes_to_effect: 120
+    requires: []
+    suitability: {attempt_not_completed: 0.70, recipient_unavailable: 0.40}
+
+  redirect_pickup:
+    title: Redirect the parcel to a pickup point
+    tool: redirect_to_pickup
+    reversible: false
+    impact: medium
+    approval: analyst
+    automatable: false
+    friction: 0.40
+    minutes_to_effect: 90
+    requires: [pickup_online]
+    suitability: {recipient_unavailable: 0.60, address_issue: 0.40}
+
+  reroute:
+    title: Reroute the vehicle around the disruption
+    tool: reroute
+    reversible: true
+    impact: medium
+    approval: analyst
+    automatable: false
+    friction: 0.20
+    minutes_to_effect: 15
+    requires: [alt_route]
+    suitability: {route_disruption: 0.85}
+
+  reassign_courier:
+    title: Reassign the parcel to a spare courier
+    tool: reassign_courier
+    reversible: true
+    impact: high
+    approval: analyst
+    escalate_if: {cod_amount_gte: 2000, value_gte: 3000}
+    automatable: false
+    friction: 0.35
+    minutes_to_effect: 60
+    requires: [spare_courier]
+    suitability: {route_disruption: 0.60, attempt_not_completed: 0.65}
+
+  branch_escalation:
+    title: Ask the branch to clear the backlog for this parcel
+    tool: escalate_case
+    reversible: true
+    impact: low
+    approval: none
+    automatable: true
+    friction: 0.10
+    minutes_to_effect: 45
+    requires: []
+    suitability: {facility_backlog: 0.90, custody_anomaly: 0.25}
+
+  redirect_locker:
+    title: Redirect to an available parcel locker
+    tool: redirect_to_pickup
+    reversible: false
+    impact: medium
+    approval: analyst
+    automatable: false
+    friction: 0.40
+    minutes_to_effect: 90
+    requires: [alt_pickup_online]
+    suitability: {pickup_point_unavailable: 0.80}
+
+  correct_exception:
+    title: Correct the recorded exception code
+    tool: escalate_case
+    reversible: true
+    impact: low
+    approval: analyst
+    automatable: false
+    friction: 0.05
+    minutes_to_effect: 5
+    requires: []
+    suitability: {custody_anomaly: 0.20}

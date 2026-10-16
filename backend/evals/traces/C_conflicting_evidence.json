@@ -1,0 +1,901 @@
+{
+  "run_id": "case-C_conflicting_evidence",
+  "subject_id": "DL-CUS-001",
+  "scenario_id": "custody_conflict-seed7",
+  "data_origin": "synthetic",
+  "planner": "evidence-driven-evoi-v1",
+  "trigger": {
+    "kind": "analyst_request"
+  },
+  "as_of": "2026-03-10T14:00:00",
+  "steps": [
+    {
+      "index": 0,
+      "tool": "get_shipment",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "bootstrap: shipment facts are needed to form a prior",
+      "phase": "bootstrap",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "DL-CUS-001 loaded",
+      "facts": [
+        "Standard \u00b7 Prepaid \u00b7 value SAR 950",
+        "no exception recorded",
+        "1 failed attempt(s) so far"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "recipient_unavailable",
+            0.1923
+          ],
+          [
+            "none",
+            0.1692
+          ],
+          [
+            "address_issue",
+            0.1538
+          ],
+          [
+            "route_disruption",
+            0.1346
+          ]
+        ],
+        "p_systemic": 0.1328,
+        "entropy_bits": 3.2979
+      },
+      "candidates": [],
+      "duration_ms": 1.048,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7"
+      }
+    },
+    {
+      "index": 1,
+      "tool": "predict_risk",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "largest information gain per cost (0.25 bits, cost 0.5); 0% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Risk 0.60 (high) \u2014 prototype-heuristic",
+      "facts": [
+        "\u2191 'out_for_delivery' recorded after 'delivered' at 11:10"
+      ],
+      "outcome": "driver_custody",
+      "belief_after": {
+        "top": [
+          [
+            "unknown",
+            0.1626
+          ],
+          [
+            "custody_anomaly",
+            0.1604
+          ],
+          [
+            "attempt_not_completed",
+            0.1558
+          ],
+          [
+            "recipient_unavailable",
+            0.13
+          ]
+        ],
+        "p_systemic": 0.1093,
+        "entropy_bits": 3.3326
+      },
+      "candidates": [
+        {
+          "tool": "predict_risk",
+          "eig_bits": 0.2488,
+          "cost": 0.5,
+          "eig_per_cost": 0.4976,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.43,
+          "cost": 1.0,
+          "eig_per_cost": 0.43,
+          "p_decision_change": 0.2147
+        },
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.3759,
+          "cost": 1.0,
+          "eig_per_cost": 0.3759,
+          "p_decision_change": 0.231
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.2947,
+          "cost": 1.0,
+          "eig_per_cost": 0.2947,
+          "p_decision_change": 0.2529
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.4185,
+          "cost": 1.5,
+          "eig_per_cost": 0.279,
+          "p_decision_change": 0.1142
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.2666,
+          "cost": 1.0,
+          "eig_per_cost": 0.2666,
+          "p_decision_change": 0.2094
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.3664,
+          "cost": 1.5,
+          "eig_per_cost": 0.2442,
+          "p_decision_change": 0.1083
+        }
+      ],
+      "duration_ms": 4.589,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7",
+        "model_id": "heuristic-noisy-or-v1",
+        "model_basis": "prototype-heuristic"
+      }
+    },
+    {
+      "index": 2,
+      "tool": "get_journey",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "largest information gain per cost (0.56 bits, cost 1.0); 0% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Conflicting custody scans",
+      "facts": [
+        "'out_for_delivery' recorded after 'delivered' at 11:10"
+      ],
+      "outcome": "sequence_conflict",
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.7985
+          ],
+          [
+            "unknown",
+            0.0578
+          ],
+          [
+            "attempt_not_completed",
+            0.0554
+          ],
+          [
+            "none",
+            0.0271
+          ]
+        ],
+        "p_systemic": 0.0618,
+        "entropy_bits": 1.549
+      },
+      "candidates": [
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.5553,
+          "cost": 1.0,
+          "eig_per_cost": 0.5553,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.3439,
+          "cost": 1.0,
+          "eig_per_cost": 0.3439,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.4132,
+          "cost": 1.5,
+          "eig_per_cost": 0.2755,
+          "p_decision_change": 0.1054
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.2192,
+          "cost": 1.0,
+          "eig_per_cost": 0.2192,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.3199,
+          "cost": 1.5,
+          "eig_per_cost": 0.2133,
+          "p_decision_change": 0.0909
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.2038,
+          "cost": 1.0,
+          "eig_per_cost": 0.2038,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 1.831,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7"
+      }
+    },
+    {
+      "index": 3,
+      "tool": "check_incident_context",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "largest information gain per cost (0.21 bits, cost 1.5); 6% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "No related failures",
+      "facts": [
+        "0 in last 30 min vs baseline 0.3\u00b10.5 \u00b7 z=-0.6 (threshold 3)"
+      ],
+      "outcome": "no_cluster",
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.8079
+          ],
+          [
+            "attempt_not_completed",
+            0.056
+          ],
+          [
+            "unknown",
+            0.0556
+          ],
+          [
+            "none",
+            0.0285
+          ]
+        ],
+        "p_systemic": 0.0039,
+        "entropy_bits": 1.2187
+      },
+      "candidates": [
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.2081,
+          "cost": 1.5,
+          "eig_per_cost": 0.1387,
+          "p_decision_change": 0.0557
+        },
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.081,
+          "cost": 1.0,
+          "eig_per_cost": 0.081,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.1091,
+          "cost": 1.5,
+          "eig_per_cost": 0.0728,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.0517,
+          "cost": 1.0,
+          "eig_per_cost": 0.0517,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0442,
+          "cost": 1.0,
+          "eig_per_cost": 0.0442,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 10.248,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7",
+        "detector": "rolling-window z-score"
+      }
+    },
+    {
+      "index": 4,
+      "tool": "get_recipient_context",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "largest information gain per cost (0.08 bits, cost 1.0); 0% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "No recipient-side problem signal",
+      "facts": [
+        "responsiveness medium",
+        "preferred channel Call"
+      ],
+      "outcome": "no_signal",
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.8007
+          ],
+          [
+            "unknown",
+            0.0601
+          ],
+          [
+            "none",
+            0.0478
+          ],
+          [
+            "attempt_not_completed",
+            0.0353
+          ]
+        ],
+        "p_systemic": 0.0043,
+        "entropy_bits": 1.258
+      },
+      "candidates": [
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.0791,
+          "cost": 1.0,
+          "eig_per_cost": 0.0791,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0972,
+          "cost": 1.5,
+          "eig_per_cost": 0.0648,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0454,
+          "cost": 1.0,
+          "eig_per_cost": 0.0454,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.0432,
+          "cost": 1.0,
+          "eig_per_cost": 0.0432,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 0.255,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7"
+      }
+    },
+    {
+      "index": 5,
+      "tool": "get_route_context",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "largest information gain per cost (0.11 bits, cost 1.5); 0% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Failed attempt logged 318 m from the address",
+      "facts": [
+        "courier GPS places the attempt away from the delivery address",
+        "corridor 58 km/h vs 62 typical (94%)",
+        "vehicle stationary 0 min"
+      ],
+      "outcome": "attempt_geo_mismatch",
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.9118
+          ],
+          [
+            "attempt_not_completed",
+            0.0604
+          ],
+          [
+            "unknown",
+            0.0171
+          ],
+          [
+            "address_issue",
+            0.0054
+          ]
+        ],
+        "p_systemic": 0.0033,
+        "entropy_bits": 0.5892
+      },
+      "candidates": [
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.1123,
+          "cost": 1.5,
+          "eig_per_cost": 0.0749,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0654,
+          "cost": 1.0,
+          "eig_per_cost": 0.0654,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.0529,
+          "cost": 1.0,
+          "eig_per_cost": 0.0529,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 1.79,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7"
+      }
+    },
+    {
+      "index": 6,
+      "tool": "analyze_disruption",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "reconcile the recorded exception with the gathered evidence before deciding",
+      "phase": "close",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "Evidence no code \u2014 high confidence",
+      "facts": [
+        "most likely cause: custody_anomaly (posterior 0.91, margin 0.85)"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.9118
+          ],
+          [
+            "attempt_not_completed",
+            0.0604
+          ],
+          [
+            "unknown",
+            0.0171
+          ],
+          [
+            "address_issue",
+            0.0054
+          ]
+        ],
+        "p_systemic": 0.0033,
+        "entropy_bits": 0.5892
+      },
+      "candidates": [
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.0164,
+          "cost": 1.0,
+          "eig_per_cost": 0.0164,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.0164,
+          "cost": 1.0,
+          "eig_per_cost": 0.0164,
+          "p_decision_change": 0.0
+        }
+      ],
+      "duration_ms": 0.015,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7",
+        "model_basis": "belief posterior (expert-assumption observation models)"
+      }
+    },
+    {
+      "index": 7,
+      "tool": "escalate_case",
+      "args": {
+        "shipment_id": "DL-CUS-001"
+      },
+      "why": "policy requires human review (conflicting_evidence)",
+      "phase": "close",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "Escalated to shift supervisor (P2)",
+      "facts": [
+        "Was the parcel handed to the recipient, or was the 'delivered' scan made in error?"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "custody_anomaly",
+            0.9118
+          ],
+          [
+            "attempt_not_completed",
+            0.0604
+          ],
+          [
+            "unknown",
+            0.0171
+          ],
+          [
+            "address_issue",
+            0.0054
+          ]
+        ],
+        "p_systemic": 0.0033,
+        "entropy_bits": 0.5892
+      },
+      "candidates": [],
+      "duration_ms": 0.024,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "custody_conflict-seed7",
+        "side_effect": "simulated"
+      }
+    }
+  ],
+  "decision": {
+    "policy_version": "policy-v1",
+    "p_systemic": 0.003,
+    "top_cause": "custody_anomaly",
+    "posterior": 0.912,
+    "type": "escalate",
+    "reason": "conflicting_evidence",
+    "headline": "Escalate \u2014 the agent will not guess a cause",
+    "rationale": "Evidence contradicts itself: the scans point to a custody anomaly (91%), so no recovery action is safe until a person establishes what actually happened to the parcel.",
+    "question": "Was the parcel handed to the recipient, or was the 'delivered' scan made in error?",
+    "escalation_id": "esc-case-C_conflicting_evidence",
+    "stop_reason": "evidence cannot name a distinct cause \u2014 hand to a human",
+    "last_candidate_table": [
+      {
+        "tool": "get_address_context",
+        "eig_bits": 0.0164,
+        "cost": 1.0,
+        "eig_per_cost": 0.0164,
+        "p_decision_change": 0.0
+      },
+      {
+        "tool": "get_facility_context",
+        "eig_bits": 0.0164,
+        "cost": 1.0,
+        "eig_per_cost": 0.0164,
+        "p_decision_change": 0.0
+      }
+    ]
+  },
+  "belief_trajectory": [
+    {
+      "after": "get_shipment",
+      "top": [
+        [
+          "recipient_unavailable",
+          0.1923
+        ],
+        [
+          "none",
+          0.1692
+        ],
+        [
+          "address_issue",
+          0.1538
+        ],
+        [
+          "route_disruption",
+          0.1346
+        ]
+      ],
+      "p_systemic": 0.1328,
+      "entropy_bits": 3.2979
+    },
+    {
+      "after": "predict_risk",
+      "top": [
+        [
+          "unknown",
+          0.1626
+        ],
+        [
+          "custody_anomaly",
+          0.1604
+        ],
+        [
+          "attempt_not_completed",
+          0.1558
+        ],
+        [
+          "recipient_unavailable",
+          0.13
+        ]
+      ],
+      "p_systemic": 0.1093,
+      "entropy_bits": 3.3326
+    },
+    {
+      "after": "get_journey",
+      "top": [
+        [
+          "custody_anomaly",
+          0.7985
+        ],
+        [
+          "unknown",
+          0.0578
+        ],
+        [
+          "attempt_not_completed",
+          0.0554
+        ],
+        [
+          "none",
+          0.0271
+        ]
+      ],
+      "p_systemic": 0.0618,
+      "entropy_bits": 1.549
+    },
+    {
+      "after": "check_incident_context",
+      "top": [
+        [
+          "custody_anomaly",
+          0.8079
+        ],
+        [
+          "attempt_not_completed",
+          0.056
+        ],
+        [
+          "unknown",
+          0.0556
+        ],
+        [
+          "none",
+          0.0285
+        ]
+      ],
+      "p_systemic": 0.0039,
+      "entropy_bits": 1.2187
+    },
+    {
+      "after": "get_recipient_context",
+      "top": [
+        [
+          "custody_anomaly",
+          0.8007
+        ],
+        [
+          "unknown",
+          0.0601
+        ],
+        [
+          "none",
+          0.0478
+        ],
+        [
+          "attempt_not_completed",
+          0.0353
+        ]
+      ],
+      "p_systemic": 0.0043,
+      "entropy_bits": 1.258
+    },
+    {
+      "after": "get_route_context",
+      "top": [
+        [
+          "custody_anomaly",
+          0.9118
+        ],
+        [
+          "attempt_not_completed",
+          0.0604
+        ],
+        [
+          "unknown",
+          0.0171
+        ],
+        [
+          "address_issue",
+          0.0054
+        ]
+      ],
+      "p_systemic": 0.0033,
+      "entropy_bits": 0.5892
+    },
+    {
+      "after": "analyze_disruption",
+      "top": [
+        [
+          "custody_anomaly",
+          0.9118
+        ],
+        [
+          "attempt_not_completed",
+          0.0604
+        ],
+        [
+          "unknown",
+          0.0171
+        ],
+        [
+          "address_issue",
+          0.0054
+        ]
+      ],
+      "p_systemic": 0.0033,
+      "entropy_bits": 0.5892
+    },
+    {
+      "after": "escalate_case",
+      "top": [
+        [
+          "custody_anomaly",
+          0.9118
+        ],
+        [
+          "attempt_not_completed",
+          0.0604
+        ],
+        [
+          "unknown",
+          0.0171
+        ],
+        [
+          "address_issue",
+          0.0054
+        ]
+      ],
+      "p_systemic": 0.0033,
+      "entropy_bits": 0.5892
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev1",
+      "label": "Risk 0.60 (high) \u2014 prototype-heuristic",
+      "detail": "\u2191 'out_for_delivery' recorded after 'delivered' at 11:10",
+      "stance": "context",
+      "source_tool": "predict_risk",
+      "cause": "unknown"
+    },
+    {
+      "id": "ev2",
+      "label": "Conflicting custody scans",
+      "detail": "'out_for_delivery' recorded after 'delivered' at 11:10",
+      "stance": "supports",
+      "source_tool": "get_journey",
+      "cause": "custody_anomaly"
+    },
+    {
+      "id": "ev3",
+      "label": "No related failures",
+      "detail": "0 in last 30 min vs baseline 0.3\u00b10.5 \u00b7 z=-0.6 (threshold 3)",
+      "stance": "context",
+      "source_tool": "check_incident_context",
+      "cause": "custody_anomaly"
+    },
+    {
+      "id": "ev4",
+      "label": "No recipient-side problem signal",
+      "detail": "responsiveness medium; preferred channel Call",
+      "stance": "context",
+      "source_tool": "get_recipient_context",
+      "cause": "custody_anomaly"
+    },
+    {
+      "id": "ev5",
+      "label": "Failed attempt logged 318 m from the address",
+      "detail": "courier GPS places the attempt away from the delivery address; corridor 58 km/h vs 62 typical (94%)",
+      "stance": "context",
+      "source_tool": "get_route_context",
+      "cause": "custody_anomaly"
+    }
+  ],
+  "diagnosis": {
+    "cause": "custody_anomaly",
+    "posterior": 0.9118,
+    "margin": 0.8515,
+    "confidence": "high",
+    "agreement": "no_code",
+    "recorded_code": null,
+    "recorded_cause": null,
+    "p_recorded_cause": null,
+    "runner_up": [
+      "attempt_not_completed",
+      0.06
+    ]
+  },
+  "actions": [],
+  "escalation": {
+    "to": "shift_supervisor",
+    "priority": "P2",
+    "reason": "unspecified",
+    "question": "Was the parcel handed to the recipient, or was the 'delivered' scan made in error?",
+    "evidence": [
+      "Risk 0.60 (high) \u2014 prototype-heuristic: \u2191 'out_for_delivery' recorded after 'delivered' at 11:10",
+      "Conflicting custody scans: 'out_for_delivery' recorded after 'delivered' at 11:10",
+      "No related failures: 0 in last 30 min vs baseline 0.3\u00b10.5 \u00b7 z=-0.6 (threshold 3)",
+      "No recipient-side problem signal: responsiveness medium; preferred channel Call",
+      "Failed attempt logged 318 m from the address: courier GPS places the attempt away from the delivery address; corridor 58 km/h vs 62 typical (94%)"
+    ],
+    "leading_hypotheses": [
+      [
+        "custody_anomaly",
+        0.9118
+      ],
+      [
+        "attempt_not_completed",
+        0.0604
+      ],
+      [
+        "unknown",
+        0.0171
+      ],
+      [
+        "address_issue",
+        0.0054
+      ]
+    ],
+    "options": [],
+    "diagnosis": {
+      "cause": "custody_anomaly",
+      "posterior": 0.9118,
+      "margin": 0.8515,
+      "confidence": "high",
+      "agreement": "no_code",
+      "recorded_code": null,
+      "recorded_cause": null,
+      "p_recorded_cause": null,
+      "runner_up": [
+        "attempt_not_completed",
+        0.06
+      ]
+    },
+    "sla": "2026-03-10 18:00:00"
+  },
+  "deviations": [],
+  "model_basis": "expert_assumption_v1",
+  "tool_path": [
+    "get_shipment",
+    "predict_risk",
+    "get_journey",
+    "check_incident_context",
+    "get_recipient_context",
+    "get_route_context",
+    "analyze_disruption",
+    "escalate_case"
+  ]
+}

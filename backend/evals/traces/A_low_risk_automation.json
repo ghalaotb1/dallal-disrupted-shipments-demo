@@ -1,0 +1,921 @@
+{
+  "run_id": "case-A_low_risk_automation",
+  "subject_id": "DL-ADD-001",
+  "scenario_id": "address_risk-seed7",
+  "data_origin": "synthetic",
+  "planner": "evidence-driven-evoi-v1",
+  "trigger": {
+    "kind": "risk_alert",
+    "detail": "address validation failed"
+  },
+  "as_of": "2026-03-10T14:00:00",
+  "steps": [
+    {
+      "index": 0,
+      "tool": "get_shipment",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "bootstrap: shipment facts are needed to form a prior",
+      "phase": "bootstrap",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "DL-ADD-001 loaded",
+      "facts": [
+        "Standard \u00b7 Prepaid \u00b7 value SAR 180",
+        "no exception recorded",
+        "0 failed attempt(s) so far"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "none",
+            0.3374
+          ],
+          [
+            "recipient_unavailable",
+            0.1534
+          ],
+          [
+            "address_issue",
+            0.1227
+          ],
+          [
+            "route_disruption",
+            0.1074
+          ]
+        ],
+        "p_systemic": 0.108,
+        "entropy_bits": 3.0458
+      },
+      "candidates": [],
+      "duration_ms": 1.294,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7"
+      }
+    },
+    {
+      "index": 1,
+      "tool": "predict_risk",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "largest information gain per cost (0.24 bits, cost 0.5); 0% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Risk 0.65 (high) \u2014 prototype-heuristic",
+      "facts": [
+        "\u2191 address confidence 0.47"
+      ],
+      "outcome": "driver_address",
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.4181
+          ],
+          [
+            "none",
+            0.2219
+          ],
+          [
+            "recipient_unavailable",
+            0.1078
+          ],
+          [
+            "unknown",
+            0.0797
+          ]
+        ],
+        "p_systemic": 0.0735,
+        "entropy_bits": 2.6751
+      },
+      "candidates": [
+        {
+          "tool": "predict_risk",
+          "eig_bits": 0.2372,
+          "cost": 0.5,
+          "eig_per_cost": 0.4745,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.4583,
+          "cost": 1.0,
+          "eig_per_cost": 0.4583,
+          "p_decision_change": 0.1874
+        },
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.3539,
+          "cost": 1.0,
+          "eig_per_cost": 0.3539,
+          "p_decision_change": 0.1943
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.3828,
+          "cost": 1.5,
+          "eig_per_cost": 0.2552,
+          "p_decision_change": 0.0952
+        },
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.2531,
+          "cost": 1.0,
+          "eig_per_cost": 0.2531,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.238,
+          "cost": 1.0,
+          "eig_per_cost": 0.238,
+          "p_decision_change": 0.0983
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.3171,
+          "cost": 1.5,
+          "eig_per_cost": 0.2114,
+          "p_decision_change": 0.0899
+        }
+      ],
+      "duration_ms": 3.94,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7",
+        "model_id": "heuristic-noisy-or-v1",
+        "model_basis": "prototype-heuristic"
+      }
+    },
+    {
+      "index": 2,
+      "tool": "get_address_context",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "largest information gain per cost (0.52 bits, cost 1.0); 46% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "alert",
+      "summary": "Address weak",
+      "facts": [
+        "confidence 0.47",
+        "2 address-related failure(s) at this address",
+        "first delivery to this address"
+      ],
+      "outcome": "address_weak",
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8383
+          ],
+          [
+            "none",
+            0.0483
+          ],
+          [
+            "unknown",
+            0.0434
+          ],
+          [
+            "recipient_unavailable",
+            0.0352
+          ]
+        ],
+        "p_systemic": 0.0318,
+        "entropy_bits": 1.1993
+      },
+      "candidates": [
+        {
+          "tool": "get_address_context",
+          "eig_bits": 0.5162,
+          "cost": 1.0,
+          "eig_per_cost": 0.5162,
+          "p_decision_change": 0.4589
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.3429,
+          "cost": 1.0,
+          "eig_per_cost": 0.3429,
+          "p_decision_change": 0.3785
+        },
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.2659,
+          "cost": 1.0,
+          "eig_per_cost": 0.2659,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.2661,
+          "cost": 1.5,
+          "eig_per_cost": 0.1774,
+          "p_decision_change": 0.067
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.1637,
+          "cost": 1.0,
+          "eig_per_cost": 0.1637,
+          "p_decision_change": 0.0
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.2383,
+          "cost": 1.5,
+          "eig_per_cost": 0.1589,
+          "p_decision_change": 0.0644
+        }
+      ],
+      "duration_ms": 0.269,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7"
+      }
+    },
+    {
+      "index": 3,
+      "tool": "get_recipient_context",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "largest information gain per cost (0.10 bits, cost 1.0); 19% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "No recipient-side problem signal",
+      "facts": [
+        "responsiveness high",
+        "preferred channel WhatsApp"
+      ],
+      "outcome": "no_signal",
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8777
+          ],
+          [
+            "none",
+            0.0554
+          ],
+          [
+            "unknown",
+            0.0321
+          ],
+          [
+            "route_disruption",
+            0.0116
+          ]
+        ],
+        "p_systemic": 0.0311,
+        "entropy_bits": 0.9696
+      },
+      "candidates": [
+        {
+          "tool": "get_recipient_context",
+          "eig_bits": 0.095,
+          "cost": 1.0,
+          "eig_per_cost": 0.095,
+          "p_decision_change": 0.1882
+        },
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.0925,
+          "cost": 1.0,
+          "eig_per_cost": 0.0925,
+          "p_decision_change": 0.4908
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.12,
+          "cost": 1.5,
+          "eig_per_cost": 0.08,
+          "p_decision_change": 0.0335
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0713,
+          "cost": 1.5,
+          "eig_per_cost": 0.0476,
+          "p_decision_change": 0.0893
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.046,
+          "cost": 1.0,
+          "eig_per_cost": 0.046,
+          "p_decision_change": 0.09
+        }
+      ],
+      "duration_ms": 0.245,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7"
+      }
+    },
+    {
+      "index": 4,
+      "tool": "get_journey",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "largest information gain per cost (0.09 bits, cost 1.0); 12% chance it changes the decision",
+      "phase": "investigate",
+      "chosen_by": "evoi",
+      "status": "ok",
+      "summary": "4 events, no failures",
+      "facts": [
+        "scan sequence follows the expected order"
+      ],
+      "outcome": "clean",
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8177
+          ],
+          [
+            "none",
+            0.1253
+          ],
+          [
+            "unknown",
+            0.0342
+          ],
+          [
+            "route_disruption",
+            0.0108
+          ]
+        ],
+        "p_systemic": 0.0283,
+        "entropy_bits": 1.1058
+      },
+      "candidates": [
+        {
+          "tool": "get_journey",
+          "eig_bits": 0.0916,
+          "cost": 1.0,
+          "eig_per_cost": 0.0916,
+          "p_decision_change": 0.119
+        },
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.118,
+          "cost": 1.5,
+          "eig_per_cost": 0.0787,
+          "p_decision_change": 0.033
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.044,
+          "cost": 1.0,
+          "eig_per_cost": 0.044,
+          "p_decision_change": 0.0873
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0582,
+          "cost": 1.5,
+          "eig_per_cost": 0.0388,
+          "p_decision_change": 0.0867
+        }
+      ],
+      "duration_ms": 1.369,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7"
+      }
+    },
+    {
+      "index": 5,
+      "tool": "analyze_disruption",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "reconcile the recorded exception with the gathered evidence before deciding",
+      "phase": "close",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "Evidence no code \u2014 high confidence",
+      "facts": [
+        "most likely cause: address_issue (posterior 0.82, margin 0.69)"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8177
+          ],
+          [
+            "none",
+            0.1253
+          ],
+          [
+            "unknown",
+            0.0342
+          ],
+          [
+            "route_disruption",
+            0.0108
+          ]
+        ],
+        "p_systemic": 0.0283,
+        "entropy_bits": 1.1058
+      },
+      "candidates": [
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.1087,
+          "cost": 1.5,
+          "eig_per_cost": 0.0725,
+          "p_decision_change": 0.031
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0546,
+          "cost": 1.5,
+          "eig_per_cost": 0.0364,
+          "p_decision_change": 0.0853
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.032,
+          "cost": 1.0,
+          "eig_per_cost": 0.032,
+          "p_decision_change": 0.0822
+        }
+      ],
+      "duration_ms": 3.402,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7",
+        "model_basis": "belief posterior (expert-assumption observation models)"
+      }
+    },
+    {
+      "index": 6,
+      "tool": "rank_recovery_actions",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "cause 'address_issue' is distinct (82%); rank actions that fit it",
+      "phase": "close",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "Top action: Ask recipient to confirm the delivery pin",
+      "facts": [
+        "#1 Ask recipient to confirm the delivery pin (fit strong, approval none)"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8177
+          ],
+          [
+            "none",
+            0.1253
+          ],
+          [
+            "unknown",
+            0.0342
+          ],
+          [
+            "route_disruption",
+            0.0108
+          ]
+        ],
+        "p_systemic": 0.0283,
+        "entropy_bits": 1.1058
+      },
+      "candidates": [
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.1087,
+          "cost": 1.5,
+          "eig_per_cost": 0.0725,
+          "p_decision_change": 0.031
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0546,
+          "cost": 1.5,
+          "eig_per_cost": 0.0364,
+          "p_decision_change": 0.0853
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.032,
+          "cost": 1.0,
+          "eig_per_cost": 0.032,
+          "p_decision_change": 0.0822
+        }
+      ],
+      "duration_ms": 0.392,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7",
+        "method": "evidence_weighted_policy_ranking",
+        "causal_claim": false,
+        "policy": "recovery-policy-v1"
+      }
+    },
+    {
+      "index": 7,
+      "tool": "retrieve_policy_constraints",
+      "args": {
+        "shipment_id": "DL-ADD-001"
+      },
+      "why": "check approval and autonomy bounds for the top action",
+      "phase": "close",
+      "chosen_by": "gate",
+      "status": "ok",
+      "summary": "Automated action permitted",
+      "facts": [
+        "all autonomy bounds satisfied"
+      ],
+      "outcome": null,
+      "belief_after": {
+        "top": [
+          [
+            "address_issue",
+            0.8177
+          ],
+          [
+            "none",
+            0.1253
+          ],
+          [
+            "unknown",
+            0.0342
+          ],
+          [
+            "route_disruption",
+            0.0108
+          ]
+        ],
+        "p_systemic": 0.0283,
+        "entropy_bits": 1.1058
+      },
+      "candidates": [
+        {
+          "tool": "check_incident_context",
+          "eig_bits": 0.1087,
+          "cost": 1.5,
+          "eig_per_cost": 0.0725,
+          "p_decision_change": 0.031
+        },
+        {
+          "tool": "get_route_context",
+          "eig_bits": 0.0546,
+          "cost": 1.5,
+          "eig_per_cost": 0.0364,
+          "p_decision_change": 0.0853
+        },
+        {
+          "tool": "get_facility_context",
+          "eig_bits": 0.032,
+          "cost": 1.0,
+          "eig_per_cost": 0.032,
+          "p_decision_change": 0.0822
+        }
+      ],
+      "duration_ms": 0.007,
+      "provenance": {
+        "data_origin": "synthetic",
+        "scenario_id": "address_risk-seed7",
+        "policy": "recovery-policy-v1"
+      }
+    }
+  ],
+  "decision": {
+    "policy_version": "policy-v1",
+    "p_systemic": 0.028,
+    "top_cause": "address_issue",
+    "posterior": 0.818,
+    "action": "verify_address",
+    "action_title": "Ask recipient to confirm the delivery pin",
+    "approval": "none",
+    "gates": [],
+    "type": "auto_eligible",
+    "headline": "Eligible for automated action: Ask recipient to confirm the delivery pin",
+    "rationale": "address_issue at 82% (\u2265 80%); action is reversible/low-impact and within value and attempt limits.",
+    "stop_reason": "diagnosis complete",
+    "last_candidate_table": [
+      {
+        "tool": "check_incident_context",
+        "eig_bits": 0.1087,
+        "cost": 1.5,
+        "eig_per_cost": 0.0725,
+        "p_decision_change": 0.031
+      },
+      {
+        "tool": "get_route_context",
+        "eig_bits": 0.0546,
+        "cost": 1.5,
+        "eig_per_cost": 0.0364,
+        "p_decision_change": 0.0853
+      },
+      {
+        "tool": "get_facility_context",
+        "eig_bits": 0.032,
+        "cost": 1.0,
+        "eig_per_cost": 0.032,
+        "p_decision_change": 0.0822
+      }
+    ]
+  },
+  "belief_trajectory": [
+    {
+      "after": "get_shipment",
+      "top": [
+        [
+          "none",
+          0.3374
+        ],
+        [
+          "recipient_unavailable",
+          0.1534
+        ],
+        [
+          "address_issue",
+          0.1227
+        ],
+        [
+          "route_disruption",
+          0.1074
+        ]
+      ],
+      "p_systemic": 0.108,
+      "entropy_bits": 3.0458
+    },
+    {
+      "after": "predict_risk",
+      "top": [
+        [
+          "address_issue",
+          0.4181
+        ],
+        [
+          "none",
+          0.2219
+        ],
+        [
+          "recipient_unavailable",
+          0.1078
+        ],
+        [
+          "unknown",
+          0.0797
+        ]
+      ],
+      "p_systemic": 0.0735,
+      "entropy_bits": 2.6751
+    },
+    {
+      "after": "get_address_context",
+      "top": [
+        [
+          "address_issue",
+          0.8383
+        ],
+        [
+          "none",
+          0.0483
+        ],
+        [
+          "unknown",
+          0.0434
+        ],
+        [
+          "recipient_unavailable",
+          0.0352
+        ]
+      ],
+      "p_systemic": 0.0318,
+      "entropy_bits": 1.1993
+    },
+    {
+      "after": "get_recipient_context",
+      "top": [
+        [
+          "address_issue",
+          0.8777
+        ],
+        [
+          "none",
+          0.0554
+        ],
+        [
+          "unknown",
+          0.0321
+        ],
+        [
+          "route_disruption",
+          0.0116
+        ]
+      ],
+      "p_systemic": 0.0311,
+      "entropy_bits": 0.9696
+    },
+    {
+      "after": "get_journey",
+      "top": [
+        [
+          "address_issue",
+          0.8177
+        ],
+        [
+          "none",
+          0.1253
+        ],
+        [
+          "unknown",
+          0.0342
+        ],
+        [
+          "route_disruption",
+          0.0108
+        ]
+      ],
+      "p_systemic": 0.0283,
+      "entropy_bits": 1.1058
+    },
+    {
+      "after": "analyze_disruption",
+      "top": [
+        [
+          "address_issue",
+          0.8177
+        ],
+        [
+          "none",
+          0.1253
+        ],
+        [
+          "unknown",
+          0.0342
+        ],
+        [
+          "route_disruption",
+          0.0108
+        ]
+      ],
+      "p_systemic": 0.0283,
+      "entropy_bits": 1.1058
+    },
+    {
+      "after": "rank_recovery_actions",
+      "top": [
+        [
+          "address_issue",
+          0.8177
+        ],
+        [
+          "none",
+          0.1253
+        ],
+        [
+          "unknown",
+          0.0342
+        ],
+        [
+          "route_disruption",
+          0.0108
+        ]
+      ],
+      "p_systemic": 0.0283,
+      "entropy_bits": 1.1058
+    },
+    {
+      "after": "retrieve_policy_constraints",
+      "top": [
+        [
+          "address_issue",
+          0.8177
+        ],
+        [
+          "none",
+          0.1253
+        ],
+        [
+          "unknown",
+          0.0342
+        ],
+        [
+          "route_disruption",
+          0.0108
+        ]
+      ],
+      "p_systemic": 0.0283,
+      "entropy_bits": 1.1058
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev1",
+      "label": "Risk 0.65 (high) \u2014 prototype-heuristic",
+      "detail": "\u2191 address confidence 0.47",
+      "stance": "supports",
+      "source_tool": "predict_risk",
+      "cause": "address_issue"
+    },
+    {
+      "id": "ev2",
+      "label": "Address weak",
+      "detail": "confidence 0.47; 2 address-related failure(s) at this address",
+      "stance": "supports",
+      "source_tool": "get_address_context",
+      "cause": "address_issue"
+    },
+    {
+      "id": "ev3",
+      "label": "No recipient-side problem signal",
+      "detail": "responsiveness high; preferred channel WhatsApp",
+      "stance": "context",
+      "source_tool": "get_recipient_context",
+      "cause": "address_issue"
+    },
+    {
+      "id": "ev4",
+      "label": "4 events, no failures",
+      "detail": "scan sequence follows the expected order",
+      "stance": "contradicts",
+      "source_tool": "get_journey",
+      "cause": "address_issue"
+    }
+  ],
+  "diagnosis": {
+    "cause": "address_issue",
+    "posterior": 0.8177,
+    "margin": 0.6924,
+    "confidence": "high",
+    "agreement": "no_code",
+    "recorded_code": null,
+    "recorded_cause": null,
+    "p_recorded_cause": null,
+    "runner_up": [
+      "none",
+      0.125
+    ]
+  },
+  "actions": [
+    {
+      "kind": "verify_address",
+      "title": "Ask recipient to confirm the delivery pin",
+      "tool": "contact_recipient",
+      "score": 0.9102,
+      "fit": "strong",
+      "reversible": true,
+      "impact": "low",
+      "approval": "none",
+      "approval_reason": null,
+      "automatable": true,
+      "minutes_to_effect": 20,
+      "factors": [
+        {
+          "label": "Expected cause-fit",
+          "value": "0.93",
+          "basis": "rule"
+        },
+        {
+          "label": "Recipient/ops friction",
+          "value": "-0.015",
+          "basis": "assumption"
+        },
+        {
+          "label": "Precondition recipient_reachable",
+          "value": "met",
+          "basis": "data"
+        }
+      ],
+      "method": "evidence_weighted_policy_ranking",
+      "causal_claim": false,
+      "rank": 1
+    }
+  ],
+  "escalation": null,
+  "deviations": [],
+  "model_basis": "expert_assumption_v1",
+  "tool_path": [
+    "get_shipment",
+    "predict_risk",
+    "get_address_context",
+    "get_recipient_context",
+    "get_journey",
+    "analyze_disruption",
+    "rank_recovery_actions",
+    "retrieve_policy_constraints"
+  ]
+}

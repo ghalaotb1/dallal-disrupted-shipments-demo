@@ -1,0 +1,183 @@
+{
+  "headline": {
+    "A_low_risk_automation": {
+      "scenario": "address_risk",
+      "tool_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_address_context",
+        "get_recipient_context",
+        "get_journey",
+        "analyze_disruption",
+        "rank_recovery_actions",
+        "retrieve_policy_constraints"
+      ],
+      "decision": "auto_eligible",
+      "reason": null,
+      "action": "verify_address",
+      "top_cause": "address_issue",
+      "posterior": 0.818,
+      "p_systemic": 0.028,
+      "failures": []
+    },
+    "B_systemic_incident": {
+      "scenario": "route_blockage",
+      "tool_path": [
+        "get_shipment",
+        "get_recipient_context",
+        "predict_risk",
+        "check_incident_context",
+        "get_facility_context",
+        "get_route_context"
+      ],
+      "decision": "incident",
+      "reason": null,
+      "action": null,
+      "top_cause": "route_disruption",
+      "posterior": 0.987,
+      "p_systemic": 0.982,
+      "failures": []
+    },
+    "C_conflicting_evidence": {
+      "scenario": "custody_conflict",
+      "tool_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_journey",
+        "check_incident_context",
+        "get_recipient_context",
+        "get_route_context",
+        "analyze_disruption",
+        "escalate_case"
+      ],
+      "decision": "escalate",
+      "reason": "conflicting_evidence",
+      "action": null,
+      "top_cause": "custody_anomaly",
+      "posterior": 0.912,
+      "p_systemic": 0.003,
+      "failures": []
+    }
+  },
+  "sweep": {
+    "healthy": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 4,
+      "safety_violations": []
+    },
+    "address_risk": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 8,
+      "safety_violations": []
+    },
+    "route_blockage": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 6,
+      "safety_violations": []
+    },
+    "custody_conflict": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 8.7,
+      "safety_violations": []
+    },
+    "recipient_unavailable": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 6,
+      "safety_violations": []
+    },
+    "repeated_failures": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 6,
+      "safety_violations": []
+    },
+    "branch_backlog": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 4,
+      "safety_violations": []
+    },
+    "stalled_no_scan": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 9,
+      "safety_violations": []
+    },
+    "pickup_unavailable": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 11,
+      "safety_violations": []
+    },
+    "courier_no_show": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 11,
+      "safety_violations": []
+    },
+    "unknown_anomaly": {
+      "pass_rate": 1.0,
+      "mean_tool_calls": 10,
+      "safety_violations": []
+    },
+    "_overall": {
+      "runs": 220,
+      "distinct_tool_paths": 12,
+      "pass_rate": 1.0,
+      "safety_violations": 0
+    }
+  },
+  "metamorphic": {
+    "address_ok": {
+      "base_decision": "auto_eligible",
+      "perturbed_decision": "resolved",
+      "base_cause": "address_issue",
+      "perturbed_cause": "none",
+      "base_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_address_context",
+        "get_recipient_context",
+        "get_journey",
+        "analyze_disruption",
+        "rank_recovery_actions",
+        "retrieve_policy_constraints"
+      ],
+      "perturbed_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_journey",
+        "get_recipient_context",
+        "get_address_context",
+        "get_route_context"
+      ],
+      "behaviour_changed_as_required": true,
+      "path_changed": true
+    },
+    "drop_delivered_scan": {
+      "base_decision": "escalate",
+      "perturbed_decision": "recommend",
+      "base_cause": "custody_anomaly",
+      "perturbed_cause": "attempt_not_completed",
+      "base_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_journey",
+        "check_incident_context",
+        "get_recipient_context",
+        "get_route_context",
+        "analyze_disruption",
+        "escalate_case"
+      ],
+      "perturbed_path": [
+        "get_shipment",
+        "predict_risk",
+        "get_journey",
+        "get_recipient_context",
+        "get_address_context",
+        "get_route_context",
+        "get_facility_context",
+        "analyze_disruption",
+        "rank_recovery_actions",
+        "retrieve_policy_constraints"
+      ],
+      "behaviour_changed_as_required": true,
+      "path_changed": true
+    }
+  }
+}
