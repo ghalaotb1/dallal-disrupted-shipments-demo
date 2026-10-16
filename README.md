@@ -6,6 +6,8 @@ Dallal helps an exception-desk analyst see which shipments need attention, catch
 
 > **Prototype notice.** This is the interactive product prototype for the qualification stage. Roads and places are real (OpenStreetMap, Dammam · Al Khobar · Dhahran). Shipments, recipients, events, risk scores and incidents are **simulated** and labelled `SIM` in the UI. No machine-learning model is trained or claimed in this phase, no SPL system or data is used, and no email leaves the browser.
 
+> **AI/ML backend (final-stage work in progress).** The intelligence shown in this UI is still the prototype logic described below. A real data foundation, ML baselines and a tool-using agent now live in [`backend/`](backend/) — see [AI/ML backend](#aiml-backend). Nothing in the UI is yet wired to it.
+
 ---
 
 ## Contents
@@ -22,6 +24,7 @@ Dallal helps an exception-desk analyst see which shipments need attention, catch
 - [What is real vs. simulated](#what-is-real-vs-simulated)
 - [From prototype to production](#from-prototype-to-production)
 - [Design & accessibility](#design--accessibility)
+- [AI/ML backend](#aiml-backend)
 - [Data sources & attribution](#data-sources--attribution)
 
 ---
@@ -204,8 +207,32 @@ All real computation, clearly labelled, running on simulated inputs:
 - Motion communicates state (moving parcels, queue consolidation, agent steps, drawers) and respects `prefers-reduced-motion`.
 - Desktop-first (1440 / 1366), usable at 1024 with an auto-collapsing sidebar.
 
+## AI/ML backend
+
+`backend/` (Python 3.11+) holds the real data pipeline, ML baselines and the agent. The frontend is unchanged.
+
+| What | Where | Doc |
+|---|---|---|
+| Dataset audit (select / secondary / reject, with licenses and measured facts) | `backend/registry/datasets.yaml` | [Dataset decision report](docs/data/DATASET_DECISION_REPORT.md) |
+| Canonical operational data model, provenance, leakage rules | `backend/dallal/data/` | [Canonical schema](docs/data/CANONICAL_SCHEMA.md) |
+| Synthetic augmentation (tagged, never evaluated as real) | `backend/dallal/data/augment/` | [Augmentation](docs/data/AUGMENTATION.md) |
+| ML tasks, real-data baselines, incident-detection backtest | `backend/dallal/ml/` | [Tasks and baselines](docs/ml/TASKS_AND_BASELINES.md) |
+| Stateful tool-using agent (belief, EVOI planner, policy, ledger) | `backend/dallal/agent/`, `tools/`, `recovery/` | [Agent architecture](docs/architecture/AGENT_ARCHITECTURE.md) · [Evaluation traces](docs/architecture/EVAL_TRACES.md) |
+
+```bash
+cd backend && uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+python -I -m dallal.data.cli fetch selected --all     # ~1.6 GB, hash-verified, git-ignored
+python -I -m dallal.data.cli build olist amazon_lmrrc lade route_deviation spl_open_data ocel_order_management labels
+python -I -m pytest -q                                  # 69 tests
+python -I evals/run_cases.py && python -I evals/render_traces.py
+dallal-agent route_blockage                             # run one case; add --frontend for the UI-shaped run
+```
+
+**Status, honestly:** no public dataset contains failure reasons, root-cause labels, incidents or recovery action→outcome pairs. The agent therefore uses expert-assumption probabilities and a policy-based (non-causal) recovery ranking, and its evaluation cases are synthetic. Real SPL operational data is the main missing input.
+
 ## Data sources & attribution
 
 - Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) (ODbL), tiles by [OpenFreeMap](https://openfreemap.org) / [CARTO](https://carto.com/attributions).
 - Route geometry computed once with the [OSRM](https://project-osrm.org) public demo server.
 - Place names geocoded with [Nominatim](https://nominatim.org). All operational records are fictional.
+- **Backend datasets** (reproduced from source, never redistributed; full terms in `backend/registry/datasets.yaml`): [Cainiao LaDe](https://huggingface.co/datasets/Cainiao-AI/LaDe) (Wu et al., KDD 2024) · [Amazon Last Mile Routing Research Challenge](https://registry.opendata.aws/amazon-last-mile-challenges) (© Amazon.com, Inc., CC BY-NC 4.0) · [Last-mile route deviations, planned vs. actual](https://data.mendeley.com/datasets/kkwgfvmtxn/1) (Konovalenko, Hvattum, Iversen; CC BY 4.0) · [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (CC BY-NC-SA 4.0) · Saudi Post | SPL Open Data Platform (areas, cities, offices) · [OCEL 2.0 Order Management](https://zenodo.org/records/8428112) (CC BY 4.0, simulated) · [Cargo 2000](https://archive.ics.uci.edu/dataset/382/cargo+2000+freight+tracking+and+tracing) (Metzger et al., CC BY 4.0) · [DataCo Smart Supply Chain](https://data.mendeley.com/datasets/8gx2fvg2k6/5) (CC BY 4.0, benchmark only). Amazon and Olist are non-commercial licenses: fine for this hackathon/research use, not for a commercial deployment.

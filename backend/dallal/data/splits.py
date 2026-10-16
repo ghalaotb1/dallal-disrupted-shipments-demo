@@ -45,7 +45,7 @@ def time_split(
     t = df[time_col]
     if t.isna().any():
         raise SplitError(f"{time_col} contains nulls; drop or impute explicitly before splitting")
-    tv = t.astype("int64").to_numpy() if np.issubdtype(t.dtype, np.datetime64) else t.to_numpy(dtype=float)
+    tv = t.astype("int64").to_numpy() if pd.api.types.is_datetime64_any_dtype(t) else t.to_numpy(dtype="float64")
     emb = float(embargo.value) if isinstance(embargo, pd.Timedelta) else float(embargo)
     q_test = np.quantile(tv, 1 - test_frac)
     q_valid = np.quantile(tv, 1 - test_frac - valid_frac)

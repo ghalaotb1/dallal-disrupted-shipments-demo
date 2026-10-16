@@ -58,3 +58,4 @@ next-env.d.ts
 !/backend/tests/data/*.parquet
 /backend/.fetch*.log
 /backend/.build.log
+/backend/.baseline.log

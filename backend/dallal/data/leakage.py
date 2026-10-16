@@ -83,3 +83,25 @@ def history_rate(df: pd.DataFrame, key: str, label: str, day: str, *, as_of_day:
         past = past[past[day] >= as_of_day - window]
     g = past.groupby(key)[label].agg(["sum", "count"])
     return (g["sum"] + prior * prior_n) / (g["count"] + prior_n)
+
+
+def assert_no_label_proxy(features: pd.DataFrame, y, *, max_single_auc: float = 0.98) -> None:
+    """Behavioural leakage guard that does not depend on column names.
+
+    A genuine pre-decision feature of a noisy real-world outcome essentially never predicts it near-perfectly on its own. If
+    one does, it is the label (or a deterministic function of it) under another name — e.g. a merge-suffix collision.
+    """
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    y = np.asarray(y)
+    if len(set(y.tolist())) < 2:
+        return
+    for c in features.columns:
+        v = features[c].to_numpy(dtype="float64", na_value=np.nan) if hasattr(features[c], "to_numpy") else features[c]
+        m = ~np.isnan(v)
+        if m.sum() < 200 or len(set(y[m].tolist())) < 2:
+            continue
+        a = roc_auc_score(y[m], v[m])
+        if max(a, 1 - a) >= max_single_auc:
+            raise LeakageError(f"feature '{c}' alone gives AUC {max(a, 1 - a):.3f} >= {max_single_auc}: it is almost certainly the label in disguise")

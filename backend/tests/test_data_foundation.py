@@ -108,6 +108,33 @@ def test_visible_events_respects_prediction_instant():
         leakage.visible_events(ev, as_of_ts=pd.Timestamp("2024-01-01"))  # untimed rows but no as_of_day
 
 
+def test_label_proxy_guard_catches_a_renamed_label():
+    rng = np.random.default_rng(0)
+    y = (rng.random(2000) < 0.1).astype(int)
+    honest = pd.DataFrame({"noise": rng.normal(size=2000), "weak": y * 0.3 + rng.normal(size=2000)})
+    leakage.assert_no_label_proxy(honest, y)
+    with pytest.raises(leakage.LeakageError, match="label in disguise"):
+        leakage.assert_no_label_proxy(honest.assign(value=y), y)  # the exact Olist merge-collision failure mode
+
+
+def test_past_stat_never_sees_its_own_or_future_outcomes():
+    from dallal.ml.features import past_stat
+
+    k = pd.Series(["a"] * 4)
+    as_of = pd.Series([10, 20, 30, 40])
+    avail = pd.Series([15, 25, 35, 45])  # each outcome resolves 5 units after its own prediction
+    v = pd.Series([1.0, 0.0, 1.0, 1.0])
+    m, c = past_stat(k, as_of, avail, v, prior=0.5, prior_n=1.0)
+    assert list(c) == [0, 1, 2, 3]  # row i sees exactly the outcomes resolved before its as_of
+    expected = [(0 + 0.5) / 1, (1 + 0.5) / 2, (1 + 0 + 0.5) / 3, (1 + 0 + 1 + 0.5) / 4]
+    assert list(m) == pytest.approx(expected)
+    # flipping a row's OWN or a LATER outcome must not change its feature
+    v2 = v.copy()
+    v2[2] = 0.0
+    m2, _ = past_stat(k, as_of, avail, v2, prior=0.5, prior_n=1.0)
+    assert m2[2] == m[2] and m2[0] == m[0] and m2[1] == m[1]
+
+
 def test_history_rate_uses_only_the_past():
     df = pd.DataFrame({"zone": ["a"] * 4, "day": [1, 2, 3, 4], "y": [1, 1, 0, 1]})
     r = leakage.history_rate(df, "zone", "y", "day", as_of_day=3, prior=0.0, prior_n=0.0)
