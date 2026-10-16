@@ -16,6 +16,9 @@ from dallal.tools.bundle import Bundle
 STALL_HOURS = 4.0  # no scan for this long on an open parcel counts as stalled
 STATIONARY_RADIUS_M = 80.0
 STATIONARY_MIN_FLAG = 15.0
+STATIONARY_AT_ADDRESS_MIN = 12.0  # parked this long within AT_ADDRESS_M of the destination, no attempt logged
+AT_ADDRESS_M = 200.0
+STATIONARY_ELSEWHERE_M = 500.0
 GEO_MISMATCH_M = 300.0  # a failed attempt logged this far from the address was not made at the address
 SLOW_RATIO = 0.6
 BLOCKED_RATIO = 0.5
@@ -64,7 +67,7 @@ def shipment_facts(b: Bundle, sid: str) -> dict[str, Any]:
         "delivered": bool((ev["event_type"] == "delivered").any()) if not ev.empty else False,
         "origin": sh.get("origin"), "scenario_id": sh.get("scenario_id"),
         "recipient_phone": a.get("recipient_phone"), "recipient_opt_in": bool(a.get("recipient_opt_in", False)),
-        "recipient_name": a.get("recipient_name"), "window_text": a.get("window_text"),
+        "recipient_name": a.get("recipient_name"), "branch_name": (b.row("node", "node_id", sh.get("origin_node_id")) or {}).get("name") if "node" in b.tables else None, "window_text": a.get("window_text"),
         "dispatcher_contactable": bool(a.get("dispatcher_contactable", True)), "branch_contactable": bool(a.get("branch_contactable", True)),
         "courier_phone": a.get("courier_phone", True),
         "recipient_responsiveness": (b.row("recipient_context", "shipment_id", sid) or {}).get("responsiveness"),
@@ -155,6 +158,8 @@ def route_signals(b: Bundle, sid: str, facts: dict[str, Any]) -> dict[str, Any]:
                 else:
                     break
             out["stationary_min"] = float((b.as_of - t_start).total_seconds() / 60) if (b.as_of - last["ts"]).total_seconds() < 900 else 0.0
+            if facts.get("dest_lat") is not None:
+                out["dist_to_dest_m"] = float(haversine_m(last["lat"], last["lng"], facts["dest_lat"], facts["dest_lng"]))
         fails = ev[(ev["event_type"] == "failed_attempt") & ev["lat"].notna()]
         if not fails.empty and facts.get("dest_lat") is not None:
             d = max(haversine_m(r["lat"], r["lng"], facts["dest_lat"], facts["dest_lng"]) for _, r in fails.iterrows())

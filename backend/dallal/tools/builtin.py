@@ -89,10 +89,18 @@ def get_route_context(ctx: ToolContext, args: dict) -> ToolResult:
         out, status, summ = "blocked_stationary", "alert", "Vehicle held in a corridor slowdown"
     elif r["corridor_ratio"] is not None and r["corridor_ratio"] < sg.SLOW_RATIO:
         out, status, summ = "corridor_slow", "warn", "Corridor slower than typical"
+    elif r["stationary_min"] >= sg.STATIONARY_AT_ADDRESS_MIN and r.get("dist_to_dest_m", 1e9) <= sg.AT_ADDRESS_M and not facts_failed(ctx):
+        out, status, summ = "stationary_at_address", "warn", f"Van parked {r['dist_to_dest_m']:.0f} m from the address for {r['stationary_min']:.0f} min, no attempt logged"
+    elif r["stationary_min"] >= sg.STATIONARY_MIN_FLAG and r.get("dist_to_dest_m", 0) > sg.STATIONARY_ELSEWHERE_M:
+        out, status, summ = "stationary_elsewhere", "warn", f"Van stationary {r['stationary_min']:.0f} min, {r.get('dist_to_dest_m', 0):.0f} m from the address, corridor normal"
     else:
         out, status, summ = "normal", "ok", "Route and telemetry normal"
         facts = facts or ["no corridor or vehicle anomaly"]
     return ToolResult(status, summ, facts, outcome=out, data={"route": r}, provenance=_prov(ctx))
+
+
+def facts_failed(ctx: ToolContext) -> bool:
+    return bool((ctx.state.facts or {}).get("failed_attempts"))
 
 
 def get_facility_context(ctx: ToolContext, args: dict) -> ToolResult:

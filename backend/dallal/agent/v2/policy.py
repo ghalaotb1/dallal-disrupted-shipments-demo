@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Any
 
 from dallal.agent.belief import Cause
-from dallal.agent.v2.planner import actionable
 from dallal.agent.v2.state import CaseStateV2
 from dallal.agent.v2.tools import autonomy_check, case_options
 from dallal.agent.v2.utility import best_option, utility_table
@@ -51,13 +50,13 @@ def decide(state: CaseStateV2, world: Any) -> dict[str, Any]:
         why = f"Expected utility is highest when waiting ({eu:.1f} SAR-eq); no intervention is worth its cost and delay."
         return {**base, "type": "resolved", "headline": "No action needed" if top == Cause.NONE else "Monitor - no intervention justified", "rationale": why}
 
-    if best.kind == "escalate" and actionable(state):
+    if best.kind == "escalate" and top not in (Cause.UNKNOWN, Cause.CUSTODY_ANOMALY) and p >= lim["diagnose_min_posterior"]:
         acts = [r for r in table if r["option"] not in ("escalate", "wait")]
         alt = f"; best automated/approvable alternative is '{acts[0]['option']}' at {acts[0]['eu']:.1f}" if acts else "; no eligible alternative action"
         return {**base, "type": "escalate", "reason": "delegation_preferred", "headline": "Escalate - delegating to the supervisor has the highest expected utility",
                 "rationale": f"Cause '{top.value}' is named ({p:.0%}) but expected utility is highest ({eu:.1f} SAR-eq) when a supervisor decides{alt}.",
                 "question": f"Which recovery action should be taken for {state.subject_id} ({top.value})?"}
-    if best.kind == "escalate" or not actionable(state):
+    if best.kind == "escalate":
         if top == Cause.CUSTODY_ANOMALY:
             reason = "conflicting_evidence"
         elif top == Cause.UNKNOWN or (d.get("agreement") == "inconclusive" and p < 0.55):

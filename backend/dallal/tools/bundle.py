@@ -43,6 +43,21 @@ class Bundle:
             tables[name] = df
         return cls(raw["scenario_id"], pd.Timestamp(raw["as_of"]), raw["subject_id"], raw.get("trigger", {}), tables, raw.get("expected", {}))
 
+    def to_dict(self) -> dict[str, Any]:
+        return {"scenario_id": self.scenario_id, "as_of": self.as_of.isoformat(), "subject_id": self.subject_id, "trigger": self.trigger, "expected": self.expected,
+                "tables": {n: json.loads(df.to_json(orient="records", date_format="iso")) for n, df in self.tables.items()}}
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, Any]) -> Bundle:
+        tables = {}
+        for name, rows in raw["tables"].items():
+            df = pd.DataFrame(rows)
+            for c in _ts_cols(name):
+                if c in df:
+                    df[c] = pd.to_datetime(df[c], utc=False)
+            tables[name] = df
+        return cls(raw["scenario_id"], pd.Timestamp(raw["as_of"]), raw["subject_id"], raw.get("trigger", {}), tables, raw.get("expected", {}))
+
     def to_json(self, path: str | Path) -> None:
         out = {"scenario_id": self.scenario_id, "as_of": self.as_of.isoformat(), "subject_id": self.subject_id,
                "trigger": self.trigger, "expected": self.expected,

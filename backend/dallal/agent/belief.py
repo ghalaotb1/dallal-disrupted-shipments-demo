@@ -122,11 +122,11 @@ OBSERVATION_MODELS: dict[str, ObservationModel] = {
             pickup_point_unavailable=(.80, .10, .10), custody_anomaly=(.55, .10, .35), unknown=(.60, .25, .15)),
     ),
     "get_route_context": ObservationModel(
-        ("normal", "corridor_slow", "blocked_stationary", "attempt_geo_mismatch"),
-        _bc(none=(.93, .04, .02, .01), address_issue=(.85, .05, .02, .08), recipient_unavailable=(.90, .04, .01, .05),
-            attempt_not_completed=(.20, .10, .10, .60), route_disruption=(.12, .30, .55, .03),
-            facility_backlog=(.85, .08, .02, .05), pickup_point_unavailable=(.85, .07, .02, .06),
-            custody_anomaly=(.50, .05, .05, .40), unknown=(.60, .15, .15, .10)),
+        ("normal", "corridor_slow", "blocked_stationary", "attempt_geo_mismatch", "stationary_at_address", "stationary_elsewhere"),
+        _bc(none=(.90, .04, .02, .01, .015, .015), address_issue=(.70, .05, .02, .06, .15, .02), recipient_unavailable=(.55, .04, .01, .04, .32, .04),
+            attempt_not_completed=(.15, .06, .07, .42, .10, .20), route_disruption=(.10, .28, .50, .02, .03, .07),
+            facility_backlog=(.82, .07, .02, .04, .02, .03), pickup_point_unavailable=(.80, .07, .02, .05, .03, .03),
+            custody_anomaly=(.45, .05, .05, .35, .04, .06), unknown=(.35, .15, .15, .15, .10, .10)),
     ),
     "get_facility_context": ObservationModel(
         ("normal", "backlog", "scan_gap"),

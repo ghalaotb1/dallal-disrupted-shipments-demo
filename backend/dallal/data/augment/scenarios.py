@@ -44,6 +44,7 @@ class World:
     rng: np.random.Generator = field(init=False)
     rows: dict[str, list[dict[str, Any]]] = field(default_factory=lambda: {t: [] for t in TABLES})
     n_ship: int = 0
+    now: pd.Timestamp = NOW
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
@@ -61,7 +62,7 @@ class World:
 
     # ── primitives ──
     def minutes_ago(self, m: float) -> pd.Timestamp:
-        return NOW - pd.Timedelta(minutes=float(m))
+        return self.now - pd.Timedelta(minutes=float(m))
 
     def node(self, node_id: str, kind: str, name: str, lat: float, lng: float) -> None:
         self.add("node", node_id, node_id=node_id, kind=kind, name=name, city="Dammam/Khobar", lat=lat, lng=lng)
@@ -71,12 +72,12 @@ class World:
 
     def node_state(self, node_id: str, *, backlog: int = 25, baseline: float = 28, last_scan_min: float = 10, status: str = "online") -> None:
         self._replace("node_state", "node_state_id", f"ns:{node_id}")  # scenario overrides replace the default state
-        self.add("node_state", f"ns:{node_id}", node_state_id=f"ns:{node_id}", node_id=node_id, ts=NOW - pd.Timedelta(minutes=1), backlog_parcels=backlog,
+        self.add("node_state", f"ns:{node_id}", node_state_id=f"ns:{node_id}", node_id=node_id, ts=self.now - pd.Timedelta(minutes=1), backlog_parcels=backlog,
                  last_scan_ts=self.minutes_ago(last_scan_min), status=status, baseline_backlog=baseline)
 
     def corridor(self, cid: str, speed: float, typical: float = 62.0, mean: float = 0.4, std: float = 0.6) -> None:
         self._replace("corridor_state", "corridor_state_id", f"cs:{cid}")
-        self.add("corridor_state", f"cs:{cid}", corridor_state_id=f"cs:{cid}", corridor_id=cid, ts=NOW - pd.Timedelta(minutes=1), speed_kmh=speed,
+        self.add("corridor_state", f"cs:{cid}", corridor_state_id=f"cs:{cid}", corridor_id=cid, ts=self.now - pd.Timedelta(minutes=1), speed_kmh=speed,
                  typical_speed_kmh=typical, baseline_exceptions_mean=mean, baseline_exceptions_std=std)
 
     def shipment(self, *, corridor: str = "DK-01", origin: str = HUB, service: str = "Standard", cod: float | None = None, value: float | None = None,
@@ -156,7 +157,7 @@ class World:
                 continue
             df = pd.DataFrame(rows)
             tables[t] = df
-        b = Bundle(f"{self.scenario}-seed{self.seed}", NOW, subject, trigger, tables, expected)
+        b = Bundle(f"{self.scenario}-seed{self.seed}", self.now, subject, trigger, tables, expected)
         b.validate()
         return b
 
@@ -342,7 +343,26 @@ def unknown_anomaly(seed: int) -> Bundle:
     return w.build(s, {"kind": "exception_recorded"}, {"decision": "escalate", "reason_in": ["unknown_pattern", "insufficient_evidence"]})
 
 
+def developing_disruption(seed: int) -> Bundle:
+    """HEADLINE for active evidence acquisition. A high-value parcel's van has been parked beside the address for ~28 minutes with no
+    scan, no exception and no attempt logged. Databases cannot say WHY (waiting for the recipient? vehicle trouble? cannot find the
+    address?) and the candidate fixes differ in cost and reversibility - so a person's answer is worth more than another lookup."""
+    w = World("developing", seed)
+    w.standard_nodes()
+    s = w.shipment(value=1850.0, cod=1850.0, pickup_point=PP, alt_pickup=None)
+    d = (w.rows["shipment"][0]["dest_lat"], w.rows["shipment"][0]["dest_lng"])
+    parked = _m(*d, 60, 45)
+    w.journey_base(s, out_for_delivery_min=75)
+    w.pings(s, d, moving=False, at=parked, span_min=30)
+    w.address(s, conf=0.88, past=0, first=False)
+    w.recipient(s, resp="high", channel="WhatsApp", missed=0)
+    w.background(3)
+    return w.build(s, {"kind": "risk_alert", "detail": "vehicle stationary near destination, no scan"},
+                   {"decision_in": ["auto_eligible", "recommend", "escalate", "resolved"], "note": "active evidence acquisition headline"})
+
+
 SCENARIOS: dict[str, Callable[[int], Bundle]] = {
+    "developing_disruption": developing_disruption,
     "healthy": healthy, "address_risk": address_risk, "route_blockage": route_blockage_incident, "custody_conflict": custody_conflict,
     "recipient_unavailable": recipient_unavailable, "repeated_failures": repeated_failed_attempts, "branch_backlog": branch_backlog_incident,
     "stalled_no_scan": stalled_no_scan, "pickup_unavailable": pickup_unavailable, "courier_no_show": courier_never_arrived,

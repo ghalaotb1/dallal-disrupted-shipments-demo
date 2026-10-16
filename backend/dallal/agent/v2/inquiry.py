@@ -131,7 +131,7 @@ def parse_variant(name: str) -> tuple[str, float] | None:
 # ── messages ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 def render_question(s: InquirySpec, facts: dict[str, Any], lang: str = "ar") -> str:
     fmt = {"window": facts.get("window_text", "14:00-18:00"), "shipment": facts.get("shipment_id", ""), "corridor": facts.get("corridor_id", ""),
-           "branch": facts.get("origin_node_id", "")}
+           "branch": facts.get("branch_name") or facts.get("origin_node_id", "")}
     return s.raw["question"][lang].format(**fmt)
 
 

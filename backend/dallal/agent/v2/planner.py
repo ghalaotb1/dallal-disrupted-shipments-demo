@@ -104,9 +104,9 @@ class PlannerV2:
             return Step("stop", None, f"shipment healthy with {p:.0%} confidence - keep monitoring", "stop")
         if "analyze_disruption" not in called:
             return Step("tool", "analyze_disruption", "reconcile the recorded exception with the gathered evidence before deciding", "close")
-        if actionable(state):
-            if "rank_recovery_actions" not in called:
-                return Step("tool", "rank_recovery_actions", f"cause '{top.value}' is distinct ({p:.0%}); rank options by expected utility", "close")
-            if state.ranked_actions and "retrieve_policy_constraints" not in called:
-                return Step("tool", "retrieve_policy_constraints", "check approval and autonomy bounds on the best action", "close")
-        return Step("stop", None, "diagnosis complete" if actionable(state) else "evidence cannot name a distinct cause - decide between waiting and a human", "stop")
+        # Expected utility (not a posterior threshold) decides what to do: rank the options, then check the autonomy gates on the best one.
+        if "rank_recovery_actions" not in called:
+            return Step("tool", "rank_recovery_actions", f"leading cause '{top.value}' ({p:.0%}); rank options by expected utility under the full belief", "close")
+        if state.ranked_actions and "retrieve_policy_constraints" not in called:
+            return Step("tool", "retrieve_policy_constraints", "check approval and autonomy bounds on the best action", "close")
+        return Step("stop", None, "decision ready", "stop")
