@@ -29,6 +29,7 @@ from dallal.channels import templates as tpl
 from dallal.channels import whatsapp as wa
 from dallal.channels.channel import WhatsAppChannel
 from dallal.channels.interpret import interpret
+from dallal.plans import PlanOps
 from dallal.store import Store
 from dallal.tools.bundle import Bundle
 from dallal.tools.providers import DefaultProviders
@@ -45,6 +46,7 @@ class OpsService:
         self.book = default_book()
         self.providers = DefaultProviders()
         self.channel = WhatsAppChannel(self.provider, on_sent=self._on_sent)
+        self.plans = PlanOps(self)
         self.locks: dict[str, threading.Lock] = {}
         self._glock = threading.Lock()
 
@@ -52,6 +54,9 @@ class OpsService:
     def _lock(self, run_id: str) -> threading.Lock:
         with self._glock:
             return self.locks.setdefault(run_id, threading.Lock())
+
+    def _guard_send(self, pending: Any, facts: dict[str, Any]) -> dict[str, Any]:
+        return _Guard(self.channel, self.store).send_inquiry(pending, facts)
 
     def _runtime(self) -> AgentRuntimeV2:
         return AgentRuntimeV2(mode=self.mode, book=self.book, providers=self.providers, channel=_Guard(self.channel, self.store))
@@ -123,6 +128,8 @@ class OpsService:
             self.store.ledger_add("decision", r)
 
     def _continue(self, run_id: str, ev: InquiryResponse | InquiryTimeout, bundle: Bundle | None = None) -> dict[str, Any]:
+        if run_id.startswith("plan-"):
+            return self.plans.resume(run_id, ev)  # a shared incident-level question resumes the PLAN, not a single-shipment run
         rec = self.store.get_run(run_id)
         bundle = bundle or Bundle.from_dict(json.loads(rec["bundle_json"]))
         res = self._runtime().resume(bundle, rec["checkpoint"], ev, run_id)
@@ -175,7 +182,7 @@ class OpsService:
             if self.provider.mode == "sandbox":
                 self.provider.open_window(inq["recipient_ref"])
             r = self._on_inbound(m, inq)
-            out["resumed"].append({"run_id": r.get("run_id"), "status": r.get("status"), "inquiry_id": inq["inquiry_id"]})
+            out["resumed"].append({"run_id": r.get("run_id") or r.get("plan_id"), "status": r.get("status"), "inquiry_id": inq["inquiry_id"]})
         return out
 
     def _correlate(self, m: wa.Inbound) -> dict[str, Any] | None:
@@ -196,7 +203,7 @@ class OpsService:
         run_id = inq["run_id"]
         with self._lock(run_id):
             rec = self.store.get_run(run_id)
-            facts = (rec["checkpoint"] or {}).get("facts") or {}
+            facts = ((rec["checkpoint"] or {}).get("facts") or {}) if rec else {}
             spec = iq.spec(inq["spec_id"])
             it = interpret(m, spec, inq["inquiry_id"], facts)
             body = {"kind": m.kind, "text": m.text if m.kind == "text" else None, "button_text": m.button_text, "choice_title": m.choice_title, "lat": m.lat, "lng": m.lng, "media_id": m.media_id,

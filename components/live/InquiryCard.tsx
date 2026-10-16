@@ -30,7 +30,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   send_refused: { label: "Not sent", cls: "bg-crit-50 text-crit-700 ring-crit-200" },
 };
 
-export function InquiryCard({ inquiry }: { inquiry: LiveInquiry }) {
+export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onChanged?: () => Promise<unknown> | void }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export function InquiryCard({ inquiry }: { inquiry: LiveInquiry }) {
     setErr(null);
     try {
       await fn();
-      await refreshRunNow(inquiry.run_id);
+      await (onChanged ? onChanged() : refreshRunNow(inquiry.run_id));
     } catch (e) {
       setErr(e instanceof Error ? e.message : "request failed");
     } finally {

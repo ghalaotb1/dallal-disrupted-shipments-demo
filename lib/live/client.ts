@@ -61,3 +61,11 @@ export const api = {
 };
 
 export const lastEventId = () => request<{ id: number }>("GET", "/v1/events/last", undefined, 4000);
+
+import type { LivePlan, PlanSnapshot } from "@/types/live";
+
+export const planApi = {
+  create: (snapshot: PlanSnapshot, lang = "ar") => request<LivePlan>("POST", "/v1/frontend/incidents/plan", { snapshot, lang }),
+  get: (id: string) => request<LivePlan>("GET", `/v1/plans/${encodeURIComponent(id)}`),
+  decide: (id: string, body: { decision: "approve" | "reject"; by: string; role: string; note?: string }) => request<LivePlan>("POST", `/v1/plans/${encodeURIComponent(id)}/decision`, body),
+};

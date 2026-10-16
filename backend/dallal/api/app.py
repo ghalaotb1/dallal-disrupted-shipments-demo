@@ -66,6 +66,18 @@ class ReviewRequest(BaseModel):
     reviewer: str
 
 
+class PlanRequest(BaseModel):
+    snapshot: dict[str, Any]
+    lang: str = "ar"
+
+
+class PlanDecision(BaseModel):
+    decision: str
+    by: str
+    role: str
+    note: str = ""
+
+
 class SandboxReply(BaseModel):
     inquiry_id: str
     kind: str
@@ -188,7 +200,7 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
             run = svc.expire(inquiry_id)
         except KeyError:
             raise HTTPException(404, "unknown or already-closed inquiry") from None
-        return {"run": run, "ui": ui(run)}
+        return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
 
     @app.post("/v1/inquiries/{inquiry_id}/review", dependencies=[Depends(guard)])
     def review(inquiry_id: str, req: ReviewRequest) -> dict[str, Any]:
@@ -198,7 +210,37 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
             raise HTTPException(404, "unknown or already-closed inquiry") from None
         except ValueError as e:
             raise HTTPException(422, str(e)) from e
-        return {"run": run, "ui": ui(run)}
+        return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
+
+    # ── coordinated recovery plans ──
+    @app.post("/v1/frontend/incidents/plan", dependencies=[Depends(guard)])
+    def make_plan(req: PlanRequest) -> dict[str, Any]:
+        try:
+            return svc.plans.create(req.snapshot, req.lang)
+        except (KeyError, ValueError) as e:
+            raise HTTPException(422, f"invalid incident snapshot: {e}") from e
+
+    @app.get("/v1/plans")
+    def list_plans() -> list[dict[str, Any]]:
+        return [{"plan_id": r["plan_id"], "status": r["status"], "scope": r["scope"], "created_at": r["created_at"]} for r in svc.store.list_plans()]
+
+    @app.get("/v1/plans/{plan_id}")
+    def get_plan(plan_id: str) -> dict[str, Any]:
+        try:
+            return svc.plans.view(plan_id)
+        except KeyError:
+            raise HTTPException(404, "unknown plan") from None
+
+    @app.post("/v1/plans/{plan_id}/decision", dependencies=[Depends(guard)])
+    def decide_plan(plan_id: str, req: PlanDecision) -> dict[str, Any]:
+        try:
+            return svc.plans.decide(plan_id, req.decision, req.by, req.role, req.note)
+        except KeyError:
+            raise HTTPException(404, "unknown plan") from None
+        except PermissionError as e:
+            raise HTTPException(403, str(e)) from e
+        except ValueError as e:
+            raise HTTPException(409, str(e)) from e
 
     # ── audit feed ──
     @app.get("/v1/events")

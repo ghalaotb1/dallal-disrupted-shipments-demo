@@ -15,6 +15,7 @@ import { Avatar, EmptyState } from "@/components/common/Card";
 import { SeverityBadge, SimTag } from "@/components/common/Badges";
 import { Button } from "@/components/common/Button";
 import { LazyNetworkMap } from "@/components/map/LazyMap";
+import { CoordinatedPlan } from "@/components/live/CoordinatedPlan";
 import { ConsolidationHero } from "@/components/incidents/ConsolidationHero";
 import { IncidentSignals } from "@/components/incidents/IncidentSignals";
 import { IncidentTimeline } from "@/components/incidents/IncidentTimeline";
@@ -143,6 +144,7 @@ export function IncidentIntelligence({ id }: { id: string }) {
           <MemberTable incident={inc} shipments={shipments} now={now} onHover={setHoverId} />
         </div>
         <div className="space-y-3">
+          <CoordinatedPlan incidentId={inc.id} />
           <ResponsePlan incident={inc} onApply={apply} onNotify={notify} onResolve={resolve} resolving={resolving} />
           <IncidentSignals incident={inc} />
           <IncidentTimeline incident={inc} />

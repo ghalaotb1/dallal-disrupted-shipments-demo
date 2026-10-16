@@ -101,3 +101,59 @@ export interface LiveCase {
   corridorBaseline?: { mean: number; std: number };
   peers: { id: string; corridorId: string; originId: string; exceptionAt?: number; code?: string; delivered?: boolean }[];
 }
+
+export interface LivePlan {
+  plan_id: string;
+  status: "awaiting_evidence" | "ready" | "executed_simulated" | "rejected" | string;
+  incident: { id?: string; scope?: string; scope_id?: string };
+  p_long_prior: number;
+  p_long: number;
+  evidence: {
+    asked: boolean;
+    reason: string;
+    p_response: number;
+    expected_latency_min: number;
+    contactable: boolean;
+    voi: { gross: number; cost: number; net: number; plan_now_objective: number; committed_now?: Record<string, string> };
+    by_answer: Record<string, { p: number; posterior_long?: number; objective: number }>;
+    answer?: { id: string | null; elapsed_min?: number; posterior_long?: number; note?: string };
+  };
+  solution: {
+    assignments: Record<string, string>;
+    reroute_vans: string[];
+    spares_used: string[];
+    objective: number;
+    solve_ms: number;
+    per_parcel: Record<string, { option: string; text: string; expected_utility: number }>;
+    committed_now: Record<string, string>;
+  };
+  comparison: {
+    coordinated_utility: number;
+    independent_utility: number;
+    gain: number;
+    independent_capacity_requests_over_cap: number;
+    independent_conflicting_van_decisions: number;
+    messages_coordinated: number;
+    messages_independent_equivalent: number;
+    assumption: string;
+  };
+  approval: { required: string; why: string };
+  executed?: { parcel: string; action_id: string; option: string }[];
+  inquiries: LiveInquiry[];
+  live: { backend: boolean; whatsapp_mode: string; scored_with: string };
+}
+
+export interface PlanSnapshot {
+  incidentId: string;
+  scope: string;
+  scopeId: string;
+  now: number;
+  belief: { pLong: number };
+  dispatcherContactable: boolean;
+  parcels: { id: string; van: string; value: number; slackMin: number; remainingMin: number; service: string; exposed: boolean; pickupOk: boolean; reachable: boolean }[];
+  resources: {
+    spares: { id: string; etaMin: number; capacity: number }[];
+    pickups: { id: string; travelMin: number; capacity: number; online: boolean }[];
+    alt: { available: boolean; extraMin: number };
+  };
+}
