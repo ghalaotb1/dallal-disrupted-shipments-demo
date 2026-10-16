@@ -66,7 +66,7 @@ def _chosen_option(decision: dict[str, Any], opts: list[Option], ep, tm, rng, st
     return by["wait"], t
 
 
-def run_episode(agent: str, seed: int, tm: TrueModel, *, systemic: bool = False) -> dict[str, Any]:
+def run_episode(agent: str, seed: int, tm: TrueModel, *, systemic: bool = False, planner: Any = None) -> dict[str, Any]:
     rng = np.random.default_rng(seed)
     ep = draw_episode(rng, systemic=systemic, seed=seed)
     env = SimEnv(ep, tm, np.random.default_rng(seed + 10_000), engine="v1" if agent == "v1_legacy" else "v2")
@@ -77,9 +77,9 @@ def run_episode(agent: str, seed: int, tm: TrueModel, *, systemic: bool = False)
         run, st = AgentRuntime(tools=sim_registry(build_registry(), "v1")).investigate(env)
         elapsed, inquiries = 0.2 * len(run.steps), []
     else:
-        mode = {"v2_no_inquiry": "no_inquiry", "v2_infogain": "infogain", "v2_value": "value"}[agent]
+        mode = {"v2_no_inquiry": "no_inquiry", "v2_infogain": "infogain", "v2_value": "value", "v2_llm": "value"}[agent]
         responder = lambda pend, st_: env.answer(pend, iq.spec(pend.spec_id), pend.p_response)  # noqa: E731
-        rr = AgentRuntimeV2(mode=mode, tools=sim_registry(build_registry_v2(), "v2"), responder=responder).start(env)
+        rr = AgentRuntimeV2(mode=mode, tools=sim_registry(build_registry_v2(), "v2"), responder=responder, planner=planner).start(env)
         run, st = rr.run, rr.state
         elapsed, inquiries = st.virtual_min, st.inquiries
     d = run.decision

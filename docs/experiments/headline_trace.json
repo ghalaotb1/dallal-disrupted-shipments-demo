@@ -1,0 +1,271 @@
+{
+  "no_inquiry": {
+    "policy_version": "policy-v2",
+    "p_systemic": 0.003,
+    "top_cause": "recipient_unavailable",
+    "posterior": 0.621,
+    "expected_utility": 49.33,
+    "chosen_option": "contact_recipient",
+    "decision_stability": 1.0,
+    "utility_table": [
+      {
+        "option": "contact_recipient",
+        "eu": 49.33,
+        "approval": "none",
+        "delay_min": 21,
+        "cost": 2
+      },
+      {
+        "option": "offer_window",
+        "eu": 29.15,
+        "approval": "none",
+        "delay_min": 31,
+        "cost": 3
+      },
+      {
+        "option": "escalate",
+        "eu": 13.36,
+        "approval": "supervisor",
+        "delay_min": 50,
+        "cost": 22
+      },
+      {
+        "option": "wait",
+        "eu": -36.49,
+        "approval": "none",
+        "delay_min": 0.0,
+        "cost": 0.0
+      },
+      {
+        "option": "verify_address",
+        "eu": -101.46,
+        "approval": "none",
+        "delay_min": 21,
+        "cost": 2
+      },
+      {
+        "option": "correct_exception",
+        "eu": -137.33,
+        "approval": "analyst",
+        "delay_min": 15,
+        "cost": 7
+      }
+    ],
+    "minutes_elapsed": 2.2,
+    "action": "contact_recipient",
+    "action_title": "Contact recipient to confirm availability",
+    "approval": "none",
+    "gates": [
+      "parcel value <= SAR 1,500"
+    ],
+    "robust_effectiveness": 0.703,
+    "type": "recommend",
+    "headline": "Recommended: Contact recipient to confirm availability",
+    "rationale": "recipient_unavailable at 62%; best option by expected utility. parcel value <= SAR 1,500.",
+    "stop_reason": "decision ready",
+    "last_candidate_table": [
+      {
+        "source": "predict_risk",
+        "kind": "tool",
+        "net_voi": -0.216,
+        "gross_voi": -0.116,
+        "cost": 0.1,
+        "eig_bits": 0.0915,
+        "p_decision_change": 0.0,
+        "p_response": 1.0,
+        "latency_min": 0.1,
+        "target": null
+      },
+      {
+        "source": "get_recipient_context",
+        "kind": "tool",
+        "net_voi": -0.381,
+        "gross_voi": -0.231,
+        "cost": 0.15,
+        "eig_bits": 0.2163,
+        "p_decision_change": 0.0,
+        "p_response": 1.0,
+        "latency_min": 0.2,
+        "target": null
+      }
+    ]
+  },
+  "with_inquiry": {
+    "policy_version": "policy-v2",
+    "p_systemic": 0.001,
+    "top_cause": "recipient_unavailable",
+    "posterior": 0.946,
+    "expected_utility": 73.08,
+    "chosen_option": "contact_recipient",
+    "decision_stability": 1.0,
+    "utility_table": [
+      {
+        "option": "contact_recipient",
+        "eu": 73.08,
+        "approval": "none",
+        "delay_min": 21,
+        "cost": 2
+      },
+      {
+        "option": "offer_window",
+        "eu": 44.04,
+        "approval": "none",
+        "delay_min": 31,
+        "cost": 3
+      },
+      {
+        "option": "escalate",
+        "eu": 1.21,
+        "approval": "supervisor",
+        "delay_min": 50,
+        "cost": 22
+      },
+      {
+        "option": "wait",
+        "eu": -83.46,
+        "approval": "none",
+        "delay_min": 0.0,
+        "cost": 0.0
+      },
+      {
+        "option": "retry_delivery",
+        "eu": -161.62,
+        "approval": "analyst",
+        "delay_min": 130,
+        "cost": 29
+      },
+      {
+        "option": "verify_address",
+        "eu": -165.39,
+        "approval": "none",
+        "delay_min": 21,
+        "cost": 2
+      }
+    ],
+    "minutes_elapsed": 2.2,
+    "action": "contact_recipient",
+    "action_title": "Contact recipient to confirm availability",
+    "approval": "none",
+    "gates": [
+      "parcel value <= SAR 1,500"
+    ],
+    "robust_effectiveness": 0.798,
+    "type": "recommend",
+    "headline": "Recommended: Contact recipient to confirm availability",
+    "rationale": "recipient_unavailable at 95%; best option by expected utility. parcel value <= SAR 1,500.",
+    "stop_reason": "decision ready",
+    "last_candidate_table": [
+      {
+        "source": "predict_risk",
+        "kind": "tool",
+        "net_voi": -0.226,
+        "gross_voi": -0.126,
+        "cost": 0.1,
+        "eig_bits": 0.0079,
+        "p_decision_change": 0.0,
+        "p_response": 1.0,
+        "latency_min": 0.1,
+        "target": null
+      },
+      {
+        "source": "get_recipient_context",
+        "kind": "tool",
+        "net_voi": -0.401,
+        "gross_voi": -0.251,
+        "cost": 0.15,
+        "eig_bits": 0.034,
+        "p_decision_change": 0.0,
+        "p_response": 1.0,
+        "latency_min": 0.2,
+        "target": null
+      },
+      {
+        "source": "ask_corridor_status",
+        "kind": "inquiry",
+        "net_voi": -7.163,
+        "gross_voi": -6.613,
+        "cost": 0.55,
+        "eig_bits": 0.0184,
+        "p_decision_change": 0.014,
+        "p_response": 0.95,
+        "latency_min": 5.4,
+        "target": "dispatcher"
+      },
+      {
+        "source": "ask_branch_backlog",
+        "kind": "inquiry",
+        "net_voi": -12.008,
+        "gross_voi": -10.958,
+        "cost": 1.05,
+        "eig_bits": 0.0107,
+        "p_decision_change": 0.0,
+        "p_response": 0.9,
+        "latency_min": 8.9,
+        "target": "branch_supervisor"
+      },
+      {
+        "source": "ask_recipient_availability",
+        "kind": "inquiry",
+        "net_voi": -37.846,
+        "gross_voi": -36.096,
+        "cost": 1.75,
+        "eig_bits": 0.0449,
+        "p_decision_change": 0.0,
+        "p_response": 0.775,
+        "latency_min": 30.7,
+        "target": "recipient"
+      },
+      {
+        "source": "ask_recipient_location",
+        "kind": "inquiry",
+        "net_voi": -49.596,
+        "gross_voi": -47.346,
+        "cost": 2.25,
+        "eig_bits": 0.0206,
+        "p_decision_change": 0.0,
+        "p_response": 0.562,
+        "latency_min": 41.5,
+        "target": "recipient"
+      }
+    ]
+  },
+  "after_reply": null,
+  "by_answer": {
+    "at_address_no_answer": {
+      "decision": "recommend",
+      "action": "contact_recipient",
+      "cause": "recipient_unavailable",
+      "posterior": 0.946
+    },
+    "cannot_find_address": {
+      "decision": "escalate",
+      "action": null,
+      "cause": "address_issue",
+      "posterior": 0.435
+    },
+    "road_blocked": {
+      "decision": "awaiting_response",
+      "action": null,
+      "cause": "route_disruption",
+      "posterior": 0.444
+    },
+    "on_route_normal": {
+      "decision": "resolved",
+      "action": null,
+      "cause": "none",
+      "posterior": 0.855
+    },
+    "never_reached": {
+      "decision": "escalate",
+      "action": null,
+      "cause": "attempt_not_completed",
+      "posterior": 0.424
+    },
+    "parcel_missing": {
+      "decision": "escalate",
+      "action": null,
+      "cause": "unknown",
+      "posterior": 0.331
+    }
+  }
+}

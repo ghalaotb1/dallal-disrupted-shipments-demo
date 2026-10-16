@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import numpy as np
@@ -240,20 +240,30 @@ def realised_utility(pr: Problem, assign: dict[str, str], reroute_vans: set[str]
 
 
 # ── independent baseline ──────────────────────────────────────────────────────────────────────────────────────────────
-def independent_plan(pr: Problem, p_long: float, slack_shift: float = 0.0, seed: int = 0) -> PlanResult:
+def independent_plan(pr: Problem, p_long: float | dict[str, float], slack_shift: float | dict[str, float] = 0.0, seed: int = 0, share_fixed_costs: bool = False, repair: str = "defer") -> PlanResult:
     """Each parcel optimises alone: blind to capacity, to the van's other parcels, and to costs shared with other parcels.
 
     The operational repair a real desk would apply is then simulated: first-come capacity (random order), a van reroutes if ANY of its parcels
     asked for it (the dispatcher cannot split a van), and parcels that lose a capacity race fall back to 'defer'.
     """
     t0 = time.perf_counter()
-    U = option_utilities(pr, slack_shift, p_long)
+    if isinstance(p_long, dict):  # each lone agent holds its own belief (e.g. it asked, or did not ask, the dispatcher on its own)
+        U = {}
+        for p in pr.parcels:
+            U.update(option_utilities(replace(pr, parcels=[p]), slack_shift.get(p.id, 0.0) if isinstance(slack_shift, dict) else slack_shift, p_long[p.id]))
+    else:
+        U = option_utilities(pr, slack_shift, p_long)
     rng = np.random.default_rng(seed)
     want: dict[str, str] = {}
     for p in pr.parcels:
         best, bu = "defer", -1e18
         for o, u in U[p.id].items():
-            full = u - (pr.reroute_cost_per_van if o == "reroute" else 0.0) - (next(s.fixed_cost for s in pr.spares if s.id == o.split(":")[1]) if o.startswith("spare:") else 0.0)
+            if share_fixed_costs:  # the stronger desk: knows how many parcels share the van / the spare's capacity, but not what the others will choose
+                per_van = pr.reroute_cost_per_van / max(1, sum(1 for q in pr.parcels if q.van == p.van))
+                sp = next((s for s in pr.spares if o.startswith("spare:") and s.id == o.split(":")[1]), None)
+                full = u - (per_van if o == "reroute" else 0.0) - (sp.fixed_cost / max(1, min(sp.capacity, len(pr.parcels))) if sp else 0.0)
+            else:
+                full = u - (pr.reroute_cost_per_van if o == "reroute" else 0.0) - (next(s.fixed_cost for s in pr.spares if s.id == o.split(":")[1]) if o.startswith("spare:") else 0.0)
             if full > bu:
                 best, bu = o, full  # a lone parcel must carry the whole shared cost: it cannot see anyone to split it with
         want[p.id] = best
@@ -267,6 +277,9 @@ def independent_plan(pr: Problem, p_long: float, slack_shift: float = 0.0, seed:
             if cap[o] > 0:
                 cap[o] -= 1
                 final[p.id] = o
+            elif repair == "next_best":  # lost the capacity race: fall back to the best option that needs no scarce capacity
+                alts = {k: u for k, u in U[p.id].items() if k not in cap and k != "defer"}
+                final[p.id] = max(alts, key=alts.get) if alts else "defer"  # type: ignore[arg-type]
             else:
                 final[p.id] = "defer"
         else:
@@ -278,6 +291,51 @@ def independent_plan(pr: Problem, p_long: float, slack_shift: float = 0.0, seed:
     conflicts = sum(1 for v in {p.van for p in pr.parcels} if len({want[p.id] for p in pr.parcels if p.van == v and want[p.id] in ("wait", "reroute")}) > 1)
     res = PlanResult(final, sorted(reroute), sorted({o.split(":")[1] for o in final.values() if o.startswith("spare:")}), 0.0, (time.perf_counter() - t0) * 1000, {}, _usage(final), "independent")
     res.utilities = {"_conflicting_van_decisions": float(conflicts), "_capacity_requests_over_cap": float(sum(1 for p in pr.parcels if want[p.id] in cap) - sum(1 for p in pr.parcels if final[p.id] in cap))}
+    return res
+
+
+def greedy_plan(pr: Problem, p_long: float | dict[str, float], slack_shift: float | dict[str, float] = 0.0) -> PlanResult:
+    """A strong human-desk heuristic: work through the parcels from highest stake down, each taking its best option given what is already
+    committed (capacity left, spares already dispatched, vans already rerouted - shared costs are free once paid). No lookahead, no joint optimisation."""
+    t0 = time.perf_counter()
+    if isinstance(p_long, dict):
+        U = {}
+        for p in pr.parcels:
+            U.update(option_utilities(replace(pr, parcels=[p]), slack_shift.get(p.id, 0.0) if isinstance(slack_shift, dict) else slack_shift, p_long[p.id]))
+    else:
+        U = option_utilities(pr, slack_shift, p_long)
+    cap = {f"spare:{s.id}": s.capacity for s in pr.spares} | {f"pickup:{k.id}": k.capacity for k in pr.pickups}
+    spare_fixed = {f"spare:{s.id}": s.fixed_cost for s in pr.spares}
+    dispatched: set[str] = set()
+    rerouted: set[str] = set()
+    waiting: set[str] = set()
+    final: dict[str, str] = {}
+    for p in sorted(pr.parcels, key=lambda q: -stakes_of(q)[0]):
+        best, bu = "defer", -1e18
+        for o, u in U[p.id].items():
+            if o in cap and cap[o] <= 0:
+                continue
+            if o == "reroute" and p.van in waiting:
+                continue  # an earlier parcel on this van already chose to wait there
+            if o == "wait" and p.van in rerouted:
+                continue  # the van has already been rerouted
+            full = u
+            if o == "reroute" and p.van not in rerouted:
+                full -= pr.reroute_cost_per_van
+            if o in spare_fixed and o not in dispatched:
+                full -= spare_fixed[o]
+            if full > bu:
+                best, bu = o, full
+        final[p.id] = best
+        if best in cap:
+            cap[best] -= 1
+        if best in spare_fixed:
+            dispatched.add(best)
+        if best == "reroute":
+            rerouted.add(p.van)
+        if best == "wait":
+            waiting.add(p.van)
+    res = PlanResult(final, sorted(rerouted), sorted({o.split(":")[1] for o in final.values() if o.startswith("spare:")}), 0.0, (time.perf_counter() - t0) * 1000, {}, _usage(final), "greedy")
     return res
 
 

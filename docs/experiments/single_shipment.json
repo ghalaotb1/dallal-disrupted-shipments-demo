@@ -1,0 +1,148 @@
+{
+  "origin": "synthetic simulator, misspecified likelihoods, paired by seed",
+  "episodes": 400,
+  "agents": {
+    "v1_legacy": {
+      "mean_regret": 40.12,
+      "median_regret": 20.74,
+      "mean_utility": -36.2,
+      "unsafe_auto_rate": 0.005,
+      "escalation_rate": 0.412,
+      "questions_per_case": 0.0,
+      "answered_per_case": 0.0,
+      "timeouts_per_case": 0.0,
+      "tools_per_case": 9.13,
+      "mean_elapsed_min": 1.8,
+      "mean_comm_cost": 0.0,
+      "cause_accuracy": 0.71
+    },
+    "v2_no_inquiry": {
+      "mean_regret": 33.4,
+      "median_regret": 6.35,
+      "mean_utility": -29.48,
+      "unsafe_auto_rate": 0.0225,
+      "escalation_rate": 0.37,
+      "questions_per_case": 0.0,
+      "answered_per_case": 0.0,
+      "timeouts_per_case": 0.0,
+      "tools_per_case": 8.73,
+      "mean_elapsed_min": 1.9,
+      "mean_comm_cost": 0.0,
+      "cause_accuracy": 0.667
+    },
+    "v2_infogain": {
+      "mean_regret": 30.73,
+      "median_regret": 13.16,
+      "mean_utility": -26.81,
+      "unsafe_auto_rate": 0.0175,
+      "escalation_rate": 0.295,
+      "questions_per_case": 1.435,
+      "answered_per_case": 1.248,
+      "timeouts_per_case": 0.188,
+      "tools_per_case": 6.13,
+      "mean_elapsed_min": 12.1,
+      "mean_comm_cost": 2.46,
+      "cause_accuracy": 0.77
+    },
+    "v2_value": {
+      "mean_regret": 27.85,
+      "median_regret": 5.74,
+      "mean_utility": -23.93,
+      "unsafe_auto_rate": 0.015,
+      "escalation_rate": 0.343,
+      "questions_per_case": 0.45,
+      "answered_per_case": 0.39,
+      "timeouts_per_case": 0.06,
+      "tools_per_case": 8.66,
+      "mean_elapsed_min": 4.9,
+      "mean_comm_cost": 0.67,
+      "cause_accuracy": 0.713
+    }
+  },
+  "paired_regret_difference": {
+    "v1_legacy_minus_v2_no_inquiry": {
+      "mean": 6.71,
+      "ci95": [
+        0.62,
+        12.61
+      ]
+    },
+    "v2_infogain_minus_v2_no_inquiry": {
+      "mean": -2.67,
+      "ci95": [
+        -8.97,
+        3.22
+      ]
+    },
+    "v2_value_minus_v2_no_inquiry": {
+      "mean": -5.56,
+      "ci95": [
+        -9.66,
+        -1.6
+      ]
+    },
+    "v2_value_minus_v2_infogain": {
+      "mean": -2.89,
+      "ci95": [
+        -8.98,
+        3.55
+      ]
+    }
+  },
+  "by_stake": {
+    "low": {
+      "v1_legacy": {
+        "mean_regret": 39.91,
+        "questions": 0.0
+      },
+      "v2_no_inquiry": {
+        "mean_regret": 27.15,
+        "questions": 0.0
+      },
+      "v2_infogain": {
+        "mean_regret": 22.7,
+        "questions": 1.43
+      },
+      "v2_value": {
+        "mean_regret": 23.53,
+        "questions": 0.47
+      }
+    },
+    "mid": {
+      "v1_legacy": {
+        "mean_regret": 36.26,
+        "questions": 0.0
+      },
+      "v2_no_inquiry": {
+        "mean_regret": 25.28,
+        "questions": 0.0
+      },
+      "v2_infogain": {
+        "mean_regret": 27.57,
+        "questions": 1.43
+      },
+      "v2_value": {
+        "mean_regret": 22.72,
+        "questions": 0.38
+      }
+    },
+    "high": {
+      "v1_legacy": {
+        "mean_regret": 44.18,
+        "questions": 0.0
+      },
+      "v2_no_inquiry": {
+        "mean_regret": 47.83,
+        "questions": 0.0
+      },
+      "v2_infogain": {
+        "mean_regret": 41.99,
+        "questions": 1.45
+      },
+      "v2_value": {
+        "mean_regret": 37.32,
+        "questions": 0.5
+      }
+    }
+  }
+}

@@ -140,3 +140,19 @@ def test_plan_view_carries_the_coordinated_vs_independent_comparison():
     plan = OpsService(time_scale=60).plans.create(snapshot(0.9))
     c = plan["comparison"]
     assert c["gain"] >= 0 and c["messages_coordinated"] <= c["messages_independent_equivalent"]
+
+
+def test_greedy_desk_respects_capacity_and_van_consistency():
+    pr = N.Problem([N.Parcel(f"P{i}", "V0" if i < 3 else "V1", 400.0, 50.0, 30.0, "Express") for i in range(6)], [N.Spare("S1", 20.0, 2)], [N.PickupPoint("K1", 20.0, 1)], True, 40.0)
+    g = N.greedy_plan(pr, 0.9)
+    assert sum(1 for o in g.assignments.values() if o == "spare:S1") <= 2 and sum(1 for o in g.assignments.values() if o == "pickup:K1") <= 1
+    for v in ("V0", "V1"):  # a van cannot both reroute and have a parcel that waits on it
+        on_van = {g.assignments[p.id] for p in pr.parcels if p.van == v}
+        assert not ({"wait", "reroute"} <= on_van)
+
+
+def test_independent_next_best_repair_never_defers_when_waiting_is_possible():
+    pr = N.Problem([N.Parcel(f"P{i}", f"V{i % 2}", 500.0, 40.0, 30.0, "Same-day") for i in range(8)], [N.Spare("S1", 20.0, 1)], [], False, 40.0)
+    naive = N.independent_plan(pr, 0.9)
+    strong = N.independent_plan(pr, 0.9, share_fixed_costs=True, repair="next_best")
+    assert sum(o == "defer" for o in strong.assignments.values()) <= sum(o == "defer" for o in naive.assignments.values())
