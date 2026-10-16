@@ -51,12 +51,13 @@ def chart_single_gain() -> None:
     p = _rd("single_paired")
     p = p[p.metric == "utility"]
     regs = list(dict.fromkeys(p.regime))
-    pairs = [("v2_value", "v2_no_inquiry", AQUA, "Decision-value asking vs database-only"), ("v2_infogain", "v2_no_inquiry", ORANGE, "Information-gain asking vs database-only"), ("v2_no_inquiry", "v1_legacy", BLUE, "v2 database-only vs legacy v1")]
-    fig, ax = plt.subplots(figsize=(8.6, 5.2))
-    h = 0.24
+    pairs = [("v2_value", "v2_no_inquiry", AQUA, "Decision-value asking vs database-only"), ("v2_value_adaptive", "v2_no_inquiry", VIOLET, "... with learned responsiveness"),
+             ("v2_infogain", "v2_no_inquiry", ORANGE, "Information-gain asking vs database-only"), ("v2_no_inquiry", "v1_legacy", BLUE, "v2 database-only vs legacy v1")]
+    fig, ax = plt.subplots(figsize=(9, 5.6))
+    h = 0.19
     for j, (a, b, col, lab) in enumerate(pairs):
         d = p[(p.a == a) & (p.b == b)].set_index("regime").reindex(regs)
-        y = np.arange(len(regs)) + (j - 1) * h
+        y = np.arange(len(regs)) + (j - 1.5) * h
         ax.errorbar(d.mean_diff, y, xerr=[d.mean_diff - d.ci_lo, d.ci_hi - d.mean_diff], fmt="o", color=col, ecolor=col, elinewidth=1.6, capsize=0, ms=5.5, mec="#fcfcfb", mew=1.2, label=lab)
     ax.axvline(0, color=INK2, lw=0.8)
     ax.set_yticks(np.arange(len(regs)), [pretty(r) for r in regs])
@@ -65,46 +66,50 @@ def chart_single_gain() -> None:
     n = int(p.n.iloc[0])
     ax.set_xlabel("Paired difference in realised utility per case (environment units; right = better), 95% CI")
     ax.set_title(f"Effect of asking people vs looking things up, by operating regime (SYNTHETIC, n={n}/regime/agent)")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=3, fontsize=8.5)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, fontsize=8.5)
     _save(fig, "fig_single_regimes")
 
 
 def chart_ablation() -> None:
     p = _rd("ablation_paired")
     p = p[p.metric == "utility"]
-    names = {"abl_point_belief": "Point-estimate belief\n(no ensemble)", "abl_no_tempering": "No correlated-evidence\ntempering", "abl_no_lookahead": "No set look-ahead",
-             "abl_asks_before_looking": "Asks before looking\nup databases", "abl_mean_autonomy": "Autonomy at mean,\nnot pessimistic tail", "v2_no_inquiry": "No inquiries at all"}
-    regs = ["baseline", "high_uncertainty", "contradictory_evidence", "urgent_deadlines"]
-    cols = [BLUE, ORANGE, AQUA, VIOLET]
-    fig, ax = plt.subplots(figsize=(9, 4.8))
-    h = 0.2
+    names = {"abl_point_belief": "Point-estimate\nbelief\n(no ensemble)", "abl_no_tempering": "No correlated-\nevidence\ntempering", "abl_no_lookahead": "No set\nlook-ahead",
+             "abl_asks_before_looking": "Asks before\nlooking up\ndatabases", "abl_mean_autonomy": "Autonomy at mean,\nnot pessimistic\ntail", "v2_no_inquiry": "No inquiries\nat all"}
+    regs = [r for r in ("baseline", "high_uncertainty", "contradictory_evidence", "urgent_deadlines", "correlated_evidence") if r in set(p.regime)]
+    cols = [BLUE, ORANGE, AQUA, VIOLET, RED]
+    fig, ax = plt.subplots(figsize=(11, 5.2))
+    h = 0.16
     x = np.arange(len(names))
     for j, r in enumerate(regs):
         d = p[p.regime == r].set_index("b").reindex(list(names))
-        ax.bar(x + (j - 1.5) * h, d.mean_diff, width=h - 0.02, color=cols[j], label=pretty(r))
-        ax.errorbar(x + (j - 1.5) * h, d.mean_diff, yerr=[d.mean_diff - d.ci_lo, d.ci_hi - d.mean_diff], fmt="none", ecolor=INK, elinewidth=1)
+        off = (j - (len(regs) - 1) / 2) * h
+        ax.bar(x + off, d.mean_diff, width=h - 0.015, color=cols[j], label=pretty(r))
+        ax.errorbar(x + off, d.mean_diff, yerr=[d.mean_diff - d.ci_lo, d.ci_hi - d.mean_diff], fmt="none", ecolor=INK, elinewidth=1)
     ax.axhline(0, color=INK2, lw=0.8)
-    ax.set_xticks(x, list(names.values()), fontsize=8)
-    ax.set_ylabel("Full system minus ablated variant: utility per case (>0 means the component helps)")
+    ax.set_xticks(x, list(names.values()), fontsize=8.5)
+    ax.set_ylabel("Full system minus ablated variant\n(utility per case; > 0 means the component helps)")
     ax.grid(axis="y")
-    ax.set_title(f"Ablation: what each innovation contributes (SYNTHETIC, n={int(p.n.iloc[0])}/regime)")
-    ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.22), fontsize=8.5)
+    ax.set_title(f"Ablation: what each component contributes (SYNTHETIC, n={int(p.n.iloc[0])}/regime, 95% CI)")
+    ax.legend(ncol=5, loc="upper center", bbox_to_anchor=(0.5, -0.2), fontsize=8.5)
     _save(fig, "fig_ablation")
 
 
 def chart_sensitivity() -> None:
     t = _rd("sensitivity_envs").sort_values("value_minus_dbonly").reset_index(drop=True)
     s = json.loads((R / "sensitivity_summary.json").read_text())
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 4.6), gridspec_kw={"width_ratios": [1.5, 1]})
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11.5, 4.8), gridspec_kw={"width_ratios": [1.6, 1], "wspace": 0.55})
     col = np.where(t.ci_lo > 0, AQUA, np.where(t.ci_hi < 0, RED, GRAY))
     a1.vlines(t.index, t.ci_lo, t.ci_hi, color=col, lw=1.4)
-    a1.scatter(t.index, t.value_minus_dbonly, c=col, s=14, zorder=3)
+    a1.scatter(t.index, t.value_minus_dbonly, c=col, s=14, zorder=3, label="fixed assumptions (colour: significantly better / worse / n.s.)")
+    if "adaptive_minus_dbonly" in t:
+        a1.scatter(t.index + 0.25, t.adaptive_minus_dbonly, marker="D", s=14, color=VIOLET, zorder=4, label="learned responsiveness")
+        a1.legend(loc="lower right", fontsize=8)
     a1.axhline(0, color=INK2, lw=0.8)
     a1.set_xlabel(f"{len(t)} random environments, sorted by effect")
     a1.set_ylabel("Decision-value asking minus database-only (utility/case)")
     a1.set_title("Benefit across randomly perturbed worlds (SYNTHETIC)")
     a1.grid(axis="y")
-    a1.text(0.02, 0.96, f"positive in {s['value_minus_dbonly']['share_positive']:.0%} of worlds; significantly {s['value_minus_dbonly']['share_significantly_positive']:.0%} up, {s['value_minus_dbonly']['share_significantly_negative']:.0%} down",
+    a1.text(0.02, 0.96, f"fixed: positive in {s['value_minus_dbonly']['share_positive']:.0%}, significantly {s['value_minus_dbonly']['share_significantly_positive']:.0%} up / {s['value_minus_dbonly']['share_significantly_negative']:.0%} down;  learned: positive in {s['adaptive_minus_dbonly']['share_positive']:.0%}, {s['adaptive_minus_dbonly']['share_significantly_positive']:.0%} up / {s['adaptive_minus_dbonly']['share_significantly_negative']:.0%} down",
             transform=a1.transAxes, va="top", fontsize=8.5, color=INK2)
     k = pd.Series(s["spearman_of_benefit_with_knob"]).sort_values()
     a2.barh([pretty(i) for i in k.index], k.values, color=[AQUA if v > 0 else ORANGE for v in k.values])
@@ -163,13 +168,13 @@ def chart_network_gain() -> None:
 def chart_safety() -> None:
     dev = pd.read_csv(R / "safety_dev_sweep.csv")
     ev = _rd("safety_policy_eval")
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.6))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={"wspace": 0.7})
     a1.scatter(dev.auto_rate, dev.harmful_per_episode * 100, s=40, color=BLUE, zorder=3)
     for _, r in dev.iterrows():
-        a1.annotate(r.policy.replace("A_baseline(min.62)", "baseline (min 0.62)"), (r.auto_rate, r.harmful_per_episode * 100), textcoords="offset points", xytext=(6, 4), fontsize=7.5, color=INK2)
+        a1.annotate(r.policy.replace("A_baseline(min.62)", "baseline (min 0.62)"), (r.auto_rate, r.harmful_per_episode * 100), textcoords="offset points", xytext=(-6, 6) if r.auto_rate > 0.19 else (6, 4), ha="right" if r.auto_rate > 0.19 else "left", fontsize=7.5, color=INK2)
     a1.set_xlabel("Share of cases handled automatically")
     a1.set_ylabel("Harmful automatic actions per 100 cases")
-    a1.set_title("Autonomy policy trade-off (development seeds, SYNTHETIC)")
+    a1.set_title("Policy sweep (development seeds, SYNTHETIC)")
     a1.grid()
     pe = ev[ev.env.str.startswith("process/")]
     old = pe[pe.policy.str.startswith("old")].set_index("env")
@@ -181,8 +186,8 @@ def chart_safety() -> None:
     a2.set_yticks(y, [e.replace("process/", "").replace("_", " ") for e in envs], fontsize=8)
     a2.invert_yaxis()
     a2.set_xlabel("Harmful automatic actions per 100 cases (held-out seeds)")
-    a2.set_title("Re-evaluation on fresh seeds, every regime")
-    a2.legend(loc="lower right", fontsize=8.5)
+    a2.set_title("Held-out re-evaluation, every regime")
+    a2.legend(loc="upper center", bbox_to_anchor=(0.4, -0.14), ncol=1, fontsize=8.5)
     a2.grid(axis="x")
     _save(fig, "fig_safety")
 
@@ -201,17 +206,17 @@ def chart_bridge() -> None:
     ax.set_title(f"Calibration on real replay (n={la['trained_model_via_bridge']['n']})")
     ax.grid()
     ax = axes[1]
-    vals = [("Trained model\n(via the bridge)", la["trained_model_via_bridge"]["roc_auc"], BLUE), ("Heuristic\n(same cases)", la["heuristic_same_cases"]["roc_auc"], GRAY)]
-    if la.get("forced_scores_on_abstained_cases_if_range_check_were_off"):
-        vals.append(("Model on cases it\nabstained on*", la["forced_scores_on_abstained_cases_if_range_check_were_off"]["roc_auc"], VIOLET))
-    ax.bar([v[0] for v in vals], [v[1] for v in vals], color=[v[2] for v in vals], width=0.55)
+    ci = la["trained_model_via_bridge"].get("roc_auc_95ci")
+    vals = [("Trained model\n(via the bridge)", la["trained_model_via_bridge"]["roc_auc"], BLUE), ("Hand-written heuristic\n(same cases)", la["heuristic_same_cases"]["roc_auc"], GRAY)]
+    ax.bar([v[0] for v in vals], [v[1] for v in vals], color=[v[2] for v in vals], width=0.5)
+    if ci:
+        ax.errorbar([0], [vals[0][1]], yerr=[[vals[0][1] - ci[0]], [ci[1] - vals[0][1]]], fmt="none", ecolor=INK, elinewidth=1.4, capsize=4)
     for i, v in enumerate(vals):
-        ax.text(i, v[1] + 0.01, f"{v[1]:.3f}", ha="center", fontsize=9)
+        ax.text(i, v[1] + 0.04 if i == 0 else v[1] + 0.012, f"{v[1]:.3f}", ha="center", fontsize=9)
     ax.axhline(0.5, color=INK2, lw=0.8, ls=":")
     ax.set_ylim(0.4, 1.0)
     ax.set_ylabel("ROC-AUC on real held-out tasks")
     ax.set_title("Model vs heuristic (real data, LaDe)")
-    ax.text(0.5, 0.415, "*not used: outside training range; shown for transparency", ha="center", fontsize=7, color=INK2, transform=ax.get_xaxis_transform())
     ax = axes[2]
     op = la["operating_points"]
     names = ["elevated_band", "high_band", "top5%", "top10%", "top20%"]

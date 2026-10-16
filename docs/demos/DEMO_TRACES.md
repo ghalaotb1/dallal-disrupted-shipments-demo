@@ -10,7 +10,7 @@ backend: env=dev whatsapp=sandbox real_delivery_possible=False actions=simulated
   - `get_shipment` - lade:D:sh:272047 loaded -> None | belief: -
   - `predict_risk` - Low risk - P(accept-to-deliver duration above the training-period P90 (engineered)) = 4.6% (trained:lade_slow_task_v1, calibrated on LaDe last-mile delivery (Cainiao), Shanghai) -> low | belief: -
       * MODEL (trained, calibrated): lade_slow_task_v1
-      * features as of 2000-10-14T10:36:00
+      * features as of 10-14T10:36:00 (source publishes no year)
       * base rate in source data 8.9%
       * source population differs from SPL: ranking evidence, not an SPL probability
   - `get_journey` - 1 events, no failures -> clean | belief: -
@@ -38,7 +38,7 @@ backend: env=dev whatsapp=sandbox real_delivery_possible=False actions=simulated
 
 ## Demo B - uncertain shipment: value-based inquiry, sandbox reply, belief update
 
-run run-d5939313: status awaiting_response; databases first, then a question:
+run run-3a60afbe: status awaiting_response; databases first, then a question:
   - `get_shipment` - bootstrap: shipment facts are needed to form a prior -> None | belief: none 33%, recipient_unavailable 15%
   - `get_journey` - net value of information +6.93 SAR-eq (gross 7.08, cost 0.15); 48% chance it changes the best option -> clean | belief: none 58%, address_issue 10%
   - `get_address_context` - net value of information +19.29 SAR-eq (gross 19.44, cost 0.15); 20% chance it changes the best option -> address_ok | belief: none 64%, recipient_unavailable 10%
@@ -54,11 +54,11 @@ run run-d5939313: status awaiting_response; databases first, then a question:
   reply `cannot_find_address` -> belief recipient_unavailable 45%, address_issue 29%; decision escalate - Escalate - the agent will not guess a cause
 - [x] the reply changed the belief and the decision differs by answer - recommend/contact_recipient vs escalate/None
 - [x] sensitive action needs human approval (403 without it)
-- [x] analyst approves -> action recorded as SIMULATED, outcome pending (not claimed successful) - {'action_id': 'act:run-d5939313-exec:contact_recipient', 'action': 'contact_recipient', 'status': 'e
+- [x] analyst approves -> action recorded as SIMULATED, outcome pending (not claimed successful) - {'action_id': 'act:run-3a60afbe-exec:contact_recipient', 'action': 'contact_recipient', 'status': 'e
 
 ## Demo C - shared incident: one inquiry, one coordinated plan
 
-plan plan-1717459c: P(long blockage) prior 30%; ask the dispatcher ONCE: True (net VOI +135.32, reply chance 95%); committed now: []
+plan plan-3fbd0d27: P(long blockage) prior 30%; ask the dispatcher ONCE: True (net VOI +135.32, reply chance 95%); committed now: []
 - [x] one shared question replaces per-shipment questions
   reply `blocked_long` -> P(long) 88%; plan status ready; decisions changed for 9/10 shipments: P0: pickup:K1->defer, P1: pickup:K1->defer, P2: wait->defer, P3: spare:S1->pickup:K1, P4: spare:S1->pickup:K1, P6: spare:S2->spare:S1
   coordinated utility 741 vs independent -310; messages 11 vs 20; independent capacity over-requests 7

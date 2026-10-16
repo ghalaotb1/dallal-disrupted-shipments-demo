@@ -218,7 +218,8 @@ All real computation, clearly labelled, running on simulated inputs:
 | Coordinated network recovery (joint MILP, one shared question with recourse, supervisor approval) | `backend/dallal/recovery/network.py`, `plans.py` | [Agent v2 §5](docs/architecture/AGENT_V2.md#5-coordinated-network-recovery) |
 | Real-data risk models (calibrated, feature-contract, abstaining) and the Model Lab page | `backend/dallal/ml/`, `backend/artifacts/`, `/models` | [Experiments, Part A](docs/experiments/README.md) |
 | Guarded LLM planner (Qwen via Ollama) and reply-interpretation benchmark | `backend/dallal/agent/v2/llm_planner.py`, `eval/` | [Experiments](docs/experiments/README.md) |
-| Experiments (synthetic decisions kept apart from real-data metrics) | `backend/dallal/sim/`, `eval/` | [Experiments](docs/experiments/README.md) · [headline trace](docs/experiments/headline_trace.md) |
+| **Technical evaluation** (independent simulators, paired, regimes, ablation, sensitivity, safety; real-data results kept apart) | `backend/dallal/sim/`, `dallal/eval/` | [**Evaluation report**](docs/EVALUATION_REPORT.md) · [pitch metrics](docs/experiments/PITCH_METRICS.md) · [charts](docs/experiments/charts) · [results](docs/experiments/results) |
+| Local demos (real-data replay, uncertain shipment, shared incident) | `scripts/demo.sh`, `backend/scripts/demo_check.py` | [Demo guide](docs/DEMOS.md) · [backend traces](docs/demos/DEMO_TRACES.md) · [screenshots](docs/demos/screenshots) |
 | Dataset audit, canonical schema, augmentation, baselines | `backend/registry/`, `dallal/data/`, `dallal/ml/` | [Dataset report](docs/data/DATASET_DECISION_REPORT.md) · [Schema](docs/data/CANONICAL_SCHEMA.md) · [Augmentation](docs/data/AUGMENTATION.md) · [Baselines](docs/ml/TASKS_AND_BASELINES.md) |
 | Deployment (Vercel frontend + container backend) | `backend/Dockerfile`, `render.yaml`, `app/api/dallal` | [Deployment](docs/deployment/DEPLOYMENT.md) |
 
@@ -227,8 +228,8 @@ All real computation, clearly labelled, running on simulated inputs:
 cd backend && uv venv && source .venv/bin/activate && uv pip install -e ".[dev,api]"
 python -I -m pytest -q
 DALLAL_TIME_SCALE=30 python -m uvicorn dallal.api.app:app --port 8000     # sandbox WhatsApp; no secrets needed
-# frontend (another terminal): the dev server connects to http://localhost:8000 automatically
-npm run dev            # open /shipments/DL-20764?demo=manual  (live agent asks the courier), /incidents/INC-2417 (Plan with the backend), /models
+npm run demo           # one command: Ollama (optional) + backend :8000 + frontend :3000; npm run demo:reset / demo:stop / demo:check
+# open /shipments/DL-20764?demo=manual (live agent asks the courier), /incidents/INC-2417 (Plan with the backend), /models (real-data replay)
 ```
 
 Datasets are never committed: `python -I -m dallal.data.cli fetch selected --all` reproduces them (hash-verified); training needs them (`python -I -m dallal.ml.train`), serving does not (the three small calibrated artifacts are committed and SHA-256 checked on load).

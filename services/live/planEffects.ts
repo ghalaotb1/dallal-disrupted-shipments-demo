@@ -4,6 +4,7 @@ import { plural } from "@/lib/format";
 import { addEvent, addLedger, notify, rescore, setHealth } from "@/services/demo/mutations";
 import { anchorMovement } from "@/services/logic/movement";
 import { demoNow, updateWorld } from "@/store/world";
+import type { ResponseStep } from "@/types/domain";
 import type { LivePlan } from "@/types/live";
 
 const applied = new Set<string>();
@@ -57,6 +58,20 @@ export function applyPlanToWorld(incidentId: string, plan: LivePlan, approvedBy:
       s.agent = { ...s.agent, state: "acting", headline: `Recovering under coordinated plan for ${incidentId}`, updatedAt: now };
       rescore(d, pid, now);
     }
+    // The incident's response card must show what was actually decided, not the generic demo steps.
+    const groups: Record<string, { title: string; detail: string; tool: string; shipments: string[] }> = {};
+    for (const [pid, { option, text }] of Object.entries(plan.solution.per_parcel)) {
+      const kind = option;
+      const g = (groups[kind] ??= {
+        title: text,
+        detail: kind === "wait" ? "Van holds on its route and resumes when the lane opens" : kind === "defer" ? "No capacity can recover these on time: notice sent, delivery re-planned" : "Chosen jointly with the other shipments, within shared capacity",
+        tool: kind.startsWith("spare:") ? "reassign_courier" : kind.startsWith("pickup:") ? "contact_recipient" : "reschedule_delivery",
+        shipments: [],
+      });
+      g.shipments.push(pid);
+    }
+    inc.response.steps = Object.entries(groups).map(([k, g]) => ({ id: k, title: g.title, detail: g.detail, shipments: g.shipments, tool: g.tool }));
+    inc.response.summary = `Coordinated plan (backend): ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ")}`;
     inc.response.state = "applied";
     inc.response.appliedAt = now;
     inc.response.approvedBy = approvedBy;

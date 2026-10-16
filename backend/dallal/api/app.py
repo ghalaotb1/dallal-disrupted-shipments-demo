@@ -199,7 +199,7 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True, set
 
         return {"env": settings.env, "execution": {"mode": settings.execution_mode, "note": "operational actions are recorded and simulated; no real executor is configured"},
                 "whatsapp": {"mode": svc.provider.mode, "send_requires_supervisor_approval": svc.provider.mode == "cloud" and settings.require_send_approval, "real_send_enabled": settings.allow_real_send and svc.provider.mode == "cloud"},
-                "llm": llm.capabilities(), "response_learning": {"enabled": True, "prior_strength": 8.0, "learned": {k: {"p_response": round(v["p"], 3), "median_latency_min": round(v["latency_median"], 1)} for k, v in svc.response_stats().overrides().items()}},
+                "llm": llm.capabilities(), "response_learning": {"enabled": True, "prior_strength": svc.response_stats().prior_strength, "learned": {k: {"p_response": round(v["p"], 3), "median_latency_min": round(v["latency_median"], 1)} for k, v in svc.response_stats().overrides().items()}},
                 "ml": {"models": registry.available(), "agent_scoring": "calibrated models score a case only when a point-in-time adapter supplies a complete in-domain feature row; otherwise the labelled heuristic is used"},
                 "persistence": {"db": "sqlite (WAL)", "backups": bool(settings.backup_dir), "last_backup": backup_state.get("last"), "backup_error": backup_state.get("error")},
                 "auth": {"api_key_required": bool(api_key), "roles": "asserted by the client; a single shared key does not identify individual users (add SSO before production)"}}

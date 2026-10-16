@@ -20,7 +20,7 @@ from dallal.eval import stages as S
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--stages", default="single,inquiry_effect,ablation,sensitivity,network,safety")
+    ap.add_argument("--stages", default="single,inquiry_effect,ablation,ensemble,sensitivity,network,safety")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--only-regimes", default="", help="comma list; with --stages single, adds/refreshes just those regimes")
     a = ap.parse_args()
@@ -28,7 +28,7 @@ def main() -> None:
     only = [r for r in a.only_regimes.split(",") if r] or None
     plan = {"single": lambda: S.stage_single(120 if q else 2000, a.workers, only), "ablation": lambda: S.stage_ablation(120 if q else 1500, a.workers),
             "sensitivity": lambda: S.stage_sensitivity(12 if q else 60, 80 if q else 250, a.workers), "network": lambda: S.stage_network(40 if q else 400, a.workers),
-            "safety": lambda: S.stage_safety(120 if q else 1500, a.workers), "inquiry_effect": lambda: S.stage_inquiry_effect()}
+            "safety": lambda: S.stage_safety(120 if q else 1500, a.workers), "inquiry_effect": lambda: S.stage_inquiry_effect(), "ensemble": lambda: S.stage_ensemble(120 if q else 1200, a.workers)}
     manifest = {}
     for name in a.stages.split(","):
         t0 = time.time()

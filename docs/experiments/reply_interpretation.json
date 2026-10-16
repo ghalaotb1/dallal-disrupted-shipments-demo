@@ -14,6 +14,910 @@
   },
   "models": {
     "qwen3.5:4b": {
+      "by_language": {
+        "ar": {
+          "llm_only": {
+            "n": 64,
+            "coverage_of_answerable": 0.942,
+            "accepted": 52,
+            "false_accept_rate": 0.058,
+            "false_accepts": 3,
+            "abstain_correct_on_unanswerable": 0.833
+          },
+          "rules_only": {
+            "n": 64,
+            "coverage_of_answerable": 0.346,
+            "accepted": 20,
+            "false_accept_rate": 0.1,
+            "false_accepts": 2,
+            "abstain_correct_on_unanswerable": 0.917
+          }
+        },
+        "en": {
+          "llm_only": {
+            "n": 32,
+            "coverage_of_answerable": 1.0,
+            "accepted": 26,
+            "false_accept_rate": 0.0,
+            "false_accepts": 0,
+            "abstain_correct_on_unanswerable": 1.0
+          },
+          "rules_only": {
+            "n": 32,
+            "coverage_of_answerable": 0.462,
+            "accepted": 12,
+            "false_accept_rate": 0.0,
+            "false_accepts": 0,
+            "abstain_correct_on_unanswerable": 1.0
+          }
+        }
+      },
+      "rows": [
+        {
+          "spec": "ask_recipient_availability",
+          "text": "نعم متوفر",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ايوه موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "أكيد بكون في البيت",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "تمام، موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "yes I'll be home",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ok available",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "موجودين، تفضل",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ايوا بكون موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حياك الله، موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "لا مو موجود",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "مسافر لين الاسبوع الجاي",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ما اقدر اليوم",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "not home today",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "I'm out of town",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "غير متواجد",
+          "expected": "avail_no",
+          "rules": null,
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "للاسف ما راح اكون موجود",
+          "expected": "avail_no",
+          "rules": "avail_yes",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "No",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "بكرة أفضل",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ممكن بعد العصر بكرة؟",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "can you come tomorrow instead",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "خلها يوم الخميس",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "وقت ثاني لو سمحت",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "later this week please",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "اجلها للاسبوع القادم",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ليس اليوم، غدا افضل",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "مين انت؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "who is this",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "شكرا",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "متى بالضبط؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "اتصل علي",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "نعم ولا",
+          "expected": null,
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "😊",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حاضر",
+          "expected": null,
+          "rules": null,
+          "llm": "avail_yes",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "نعم استلمتها",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "وصلتني الشحنة شكرا",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "استلمتها امس",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "received, thanks",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "yes got it",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "تم الاستلام والحمدلله",
+          "expected": "received",
+          "rules": null,
+          "llm": "received",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "لا ما استلمت",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "ما وصلني شي",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "لم تصل",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "never got it",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "I didn't receive anything",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "No",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "مدري",
+          "expected": "unsure",
+          "rules": "unsure",
+          "llm": "unsure",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "ما أدري يمكن زوجتي استلمتها",
+          "expected": "unsure",
+          "rules": null,
+          "llm": "unsure",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "not sure, will check",
+          "expected": "unsure",
+          "rules": "unsure",
+          "llm": "unsure",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "خلني اسأل اهل البيت",
+          "expected": "unsure",
+          "rules": null,
+          "llm": "unsure",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "منو؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "كم السعر",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "شكرا",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "?",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "في الطريق، كله طبيعي",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "on my way, no issues",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ماشي الامور تمام وبوصل بعد ١٥ دقيقة",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "انا عند العنوان وماحد يرد",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "at the address, nobody is answering the door",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "واقف عند الباب ولا احد يفتح",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما لقيت العنوان",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "can't find the building",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "العنوان مو واضح وانا ضايع",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الطريق مسكر",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "stuck, there is an accident on the road",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "في حادث والطريق واقف",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما وصلت للموقع بعد",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "haven't reached the stop yet",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "لسا ما وصلت",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "سلمتها للعميل",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "already delivered",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "تم التسليم",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الشحنة مو معي",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "I don't have this parcel on the van",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما لقيتها في السيارة",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ممكن اتصل بك؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ok",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الشحنة ايش؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "wait",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "سالك",
+          "expected": "clear",
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "كل شي تمام",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "the road is clear",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "مفتوح وما فيه زحمة",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "بطيء شوي، ربع ساعة",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "slow but moving, 15 minutes",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "زحمة بسيطة وبتفتح قريب",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "just slow, 20 min",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "مغلق تماما يمكن ساعتين",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "closed after an accident, hours",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "الطريق مسكر لين الليل",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "blocked for at least an hour",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ما اعلم",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "no idea",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ما عندي معلومة",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ماني متأكد من الطريق",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "اتصل بالمشرف",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "who is asking",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        }
+      ],
       "llm_only": {
         "n": 96,
         "coverage_of_answerable": 0.962,
@@ -30,7 +934,7 @@
         "false_accepts": 4,
         "abstain_correct_on_unanswerable": 0.889
       },
-      "median_latency_s": 4.57,
+      "median_latency_s": 6.21,
       "errors": [
         {
           "spec": "ask_recipient_availability",
@@ -56,6 +960,910 @@
       ]
     },
     "qwen3.5:9b": {
+      "by_language": {
+        "ar": {
+          "llm_only": {
+            "n": 64,
+            "coverage_of_answerable": 0.942,
+            "accepted": 51,
+            "false_accept_rate": 0.039,
+            "false_accepts": 2,
+            "abstain_correct_on_unanswerable": 0.917
+          },
+          "rules_only": {
+            "n": 64,
+            "coverage_of_answerable": 0.346,
+            "accepted": 20,
+            "false_accept_rate": 0.1,
+            "false_accepts": 2,
+            "abstain_correct_on_unanswerable": 0.917
+          }
+        },
+        "en": {
+          "llm_only": {
+            "n": 32,
+            "coverage_of_answerable": 0.962,
+            "accepted": 25,
+            "false_accept_rate": 0.0,
+            "false_accepts": 0,
+            "abstain_correct_on_unanswerable": 1.0
+          },
+          "rules_only": {
+            "n": 32,
+            "coverage_of_answerable": 0.462,
+            "accepted": 12,
+            "false_accept_rate": 0.0,
+            "false_accepts": 0,
+            "abstain_correct_on_unanswerable": 1.0
+          }
+        }
+      },
+      "rows": [
+        {
+          "spec": "ask_recipient_availability",
+          "text": "نعم متوفر",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ايوه موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "أكيد بكون في البيت",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "تمام، موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "yes I'll be home",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ok available",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "موجودين، تفضل",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ايوا بكون موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حياك الله، موجود",
+          "expected": "avail_yes",
+          "rules": "avail_yes",
+          "llm": "avail_yes",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "لا مو موجود",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "مسافر لين الاسبوع الجاي",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ما اقدر اليوم",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "not home today",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "I'm out of town",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "غير متواجد",
+          "expected": "avail_no",
+          "rules": null,
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "للاسف ما راح اكون موجود",
+          "expected": "avail_no",
+          "rules": "avail_yes",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "No",
+          "expected": "avail_no",
+          "rules": "avail_no",
+          "llm": "avail_no",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "بكرة أفضل",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ممكن بعد العصر بكرة؟",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "can you come tomorrow instead",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "خلها يوم الخميس",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "وقت ثاني لو سمحت",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "later this week please",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "اجلها للاسبوع القادم",
+          "expected": "reschedule",
+          "rules": null,
+          "llm": "reschedule",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ليس اليوم، غدا افضل",
+          "expected": "reschedule",
+          "rules": "reschedule",
+          "llm": "avail_no",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "مين انت؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "who is this",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "شكرا",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "متى بالضبط؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "اتصل علي",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "نعم ولا",
+          "expected": null,
+          "rules": "avail_yes",
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "😊",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حاضر",
+          "expected": null,
+          "rules": null,
+          "llm": "avail_yes",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "نعم استلمتها",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "وصلتني الشحنة شكرا",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "استلمتها امس",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "received, thanks",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "yes got it",
+          "expected": "received",
+          "rules": "received",
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "تم الاستلام والحمدلله",
+          "expected": "received",
+          "rules": null,
+          "llm": "received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "لا ما استلمت",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "ما وصلني شي",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "لم تصل",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "never got it",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "I didn't receive anything",
+          "expected": "not_received",
+          "rules": null,
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "No",
+          "expected": "not_received",
+          "rules": "not_received",
+          "llm": "not_received",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "مدري",
+          "expected": "unsure",
+          "rules": "unsure",
+          "llm": "unsure",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "ما أدري يمكن زوجتي استلمتها",
+          "expected": "unsure",
+          "rules": null,
+          "llm": "unsure",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "not sure, will check",
+          "expected": "unsure",
+          "rules": "unsure",
+          "llm": "unsure",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "خلني اسأل اهل البيت",
+          "expected": "unsure",
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "منو؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "كم السعر",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "شكرا",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_recipient_receipt",
+          "text": "?",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "في الطريق، كله طبيعي",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "on my way, no issues",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ماشي الامور تمام وبوصل بعد ١٥ دقيقة",
+          "expected": "on_route_normal",
+          "rules": null,
+          "llm": "on_route_normal",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "انا عند العنوان وماحد يرد",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "at the address, nobody is answering the door",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "واقف عند الباب ولا احد يفتح",
+          "expected": "at_address_no_answer",
+          "rules": null,
+          "llm": "at_address_no_answer",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما لقيت العنوان",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "can't find the building",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "العنوان مو واضح وانا ضايع",
+          "expected": "cannot_find_address",
+          "rules": null,
+          "llm": "cannot_find_address",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الطريق مسكر",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "stuck, there is an accident on the road",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 0.95,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "في حادث والطريق واقف",
+          "expected": "road_blocked",
+          "rules": null,
+          "llm": "road_blocked",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما وصلت للموقع بعد",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "haven't reached the stop yet",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "لسا ما وصلت",
+          "expected": "never_reached",
+          "rules": null,
+          "llm": "never_reached",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "سلمتها للعميل",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "already delivered",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "تم التسليم",
+          "expected": "delivered_handed",
+          "rules": null,
+          "llm": "delivered_handed",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الشحنة مو معي",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "I don't have this parcel on the van",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ما لقيتها في السيارة",
+          "expected": "parcel_missing",
+          "rules": null,
+          "llm": "parcel_missing",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ممكن اتصل بك؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "ok",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "الشحنة ايش؟",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_courier_status",
+          "text": "wait",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "سالك",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "كل شي تمام",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "the road is clear",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "مفتوح وما فيه زحمة",
+          "expected": "clear",
+          "rules": null,
+          "llm": "clear",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "بطيء شوي، ربع ساعة",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "slow but moving, 15 minutes",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 0.98,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "زحمة بسيطة وبتفتح قريب",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 0.95,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "just slow, 20 min",
+          "expected": "slow_short",
+          "rules": null,
+          "llm": "slow_short",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "مغلق تماما يمكن ساعتين",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "closed after an accident, hours",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "الطريق مسكر لين الليل",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "blocked for at least an hour",
+          "expected": "blocked_long",
+          "rules": null,
+          "llm": "blocked_long",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ما اعلم",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "no idea",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "en"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ما عندي معلومة",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "ماني متأكد من الطريق",
+          "expected": "dont_know",
+          "rules": null,
+          "llm": "dont_know",
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "اتصل بالمشرف",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "ar"
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "who is asking",
+          "expected": null,
+          "rules": null,
+          "llm": null,
+          "llm_conf": 1.0,
+          "lang": "en"
+        }
+      ],
       "llm_only": {
         "n": 96,
         "coverage_of_answerable": 0.949,
@@ -72,7 +1880,7 @@
         "false_accepts": 3,
         "abstain_correct_on_unanswerable": 0.889
       },
-      "median_latency_s": 8.99,
+      "median_latency_s": 11.33,
       "errors": [
         {
           "spec": "ask_recipient_availability",
@@ -92,5 +1900,5 @@
     }
   },
   "origin": "synthetic-handwritten (not real traffic)",
-  "generated": "2026-10-16T17:47:18"
+  "generated": "2026-10-16T23:18:40"
 }

@@ -1,0 +1,145 @@
+{
+  "single": {
+    "episodes_per_regime_per_agent": 2000,
+    "regimes": [
+      "baseline",
+      "contradictory_evidence",
+      "correlated_evidence",
+      "flexible_deadlines",
+      "high_uncertainty",
+      "low_uncertainty",
+      "missing_or_delayed_responses",
+      "prior_shift_route_heavy",
+      "unseen_behaviour_and_outage",
+      "urgent_deadlines"
+    ],
+    "agents": [
+      "v1_legacy",
+      "v2_no_inquiry",
+      "v2_infogain",
+      "v2_value",
+      "v2_value_adaptive"
+    ],
+    "seed_start": 100000,
+    "seconds": 3421,
+    "quick": false
+  },
+  "inquiry_effect": {
+    "rows": 30,
+    "quick": false
+  },
+  "ablation": {
+    "episodes_per_regime_per_variant": 1500,
+    "regimes": [
+      "baseline",
+      "high_uncertainty",
+      "contradictory_evidence",
+      "urgent_deadlines",
+      "correlated_evidence"
+    ],
+    "variants": [
+      "v2_value",
+      "abl_point_belief",
+      "abl_no_tempering",
+      "abl_no_lookahead",
+      "abl_asks_before_looking",
+      "abl_mean_autonomy",
+      "v2_no_inquiry"
+    ],
+    "seconds": 1513,
+    "quick": false
+  },
+  "sensitivity": {
+    "environments": 60,
+    "episodes_per_env": 250,
+    "value_minus_dbonly": {
+      "median": -0.206,
+      "mean": -0.122,
+      "share_positive": 0.417,
+      "share_significantly_positive": 0.05,
+      "share_significantly_negative": 0.167,
+      "p10": -2.653,
+      "p90": 2.325
+    },
+    "infogain_minus_dbonly": {
+      "median": -7.78,
+      "share_positive": 0.117
+    },
+    "adaptive_minus_dbonly": {
+      "median": 0.139,
+      "mean": 0.3,
+      "share_positive": 0.517,
+      "share_significantly_positive": 0.083,
+      "share_significantly_negative": 0.133,
+      "p10": -1.773,
+      "p90": 2.436
+    },
+    "spearman_of_benefit_with_knob": {
+      "data_gap": 0.197,
+      "signal_noise": -0.036,
+      "slack_scale": -0.07,
+      "p_resp_scale": 0.516,
+      "latency_scale": -0.412,
+      "answer_noise": -0.255,
+      "util_scale": 0.153,
+      "action_scale": 0.159,
+      "comm_scale": -0.289
+    },
+    "seed_start": 300000,
+    "seconds": 1653,
+    "quick": false
+  },
+  "network": {
+    "incidents_per_regime": 400,
+    "regimes": [
+      "baseline",
+      "low_capacity",
+      "high_capacity",
+      "urgent_deadlines",
+      "flexible_deadlines",
+      "small_incident",
+      "large_incident",
+      "missing_or_delayed_response",
+      "contradictory_answers",
+      "prior_wrong_long",
+      "prior_wrong_short"
+    ],
+    "strategies": [
+      "independent_naive",
+      "independent_strong",
+      "desk_greedy",
+      "independent_inquiry",
+      "coordinated_no_inquiry",
+      "coordinated_inquiry",
+      "coordinated_inquiry_adaptive",
+      "coordinated_always_ask",
+      "coordinated_inquiry_no_recourse",
+      "oracle"
+    ],
+    "seed_start": 400000,
+    "seconds": 409,
+    "quick": false
+  },
+  "safety": {
+    "seeds": 500000,
+    "episodes_per_env": 1500,
+    "process_worlds_mean": {
+      "auto_rate_old": 0.18,
+      "auto_rate_new": 0.0981,
+      "harmful_per_episode_old": 0.01413,
+      "harmful_per_episode_new": 0.0042,
+      "recommended_old": 0.1536,
+      "recommended_new": 0.2355,
+      "utility_old": -30.071,
+      "utility_new": -30.283
+    },
+    "policy_violations_total": 0,
+    "seconds": 1270,
+    "quick": false
+  },
+  "ensemble": {
+    "episodes_per_cell": 1200,
+    "seconds": 214,
+    "quick": false
+  }
+}

@@ -36,17 +36,17 @@ def load(name: str) -> pd.DataFrame:
 
 def single_section() -> tuple[str, dict]:
     s, p = load("single_summary"), load("single_paired")
-    lab = {"v1_legacy": "Legacy v1", "v2_no_inquiry": "DB-only v2", "v2_infogain": "Info-gain asking", "v2_value": "Value asking"}
+    lab = {"v1_legacy": "Legacy v1", "v2_no_inquiry": "DB-only v2", "v2_infogain": "Info-gain asking", "v2_value": "Value asking", "v2_value_adaptive": "Value asking + learned responsiveness"}
     out = ["### Single-shipment agents across operating regimes (SYNTHETIC process world)\n", f"n = {int(s.n.iloc[0])} paired episodes per regime per agent (seeds 100000+). Utility is expected realised utility in the environment's own units; regret is measured against an oracle that knows the true cause and the physical times.\n"]
     pv = s.pivot(index="regime", columns="agent", values="utility").rename(columns=lab)[list(lab.values())]
     out += ["**Mean utility per case (higher is better)**\n", md_table(pv.reset_index(), "{:.1f}"), ""]
-    q = s.pivot(index="regime", columns="agent", values="n_questions").rename(columns=lab)[["Info-gain asking", "Value asking"]]
+    q = s.pivot(index="regime", columns="agent", values="n_questions").rename(columns=lab)[["Info-gain asking", "Value asking", "Value asking + learned responsiveness"]]
     out += ["**Questions asked per case**\n", md_table(q.reset_index(), "{:.2f}"), ""]
     rows = []
     for reg in pv.index:
         g = p[(p.regime == reg) & (p.metric == "utility")]
         r = {"regime": reg}
-        for a, b, k in (("v2_value", "v2_no_inquiry", "value asking vs DB-only"), ("v2_infogain", "v2_no_inquiry", "info-gain asking vs DB-only"), ("v2_no_inquiry", "v1_legacy", "v2 DB-only vs v1")):
+        for a, b, k in (("v2_value", "v2_no_inquiry", "value asking vs DB-only"), ("v2_value_adaptive", "v2_no_inquiry", "+ learned responsiveness vs DB-only"), ("v2_infogain", "v2_no_inquiry", "info-gain asking vs DB-only"), ("v2_no_inquiry", "v1_legacy", "v2 DB-only vs v1")):
             x = g[(g.a == a) & (g.b == b)].iloc[0]
             r[k] = verdict(x.mean_diff, x.ci_lo, x.ci_hi)
         rows.append(r)
@@ -119,7 +119,7 @@ def section_models() -> str:
                      "chosen on validation": f"{c['metrics']['chosen']['estimator']} / {c['metrics']['chosen']['feature_set']}"})
     out = ["## 2. REAL DATA: trained models and the bridge into the agent\n", "### 2.1 Models (chronological split with embargo; estimator, features and calibrator chosen on validation only; test touched once)\n", md_table(pd.DataFrame(rows)), "",
            "Three tasks, three targets, never merged. None is SPL data. The Olist late rate drifted between validation and test, so its calibration does not transfer (ranking is what to trust); the Amazon model ranks only moderately (0.6% base rate).",
-           "The LaDe model drops resolved-task *count* features: the validation rule (a richer set must beat the simpler one by 5% PR-AUC) prefers history *means* only, and counts act as a clock that drifts out of range later in time. This was found by the bridge evaluation (23% of real held-out tasks had been abstained on, all because a count was out of range) and fixed by the rule, not by loosening the range check.\n"]
+           "The LaDe model drops resolved-task *count* features: the validation rule (a richer set must beat the simpler one by 5% PR-AUC) prefers history *means* only, and counts act as a clock that drifts out of range later in time. This was found by the bridge evaluation (12.8% of real held-out tasks, 256 of 2000, were abstained on, mostly because a history *count* feature was beyond its training range: region 158, courier 84, AOI 43 of 256) and fixed by the rule, not by loosening the range check.\n"]
     b = j("model_bridge")
     la, am, dm = b["lade_replay"], b["amazon_replay"], b["demo_scenarios"]
     out += ["### 2.2 Bridge: serving the trained models through the agent's `RiskModel` interface\n",
@@ -161,15 +161,15 @@ def section_ablation() -> str:
         rows.append(r)
     out += [md_table(pd.DataFrame(rows)), ""]
     hm = []
-    for b, label in names.items():
+    for b_, label in names.items():
         r = {"component removed": label}
         for reg in regs:
-            x = p[(p.regime == reg) & (p.b == b) & (p.metric == "harmful_auto")]
-            if len(x):
-                x = x.iloc[0]
-                r[reg] = f"{-x.mean_diff * 100:+.2f} pp harmful auto (full minus ablated; negative = full is safer: {x.mean_diff * 100:+.2f})"
+            h = p[(p.regime == reg) & (p.b == b_) & (p.metric == "harmful_auto")]
+            a_ = p[(p.regime == reg) & (p.b == b_) & (p.metric == "auto")]
+            if len(h) and len(a_):
+                r[reg] = f"{h.iloc[0].mean_diff * 100:+.2f} / {a_.iloc[0].mean_diff * 100:+.1f} pp"
         hm.append(r)
-    out += ["**Safety side of the ablation** (change in harmful automatic actions per 100 cases when the component is removed, ablated minus full):\n", md_table(pd.DataFrame([{k: (v if k == "component removed" else f"{-float(v.split('(')[0].split()[0]):+.2f}") for k, v in r.items()} for r in hm])), ""]
+    out += ["**Safety side of the ablation.** Full system minus ablated variant: harmful automatic actions per 100 cases / change in the share of cases handled automatically (percentage points). A positive first number means the full system has *more* harmful automation than the variant. Removing set look-ahead, for example, makes the agent automate less (it gathers less evidence, so it is less often confident enough), which also lowers harmful automation; that is the price of being more decisive.\n", md_table(pd.DataFrame(hm)), ""]
     return "\n".join(out)
 
 
@@ -214,6 +214,11 @@ def section_network() -> str:
     return "\n".join(out)
 
 
+def single_row(regime: str, agent: str = "v2_value") -> pd.Series:
+    t = load("single_summary")
+    return t[(t.regime == regime) & (t.agent == agent)].iloc[0]
+
+
 def section_safety() -> str:
     ev, sm = load("safety_policy_eval"), j("safety_summary", R)
     dev = load("safety_dev_sweep")
@@ -233,8 +238,9 @@ def section_safety() -> str:
            ""]
     if len(s1):
         out += ["On the older table-perturbation world (a different environment, to check the gate generalises): " + "; ".join(f"{r.policy}: automatic {r.auto_rate:.1%}, unsafe (true p<0.35) {r.unsafe_true_p_lt_035_per_episode:.2%}" for r in s1.itertuples()) + ".", ""]
-    out += ["**Trade-off, stated plainly.** The gate moves cases from automatic to analyst-approved. It cuts harmful automation at the price of more analyst reviews; utility is unchanged here because the simulated analyst approves every recommendation as written (the real benefit of review is likely larger). Humans still approve every sensitive action; real WhatsApp stays disabled by default.",
-            "**Failure under missing evidence** (regime *unseen behaviour and outage*: two evidence tools dead, couriers reporting stale statuses): see the single-shipment tables - the agent escalates more and falsely resolves rarely rather than guessing.", ""]
+    miss, base_ = single_row("unseen_behaviour_and_outage"), single_row("baseline")
+    out += ["**Trade-off, stated plainly.** The gate moves cases from automatic to analyst-approved. It cuts harmful automation at the price of more analyst reviews; mean utility changes by {sm['process_worlds_mean']['utility_new'] - sm['process_worlds_mean']['utility_old']:+.2f} per case (the analyst-approval delay), because the simulated analyst approves every recommendation as written (the real benefit of review is likely larger). Humans still approve every sensitive action; real WhatsApp stays disabled by default.",
+            "**Failure under missing evidence** (regime *unseen behaviour and outage*: two evidence tools dead, stale courier statuses; `v2_value`, n=2000 vs baseline): escalation " + f"{miss.escalated:.1%} vs {base_.escalated:.1%}, automatic share {miss.auto:.1%} vs {base_.auto:.1%}, falsely resolved (declared fine although a real cause existed) {miss.false_resolve:.1%} vs {base_.false_resolve:.1%}, harmful automatic actions {miss.harmful_auto * 100:.2f} vs {base_.harmful_auto * 100:.2f} per 100 cases (shipped gate in both). **This is a weakness, not a strength:** in this regime the dead tools fail *silently* (they return their uninformative default, which looks like a clean reading), so the agent cannot tell missing evidence from absent evidence; it escalates less and falsely resolves more. The fix is at the tool boundary (a tool that cannot read must return an explicit *unavailable*, which the belief then skips and the policy treats as missing evidence); it is listed in the next steps and not yet implemented.", ""]
     return "\n".join(out)
 
 
@@ -274,12 +280,13 @@ def pitch() -> str:
     x1 = base[(base.a == "v2_no_inquiry") & (base.b == "v1_legacy")].iloc[0]
     nwin = int(((p[(p.metric == "utility") & (p.a == "v2_no_inquiry") & (p.b == "v1_legacy")].ci_lo > 0)).sum())
     ntot = int(len(p[(p.metric == "utility") & (p.a == "v2_no_inquiry") & (p.b == "v1_legacy")]))
-    P.append((f"The redesigned agent beats the legacy agent in {nwin} of {ntot} independent operating regimes (baseline gain {x1.mean_diff:+.1f} utility per case, 95% CI {x1.ci_lo:+.1f} to {x1.ci_hi:+.1f}) and never loses",
-              "SYNTHETIC process world, independent of the agent's own tables", f"n={int(s.n.iloc[0])} paired episodes per regime", "legacy v1 agent", "9 regimes: uncertainty, deadlines, response problems, contradictions, prior shift, outage, correlated evidence", "Simulated; utility in environment units"))
+    nworse = int(((p[(p.metric == "utility") & (p.a == "v2_no_inquiry") & (p.b == "v1_legacy")].ci_hi < 0)).sum())
+    P.append((f"The redesigned agent (database-only, before any asking) is significantly better than the legacy agent in {nwin} of {ntot} independent operating regimes and significantly worse in {nworse} (baseline gain {x1.mean_diff:+.1f} utility per case, 95% CI {x1.ci_lo:+.1f} to {x1.ci_hi:+.1f})",
+              "SYNTHETIC process world, independent of the agent's own tables", f"n={int(s.n.iloc[0])} paired episodes per regime", "legacy v1 agent", f"{ntot} regimes: uncertainty, deadlines, response problems, contradictions, prior shift, outage, correlated evidence", "Simulated; utility in environment units"))
     ie = load("inquiry_effect")
     iv = ie[(ie.regime == "baseline") & (ie.agent == "v2_value")].iloc[0]
     ig = ie[(ie.regime == "baseline") & (ie.agent == "v2_infogain")].iloc[0]
-    P.append((f"Asking by decision value uses {iv.questions_per_case:.2f} questions per case instead of {ig.questions_per_case:.2f} for information-gain asking ({1 - iv.questions_per_case / ig.questions_per_case:.0%} fewer) while earning more: {iv.mean_gain_all:+.1f} vs {ig.mean_gain_all:+.1f} utility per case against database-only; when a question changes the decision ({iv.decision_changed_share_of_asked:.0%} of asked cases) it is worth {iv.mean_gain_when_decision_changed:+.0f}",
+    P.append((f"Asking by decision value uses {iv.questions_per_case:.2f} questions per case instead of {ig.questions_per_case:.2f} for information-gain asking ({1 - iv.questions_per_case / ig.questions_per_case:.0%} fewer) while earning more: {iv.mean_gain_all:+.1f} vs {ig.mean_gain_all:+.1f} utility per case against database-only; when a question changes the decision ({iv.decision_changed_share_of_asked:.0%} of asked cases) it is worth {iv.mean_gain_when_decision_changed:+.0f}; {iv.inquiry_target_relevant_share:.0%} of questions go to a person who actually holds information about the true cause",
               "SYNTHETIC process world", f"n={int(iv.n)} paired episodes (baseline regime)", "database-only agent; information-gain asking", "baseline regime; answers arrive in ~6 min on average", "Asking is conditional: see the sensitivity result below"))
     t, pn = load("network_summary"), load("network_paired")
     un = pn[pn.metric == "utility"]
@@ -287,16 +294,28 @@ def pitch() -> str:
     nsig = int((g.ci_lo > 0).sum())
     big = g[g.regime == "large_incident"].iloc[0]
     ps = t[t.regime == "large_incident"].set_index("strategy").protected_share
-    P.append((f"Coordinated recovery beats a strong capacity-aware human-desk heuristic in {nsig} of {len(g)} operating regimes; in large incidents it gains {big.mean_diff:+.0f} SAR-equivalents per incident (95% CI {big.ci_lo:+.0f} to {big.ci_hi:+.0f}) and protects {ps['coordinated_no_inquiry']:.0%} of shipments vs {ps['desk_greedy']:.0%} (and {ps['independent_naive']:.0%} for naive per-shipment handling)",
+    big_reg = t[t.regime == "large_incident"].set_index("strategy").regret
+    P.append((f"Coordinated recovery beats a strong capacity-aware human-desk heuristic in {nsig} of {len(g)} operating regimes; in large incidents it gains {big.mean_diff:+.0f} SAR-equivalents per incident (95% CI {big.ci_lo:+.0f} to {big.ci_hi:+.0f}) and cuts the utility shortfall against an oracle by {1 - big_reg['coordinated_no_inquiry'] / big_reg['desk_greedy']:.0%} versus the desk heuristic (and {1 - big_reg['coordinated_no_inquiry'] / big_reg['independent_naive']:.0%} versus naive per-shipment handling); on-time share {ps['coordinated_no_inquiry']:.0%} vs {ps['desk_greedy']:.0%} desk vs {ps['independent_naive']:.0%} naive",
               "SYNTHETIC incidents with sampled travel times and blockage durations", f"n={int(big.n)} paired incidents per regime", "human-desk heuristic; naive per-shipment handling", "11 regimes: capacity, deadlines, incident size, response problems, wrong priors", "Simulated; resources and costs are assumptions"))
     sm = j("safety_summary", R)
     w = sm["process_worlds_mean"]
     P.append((f"After diagnosing every unsafe-automation case, a new autonomy gate cut harmful automatic actions from {w['harmful_per_episode_old'] * 100:.2f} to {w['harmful_per_episode_new'] * 100:.2f} per 100 cases ({1 - w['harmful_per_episode_new'] / w['harmful_per_episode_old']:.0%} lower), with 0 policy-invariant violations across all evaluated episodes; automatic share {w['auto_rate_old']:.0%} to {w['auto_rate_new']:.0%} (the rest goes to an analyst)",
-              "SYNTHETIC process world, held-out seeds", f"n={sm['episodes_per_env']} episodes x 9 regimes x 2 policies", "the previous autonomy policy", "policy tuned on separate development seeds", "Simulated analyst approves recommendations as written"))
+              "SYNTHETIC process world, held-out seeds", f"n={sm['episodes_per_env']} episodes x 9 regimes x 2 policies", "the previous autonomy policy", "policy tuned on separate development seeds", f"Simulated analyst approves recommendations as written; the gate costs {w['utility_old'] - w['utility_new']:.2f} utility per case (analyst review delay) and raises analyst recommendations {w['recommended_old']:.0%} to {w['recommended_new']:.0%}"))
     se = j("sensitivity_summary", R)
     v, a = se["value_minus_dbonly"], se["adaptive_minus_dbonly"]
     P.append((f"Honest finding: asking people is regime-dependent. Across {se['environments']} randomly perturbed worlds, fixed-assumption asking beat database-only in {v['share_positive']:.0%} and was significantly worse in {v['share_significantly_negative']:.0%}; learning each responder's responsiveness online cut the significantly-worse worlds to {a['share_significantly_negative']:.0%}",
               "SYNTHETIC randomised environments", f"{se['environments']} worlds x {se['episodes_per_env']} paired episodes", "database-only agent", "every environment knob perturbed independently", "A robustness result, not a savings claim"))
+    uz = pn[pn.metric == "utility"]
+    fx = uz[(uz.a == "coordinated_inquiry") & (uz.b == "coordinated_no_inquiry")]
+    ad = uz[(uz.a == "coordinated_inquiry_adaptive") & (uz.b == "coordinated_no_inquiry")]
+    P.append((f"One shared question to the dispatcher, with fixed assumptions, is significantly harmful in {int((fx.ci_hi < 0).sum())} of {len(fx)} network regimes and significantly helpful in {int((fx.ci_lo > 0).sum())}; with responsiveness and reliability learned from past incidents it is significantly harmful in {int((ad.ci_hi < 0).sum())} and significantly helpful in {int((ad.ci_lo > 0).sum())} (best: {ad.mean_diff.max():+.0f} SAR-equivalents per incident)",
+              "SYNTHETIC incidents", f"n={int(ad.n.iloc[0])} paired incidents per regime", "coordinated plan without asking", "11 regimes incl. missing/delayed and contradictory dispatcher answers", "Reliability is learned from outcomes observed afterwards; the service feeds responsiveness today and reliability only in the simulation"))
+    ab = load("ablation_paired")
+    abu = ab[ab.metric == "utility"]
+    nonq = abu[abu.b == "v2_no_inquiry"]
+    others = abu[abu.b.isin(["abl_point_belief", "abl_no_tempering", "abl_mean_autonomy", "abl_asks_before_looking"])]
+    P.append((f"Ablation, stated honestly: decision-value asking is significantly beneficial in {int((nonq.ci_lo > 0).sum())} of {len(nonq)} regimes tested; the 24-table ensemble, correlated-evidence tempering, the pessimistic-tail autonomy gate and asking-order discipline show a detectable benefit in {int((others.ci_lo > 0).sum())} of {len(others)} comparisons (tempering costs utility when evidence is independent)",
+              "SYNTHETIC process world + a table-error stress test", f"n={int(abu.n.iloc[0])} paired episodes per regime and variant", "each component removed in turn", "5 regimes; ensemble also tested with table error sigma 0.2 / 0.5 / 1.0", "Those components are kept for uncertainty reporting; they are not proven contributors"))
     r = j("reply_interpretation")
     mm = next(iter(r["models"].values()))
     P.append((f"Local Qwen3.5 reads {mm['llm_only']['coverage_of_answerable']:.0%} of answerable Arabic/English replies vs {r['rules_only']['coverage_of_answerable']:.0%} for keyword rules, but is overconfident, so every suggestion is confirmed by a person",

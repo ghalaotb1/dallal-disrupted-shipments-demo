@@ -1,4 +1,6 @@
-# Dallal experiments
+# Dallal experiments (earlier report)
+
+> **Superseded for decision experiments.** The independent, paired, regime-and-sensitivity evaluation is in [`../EVALUATION_REPORT.md`](../EVALUATION_REPORT.md) with results in `results/` and charts in `charts/`; pitch numbers in [`PITCH_METRICS.md`](PITCH_METRICS.md). The B1/B2 sections below come from the earlier table-perturbation simulator, whose truth is a noisy copy of the agent's own tables (circular); keep them as history, not as evidence.
 
 Two kinds of evidence, never mixed:
 
@@ -13,7 +15,7 @@ Regenerate everything: see the commands at the end of this file.
 |---|---|---|---|---|---|---|---|---|---|
 | `olist_late_at_handoff_v1` | Olist Brazilian e-commerce (public) | delivered after the promised calendar day (engineered from observed timestamps) | 54,804 / 7,610 / 19,156 | 0.838 (0.82-0.85) | 0.303 (3.6%) | 5.1x | 0.0335 vs 0.0346 | 0.0466 | logreg / plan |
 | `amazon_failed_attempt_v1` | Amazon Last Mile Routing Research Challenge (public) | any non-delivered visit for this package on its route | 859,260 / 140,151 / 355,664 | 0.771 (0.75-0.79) | 0.028 (0.6%) | 4.1x | 0.0060 vs 0.0061 | 0.0020 | hist_gbm / plan |
-| `lade_slow_task_v1` | LaDe last-mile delivery (Cainiao), Shanghai | accept-to-deliver duration above the training-period P90 (engineered) | 259,997 / 60,001 / 80,002 | 0.863 (0.86-0.87) | 0.517 (9.0%) | 5.4x | 0.0593 vs 0.0818 | 0.0075 | hist_gbm / context+history |
+| `lade_slow_task_v1` | LaDe last-mile delivery (Cainiao), Shanghai | accept-to-deliver duration above the training-period P90 (engineered) | 259,997 / 60,001 / 80,002 | 0.864 (0.86-0.87) | 0.519 (9.0%) | 5.3x | 0.0592 vs 0.0818 | 0.0087 | hist_gbm / context+history_means |
 
 Protocol: chronological train/valid/test with embargo; estimator, feature set and calibrator chosen on validation only; test touched once. Limits: the Olist late rate drifted between validation and test, so its calibration does not transfer (ranking is what to trust); the Amazon model ranks only moderately (0.6% base rate). Full cards: `docs/ml/models.json`.
 
@@ -161,10 +163,10 @@ Reading: the model may only choose the next investigation step (closing pipeline
 | interpreter | coverage of answerable | false-accept rate | abstains correctly on unanswerable | median latency (s) |
 |---|---|---|---|---|
 | rules only | 38% | 6.2% (2) | 94% | - |
-| qwen3.5:4b llm only | 96% | 3.8% (3) | 89% | 4.57 |
-| qwen3.5:4b rules then llm | 96% | 5.1% (4) | 89% | 4.57 |
-| qwen3.5:9b llm only | 95% | 2.6% (2) | 94% | 8.99 |
-| qwen3.5:9b rules then llm | 97% | 3.8% (3) | 89% | 8.99 |
+| qwen3.5:4b llm only | 96% | 3.8% (3) | 89% | 6.21 |
+| qwen3.5:4b rules then llm | 96% | 5.1% (4) | 89% | 6.21 |
+| qwen3.5:9b llm only | 95% | 2.6% (2) | 94% | 11.33 |
+| qwen3.5:9b rules then llm | 97% | 3.8% (3) | 89% | 11.33 |
 
 Set authored by the team (not real traffic). A false accept would become evidence, so it is the metric that matters. Findings: the LLM reads 95-97% of answerable replies versus 38% for the keyword rules (the rules have no lexicon for courier / dispatcher answers), but it still accepts contradictory or vague replies ("yes and no", "حاضر") with confidence 0.95-1.0, so its stated confidence is not calibrated. Qwen3.5 under Ollama does not enforce `format` JSON schemas (first attempt: 0% parsed); enum-constrained **tool calling** works. Therefore the LLM output is a *suggestion shown to a human reviewer*, never evidence by itself.
 

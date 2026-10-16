@@ -245,3 +245,35 @@ def stage_inquiry_effect() -> dict[str, Any]:
     t = pd.DataFrame(rows)
     _save("inquiry_effect", t)
     return {"rows": len(t)}
+
+
+def stage_ensemble(n: int, workers: int) -> dict[str, Any]:
+    """Stress test of the 24-table ensemble where it is supposed to matter: the agent's likelihood tables are wrong by a controlled amount (sigma_true). Table-perturbation world."""
+    import multiprocessing as mp
+
+    rows = []
+    for sigma in (0.2, 0.5, 1.0):
+        with mp.get_context("spawn").Pool(workers) as pool:
+            res = pool.map(_ens_task, [(sigma, s, k) for s in range(SEEDS["ablation"] + 90_000, SEEDS["ablation"] + 90_000 + n) for k in (24, 1)], chunksize=40)
+        df = pd.DataFrame(res)
+        for k in (24, 1):
+            g = df[df.k == k]
+            rows.append({"sigma_true": sigma, "ensemble_size": k, "n": len(g), "regret": g.regret.mean(), "regret_lo": g.regret.mean() - 1.96 * g.regret.std() / np.sqrt(len(g)), "regret_hi": g.regret.mean() + 1.96 * g.regret.std() / np.sqrt(len(g)),
+                         "unsafe_auto": g.unsafe_auto.mean(), "auto": g.auto.mean(), "questions": g.n_questions.mean(), "escalated": g.escalated.mean()})
+        a, b = df[df.k == 24].set_index("seed").regret, df[df.k == 1].set_index("seed").regret
+        d = (b - a).to_numpy()  # >0: the ensemble has lower regret
+        rows[-2]["paired_regret_reduction_by_ensemble"] = float(d.mean())
+        rows[-2]["paired_ci_lo"], rows[-2]["paired_ci_hi"] = float(d.mean() - 1.96 * d.std() / np.sqrt(len(d))), float(d.mean() + 1.96 * d.std() / np.sqrt(len(d)))
+    t = pd.DataFrame(rows)
+    _save("ensemble_stress", t)
+    return {"episodes_per_cell": n}
+
+
+def _ens_task(args: tuple) -> dict[str, Any]:
+    from dallal.agent.v2.bayes import default_book
+    from dallal.sim import runner as sim1
+    from dallal.sim.world import TrueModel
+
+    sigma, seed, k = args
+    r = sim1.run_episode("v2_value", seed, TrueModel(sigma_true=sigma), book=default_book(k=k))
+    return {"sigma_true": sigma, "k": k, "seed": seed, "regret": r["regret"], "unsafe_auto": r["unsafe_auto"], "auto": r["decision"] == "auto_eligible", "n_questions": r["n_questions"], "escalated": r["escalated"]}

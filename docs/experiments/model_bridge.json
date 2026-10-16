@@ -1,0 +1,258 @@
+{
+  "generated": "2026-10-17T01:43:54",
+  "origin": "real public data replays (LaDe, Amazon) + synthetic demo scenarios",
+  "demo_scenarios": {
+    "scenarios": 12,
+    "cases": 60,
+    "scored_by_trained_model": 0,
+    "abstention_codes": {
+      "amazon_failed_attempt:domain_mismatch": 60,
+      "lade_slow_task:domain_mismatch": 60,
+      "olist_late_at_handoff:not_bridged": 60
+    },
+    "reading": "Demo and synthetic bundles are refused by the domain gate (source/origin), so the heuristic is used and labelled as such."
+  },
+  "lade_replay": {
+    "cases": 2000,
+    "as_of": "accept + 10 min, held-out TEST window only",
+    "latency_ms": {
+      "p50": 11.2,
+      "p95": 21.89,
+      "mean": 13.07,
+      "cold_store_build_s": 1.0
+    },
+    "abstention_codes": {
+      "ok": 1977,
+      "out_of_training_range": 23
+    },
+    "coverage": 0.989,
+    "features_outside_range_when_abstaining": {
+      "open_tasks_courier": 16,
+      "aoi_past_logdur": 18,
+      "courier_past_logdur": 13,
+      "accept_dist_m": 1
+    },
+    "trained_model_via_bridge": {
+      "n": 1977,
+      "prevalence": 0.0764,
+      "roc_auc": 0.825,
+      "roc_auc_95ci": [
+        0.7881,
+        0.8597
+      ],
+      "pr_auc": 0.3997
+    },
+    "heuristic_same_cases": {
+      "n": 1977,
+      "prevalence": 0.0764,
+      "roc_auc": 0.5,
+      "roc_auc_95ci": [
+        0.5,
+        0.5
+      ],
+      "pr_auc": 0.0764
+    },
+    "heuristic_distinct_scores": 1,
+    "forced_scores_on_abstained_cases_if_range_check_were_off": {
+      "n": 23,
+      "prevalence": 0.7391,
+      "roc_auc": 0.4902,
+      "roc_auc_95ci": [
+        0.2275,
+        0.7698
+      ],
+      "pr_auc": 0.7628
+    },
+    "calibration_on_replay": {
+      "mean_predicted": 0.08,
+      "observed_rate": 0.0764,
+      "ece": 0.0174,
+      "brier": 0.0573,
+      "brier_base_rate_forecast": 0.0705,
+      "reliability_deciles": [
+        {
+          "n": 198,
+          "pred": 0.0048,
+          "obs": 0.0101
+        },
+        {
+          "n": 198,
+          "pred": 0.0087,
+          "obs": 0.0202
+        },
+        {
+          "n": 198,
+          "pred": 0.0125,
+          "obs": 0.0051
+        },
+        {
+          "n": 198,
+          "pred": 0.0174,
+          "obs": 0.0152
+        },
+        {
+          "n": 198,
+          "pred": 0.0238,
+          "obs": 0.0404
+        },
+        {
+          "n": 198,
+          "pred": 0.0318,
+          "obs": 0.0354
+        },
+        {
+          "n": 198,
+          "pred": 0.0442,
+          "obs": 0.0657
+        },
+        {
+          "n": 197,
+          "pred": 0.0705,
+          "obs": 0.0812
+        },
+        {
+          "n": 197,
+          "pred": 0.1389,
+          "obs": 0.132
+        },
+        {
+          "n": 197,
+          "pred": 0.4492,
+          "obs": 0.3604
+        }
+      ]
+    },
+    "operating_points": {
+      "elevated_band": {
+        "threshold": 0.1423,
+        "flag_rate": 0.1401,
+        "precision": 0.2888,
+        "recall": 0.5298
+      },
+      "high_band": {
+        "threshold": 0.451,
+        "flag_rate": 0.0395,
+        "precision": 0.5641,
+        "recall": 0.2914
+      },
+      "top5%": {
+        "precision": 0.5102,
+        "recall": 0.3311,
+        "lift": 6.68
+      },
+      "top10%": {
+        "precision": 0.3604,
+        "recall": 0.4702,
+        "lift": 4.72
+      },
+      "top20%": {
+        "precision": 0.2481,
+        "recall": 0.649,
+        "lift": 3.25
+      }
+    },
+    "parity_vs_training_frame": {
+      "compared": 400,
+      "rows_identical_within_1e-6": 400,
+      "max_abs_diff_per_feature": {
+        "hour": 0.0,
+        "dow": 0.0,
+        "aoi_type": 0.0,
+        "open_tasks_courier": 0.0,
+        "accept_dist_m": 0.0,
+        "aoi_past_logdur": 0.0,
+        "courier_past_logdur": 0.0,
+        "region_past_logdur": 0.0
+      }
+    },
+    "point_in_time_check": {
+      "cases_checked": 300,
+      "feature_mismatches_when_future_rows_removed": 0
+    },
+    "agent_end_to_end": {
+      "model": {
+        "runs": 600,
+        "called_predict_risk": 600,
+        "risk_source": {
+          "model": 596,
+          "heuristic": 4
+        },
+        "decisions": {
+          "resolved": 600
+        },
+        "watch_flags": 77,
+        "band_distribution": {
+          "low": 523,
+          "elevated": 53,
+          "high": 24
+        },
+        "flag_rate": 0.128,
+        "precision_of_flagged": 0.325,
+        "recall_of_slow": 0.543,
+        "base_rate": 0.077
+      },
+      "heuristic": {
+        "runs": 600,
+        "called_predict_risk": 600,
+        "risk_source": {
+          "heuristic": 600
+        },
+        "decisions": {
+          "resolved": 600
+        },
+        "watch_flags": 0,
+        "band_distribution": {
+          "low": 600
+        },
+        "flag_rate": 0.0,
+        "precision_of_flagged": null,
+        "recall_of_slow": 0.0,
+        "base_rate": 0.077
+      }
+    }
+  },
+  "amazon_replay": {
+    "routes": 120,
+    "packages": 28245,
+    "coverage": 0.9948,
+    "abstention_codes": {
+      "ok": 28099,
+      "out_of_training_range": 146
+    },
+    "trained_model_via_bridge": {
+      "n": 28099,
+      "prevalence": 0.0051,
+      "roc_auc": 0.7468,
+      "roc_auc_95ci": [
+        0.699,
+        0.7885
+      ],
+      "pr_auc": 0.0399
+    },
+    "max_abs_feature_diff_vs_training_frame": {
+      "volume_cm3": 0.0,
+      "planned_service_s": 0.0,
+      "pk_at_stop": 0.0,
+      "pk_on_route": 0.0,
+      "n_stops": 0.0,
+      "capacity": 0.0,
+      "load_ratio": 0.0,
+      "has_window": 0.0,
+      "window_h": 0.0,
+      "dep_hour": 0.0,
+      "dep_dow": 0.0,
+      "svc_per_pkg": 0.0
+    }
+  },
+  "latency_idle_machine": {
+    "cases": 600,
+    "bridge_plus_predict_ms": {
+      "p50": 8.49,
+      "p95": 15.88,
+      "p99": 19.47,
+      "mean": 9.11
+    },
+    "predict_only_ms_mean": 5.809,
+    "note": "measured with nothing else running; adapter + calibrated model only (no agent runtime, no HTTP)"
+  }
+}

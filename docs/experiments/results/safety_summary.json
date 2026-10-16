@@ -1,0 +1,15 @@
+{
+  "seeds": 500000,
+  "episodes_per_env": 1500,
+  "process_worlds_mean": {
+    "auto_rate_old": 0.18,
+    "auto_rate_new": 0.0981,
+    "harmful_per_episode_old": 0.01413,
+    "harmful_per_episode_new": 0.0042,
+    "recommended_old": 0.1536,
+    "recommended_new": 0.2355,
+    "utility_old": -30.071,
+    "utility_new": -30.283
+  },
+  "policy_violations_total": 0
+}

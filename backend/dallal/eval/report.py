@@ -20,7 +20,7 @@ def _load(p: Path) -> dict[str, Any] | None:
 
 
 def main() -> None:
-    md = ["# Dallal experiments", "",
+    md = ["# Dallal experiments (earlier report)", "", "> **Superseded for decision experiments.** The independent, paired, regime-and-sensitivity evaluation is in [`../EVALUATION_REPORT.md`](../EVALUATION_REPORT.md) with results in `results/` and charts in `charts/`; pitch numbers in [`PITCH_METRICS.md`](PITCH_METRICS.md). The B1/B2 sections below come from the earlier table-perturbation simulator, whose truth is a noisy copy of the agent's own tables (circular); keep them as history, not as evidence.", "",
           "Two kinds of evidence, never mixed:", "",
           "* **Real-data model metrics** (Part A): models fitted on real public delivery datasets, evaluated on later held-out time windows. They describe those datasets, **not SPL**.",
           "* **Synthetic decision experiments** (Part B): agents run on a generative simulator with *misspecified* likelihoods (the world differs from what the agent believes). Utilities are SAR-equivalents from `utility.yaml` - **assumptions**. Results are *relative* comparisons under stated assumptions, not forecasts of money saved.", "",

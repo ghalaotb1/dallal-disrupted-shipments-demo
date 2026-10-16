@@ -51,7 +51,9 @@ class ResponseStats:
     @classmethod
     def from_store(cls, store: Any, time_scale: float = 1.0, limit: int = 300) -> ResponseStats:
         """Build from the durable inquiry history (closed inquiries only). Latency is the real elapsed time scaled to operational minutes."""
-        st = cls()
+        import os
+
+        st = cls(prior_strength=float(os.environ.get("DALLAL_RESPONSE_PRIOR_STRENGTH", "8")))  # higher = the catalogue prior moves more slowly (the local demo sets it high: a person clicking a simulated reply is not a real responder)
         rows = store.q("SELECT spec_id,status,asked_real,answered_real FROM inquiries WHERE status IN ('answered','timed_out') ORDER BY asked_real DESC LIMIT ?", (limit,))
         for r in rows:
             ok = r["status"] == "answered"

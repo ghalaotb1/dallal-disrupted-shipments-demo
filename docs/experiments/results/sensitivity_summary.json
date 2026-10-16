@@ -1,0 +1,38 @@
+{
+  "environments": 60,
+  "episodes_per_env": 250,
+  "value_minus_dbonly": {
+    "median": -0.206,
+    "mean": -0.122,
+    "share_positive": 0.417,
+    "share_significantly_positive": 0.05,
+    "share_significantly_negative": 0.167,
+    "p10": -2.653,
+    "p90": 2.325
+  },
+  "infogain_minus_dbonly": {
+    "median": -7.78,
+    "share_positive": 0.117
+  },
+  "adaptive_minus_dbonly": {
+    "median": 0.139,
+    "mean": 0.3,
+    "share_positive": 0.517,
+    "share_significantly_positive": 0.083,
+    "share_significantly_negative": 0.133,
+    "p10": -1.773,
+    "p90": 2.436
+  },
+  "spearman_of_benefit_with_knob": {
+    "data_gap": 0.197,
+    "signal_noise": -0.036,
+    "slack_scale": -0.07,
+    "p_resp_scale": 0.516,
+    "latency_scale": -0.412,
+    "answer_noise": -0.255,
+    "util_scale": 0.153,
+    "action_scale": 0.159,
+    "comm_scale": -0.289
+  },
+  "seed_start": 300000
+}

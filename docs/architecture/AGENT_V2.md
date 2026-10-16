@@ -93,3 +93,15 @@ Conclusion: tool calling is reliable at both sizes, but judgement without the de
 * Cause likelihoods remain expert tables; they should be re-estimated from SPL exception and resolution logs when available (the ensemble already carries the uncertainty).
 * The simulator is mine: a misspecified truth is still my idea of misspecification.
 * No real WhatsApp message has been sent; no SPL data has been used; the LLM has not been evaluated on real traffic.
+
+
+## 9. Addendum: what the independent evaluation changed (see [EVALUATION_REPORT](../EVALUATION_REPORT.md))
+
+The numbers in sections 3 and 5 above came from a simulator that perturbed the agent's own tables. A second, independent process world and a sampled-reality network model (paired, common random numbers, nine-plus regimes, 60-world sensitivity) overturned parts of that story and drove these changes:
+
+* **Asking is conditional.** With fixed assumptions, value-based asking helped in 6 of 10 single-shipment regimes, never hurt significantly there, but was significantly worse in 17% of 60 randomly perturbed worlds and the shared network question hurt when answers were missing or unreliable. **Change:** `ResponseStats` / `ReliabilityStats` learn each responder's answer rate, latency (and, for the network question, reliability from the blockage duration observed afterwards); the catalogue values become priors. Result: no significantly harmful network regime, four significantly helpful, at a small cost to the upside. Information-gain asking is worse than not asking in most worlds.
+* **Unsafe automation is a policy-gate problem, not a utility problem.** Harm concentrated in cases whose true cause was outside the catalogue. **Change:** no automation when the belief puts more than 3% on "no known pattern fits" (harmful automatic actions 1.41 to 0.42 per 100 cases on held-out seeds, automatic share 18% to 10%).
+* **Not every component earns its keep.** Ensemble belief, correlated-evidence tempering and the pessimistic-tail gate show no detectable utility effect (tempering costs 1.6 when evidence really is independent). They stay for uncertainty reporting; they are candidates for simplification.
+* **Real models reach the agent only through a bridge** with a domain gate, point-in-time features, coded abstention and model-vs-heuristic labelling. The bridge evaluation also changed the LaDe model: history *means* only, because count features drift out of range with time.
+* **Screening triggers** consult the risk model first; a model-elevated case becomes a *watch* flag (monitor, no action) because the model names no cause.
+* **Known weakness:** silent tool outages look like clean readings; the agent escalates less and falsely resolves more. Tools must return an explicit *unavailable* (next step).
