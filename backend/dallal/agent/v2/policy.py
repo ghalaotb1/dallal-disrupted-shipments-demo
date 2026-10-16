@@ -25,6 +25,15 @@ def particle_agreement(state: CaseStateV2, opts, stk, best_name: str) -> float:
     return float(sum(w[k] for k in range(pk.shape[0]) if best_option(opts, pk[k], stk)[0].name == best_name))
 
 
+def model_risk(state: CaseStateV2) -> dict[str, Any] | None:
+    """The trained model's result for this case if (and only if) a trained model actually scored it; None when the heuristic or an abstention was all there was."""
+    for c in state.calls:
+        if c.tool == "predict_risk":
+            r = (getattr(c, "data", None) or {}).get("risk") or {}
+            return r if r.get("source") == "model" else None
+    return None
+
+
 def decide(state: CaseStateV2, world: Any) -> dict[str, Any]:
     b = state.belief
     top, p, margin = b.top()
@@ -35,7 +44,8 @@ def decide(state: CaseStateV2, world: Any) -> dict[str, Any]:
     table = utility_table(opts, pcv, stk)
     stab = particle_agreement(state, opts, stk, best.name)
     state.utility_table, state.stability = table, stab
-    base = {"policy_version": POLICY_VERSION, "p_systemic": round(ps, 3), "top_cause": top.value, "posterior": round(p, 3), "expected_utility": round(eu, 2),
+    n_support = sum(1 for e in state.evidence if e.stance == "supports" and e.cause == top.value)
+    base = {"policy_version": POLICY_VERSION, "n_support": n_support, "p_unknown": round(float(b.p_cause().get(Cause.UNKNOWN, 0.0)), 4), "p_systemic": round(ps, 3), "top_cause": top.value, "posterior": round(p, 3), "expected_utility": round(eu, 2),
             "chosen_option": best.name, "decision_stability": round(stab, 3), "utility_table": table[:6], "minutes_elapsed": round(state.virtual_min, 1)}
 
     if state.incident is not None:
@@ -48,6 +58,11 @@ def decide(state: CaseStateV2, world: Any) -> dict[str, Any]:
     lim = load_catalogue()["limits"]
     if best.kind == "wait":
         why = f"Expected utility is highest when waiting ({eu:.1f} SAR-eq); no intervention is worth its cost and delay."
+        mr = model_risk(state)
+        if mr and mr.get("band") in ("elevated", "high") and state.trigger.get("kind") in ("slow_task_watch", "risk_screen", "route_plan_screen"):
+            return {**base, "type": "resolved", "watch": True, "risk_flag": {"band": mr["band"], "probability": mr.get("probability"), "model": (mr.get("meta") or {}).get("target")},
+                    "headline": f"At risk per trained model ({mr['band']}) - monitor closely; no recoverable cause is evidenced yet",
+                    "rationale": f"{mr['drivers'][0]['label']}. {why} The model ranks risk on its source population; it does not name a cause, so no action is taken."}
         return {**base, "type": "resolved", "headline": "No action needed" if top == Cause.NONE else "Monitor - no intervention justified", "rationale": why}
 
     if best.kind == "escalate" and top not in (Cause.UNKNOWN, Cause.CUSTODY_ANOMALY) and p >= lim["diagnose_min_posterior"]:

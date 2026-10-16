@@ -43,6 +43,6 @@ export function buildPlanSnapshot(incidentId: string): PlanSnapshot {
     belief: { pLong: 0.3 },
     dispatcherContactable: true,
     parcels,
-    resources: { spares: [{ id: "S1", etaMin: 20, capacity: 3 }, { id: "S2", etaMin: 28, capacity: 2 }], pickups, alt: { available: true, extraMin: 40 } },
+    resources: { spares: [{ id: "S1", etaMin: 20, capacity: 3 }, { id: "S2", etaMin: 28, capacity: 2 }], pickups, alt: { available: true, extraMin: 55 } },
   };
 }

@@ -19,6 +19,7 @@ from dallal.recovery.ranking import load_catalogue
 from dallal.tools.base import ToolRegistry
 
 INFOGAIN_MIN_BITS = 0.15
+SCREEN_TRIGGERS = {"slow_task_watch", "risk_screen", "route_plan_screen"}  # proactive screening: the risk model is consulted first, before any reactive reasoning
 MAX_INQUIRIES = 2
 
 
@@ -41,10 +42,10 @@ def actionable(state: CaseStateV2) -> bool:
 
 
 class PlannerV2:
-    def __init__(self, mode: str = "value"):
+    def __init__(self, mode: str = "value", *, tools_first: bool = True, lookahead: bool = True):
         assert mode in ("value", "infogain", "no_inquiry")
-        self.mode = mode
-        self.name = f"v2-{mode}"
+        self.mode, self.tools_first, self.lookahead = mode, tools_first, lookahead  # the two flags exist for ablation studies
+        self.name = f"v2-{mode}" + ("" if tools_first else "-joint") + ("" if lookahead else "-nolook")
 
     def candidates(self, state: CaseStateV2, tools: ToolRegistry, opts: list[Option], stk: Stakes, *, allow_inquiries: bool = True) -> tuple[list[Candidate], list[Candidate]]:
         """Every evidence source currently eligible, scored. Shared with planners that choose differently (e.g. the LLM planner)."""
@@ -61,23 +62,25 @@ class PlannerV2:
         if state.facts is None:
             return Step("tool", "get_shipment", "bootstrap: shipment facts are needed to form a prior", "bootstrap")
         assert opts is not None and stk is not None
+        if state.trigger.get("kind") in SCREEN_TRIGGERS and "predict_risk" not in state.called and "predict_risk" in tools:
+            return Step("tool", "predict_risk", "screening trigger: consult the risk model first (a trained model scores the case, or abstains and says why)", "screen")
         tool_c, inq_c = self.candidates(state, tools, opts, stk)
         table = [c.as_row() for c in sorted(tool_c + inq_c, key=lambda c: -c.net_voi)][:8]
 
         # "Ask only for what you cannot look up": free, instant database evidence is exhausted BEFORE any question to a person is
         # considered (they are not mutually exclusive, and a question's value must be judged at the belief AFTER the lookups).
-        if self.mode == "infogain":
+        if self.mode == "infogain" or (not self.tools_first and self.mode != "no_inquiry"):
             pick = self._pick(tool_c + inq_c)
         else:
             pick = self._pick(tool_c)
         lookahead = None
-        if pick is None and self.mode != "infogain" and tool_c:
+        if pick is None and self.mode != "infogain" and tool_c and self.lookahead:
             gross, cost = set_voi(state.belief, [c.label for c in tool_c], opts, stk)
             if gross - cost >= params()["autonomy"]["min_net_voi_sar"]:
                 # No single tool flips the decision, but together they do: take the most informative-per-cost one first.
                 pick = max(tool_c, key=lambda c: c.eig_bits / max(c.cost, 0.05))
                 lookahead = (gross, cost)
-        if pick is None and self.mode != "infogain":
+        if pick is None and self.mode != "infogain" and self.tools_first:
             pick = self._pick(inq_c)
         if pick is not None:
             why = (f"net value of information {pick.net_voi:+.2f} SAR-eq (gross {pick.gross_voi:.2f}, cost {pick.cost:.2f}); {pick.p_decision_change:.0%} chance it changes the best option"

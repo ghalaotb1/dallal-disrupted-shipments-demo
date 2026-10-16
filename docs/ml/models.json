@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-16T19:30:18",
+  "generated": "2026-10-16T20:22:24",
   "protocol": "(fixed before looking at test): chronological train / valid / test with an embargo; candidates and feature sets are\ncompared on VALID only; a richer feature set must beat the simpler one by >= 5% relative valid PR-AUC to be adopted; the\ncalibrator (isotonic vs Platt) is chosen on the second half of valid after fitting on the first, then refit on all of valid;\nTEST is touched once, for the chosen model. Rows with a missing feature are dropped (the serving contract refuses to impute).",
   "models": {
     "olist_late_at_handoff_v1": {
@@ -553,33 +553,15 @@
           "describe": "shrunk mean log-duration of earlier-resolved tasks in the same AOI"
         },
         {
-          "name": "aoi_past_n",
-          "lo": 0.0,
-          "hi": 3146.0,
-          "describe": ""
-        },
-        {
           "name": "courier_past_logdur",
           "lo": 3.3910805271479814,
           "hi": 5.5563288877581005,
           "describe": ""
         },
         {
-          "name": "courier_past_n",
-          "lo": 0.0,
-          "hi": 3996.0,
-          "describe": ""
-        },
-        {
           "name": "region_past_logdur",
           "lo": 3.813964282000936,
           "hi": 4.9827417419828155,
-          "describe": ""
-        },
-        {
-          "name": "region_past_n",
-          "lo": 94.0,
-          "hi": 40463.0,
           "describe": ""
         }
       ],
@@ -602,88 +584,88 @@
         "valid": {
           "n": 60001,
           "prevalence": 0.0892,
-          "roc_auc": 0.8855,
-          "pr_auc": 0.5666,
-          "pr_auc_lift_over_prevalence": 6.35,
-          "precision@top10%": 0.5235,
-          "recall@top10%": 0.5869,
-          "lift@top10%": 5.87,
-          "brier": 0.05459,
+          "roc_auc": 0.8814,
+          "pr_auc": 0.5592,
+          "pr_auc_lift_over_prevalence": 6.27,
+          "precision@top10%": 0.5155,
+          "recall@top10%": 0.5779,
+          "lift@top10%": 5.78,
+          "brier": 0.05526,
           "brier_prevalence_baseline": 0.08124,
-          "ece": 0.00235
+          "ece": 0.00401
         },
         "test": {
           "n": 80002,
           "prevalence": 0.08992,
-          "roc_auc": 0.8628,
-          "pr_auc": 0.5175,
-          "pr_auc_lift_over_prevalence": 5.76,
-          "precision@top10%": 0.482,
-          "recall@top10%": 0.536,
-          "lift@top10%": 5.36,
-          "brier": 0.05926,
+          "roc_auc": 0.8636,
+          "pr_auc": 0.5191,
+          "pr_auc_lift_over_prevalence": 5.77,
+          "precision@top10%": 0.478,
+          "recall@top10%": 0.5316,
+          "lift@top10%": 5.32,
+          "brier": 0.0592,
           "brier_prevalence_baseline": 0.08184,
-          "ece": 0.00752
+          "ece": 0.00873
         },
         "test_auc_95ci": [
-          0.8567,
-          0.8673
+          0.8578,
+          0.8682
         ],
         "test_calibration": {
-          "mean_predicted": 0.08728,
+          "mean_predicted": 0.08627,
           "observed": 0.08992,
-          "ece_uncalibrated_raw": 0.00626,
-          "ece_calibrated": 0.00752,
+          "ece_uncalibrated_raw": 0.00703,
+          "ece_calibrated": 0.00873,
           "reliability_deciles": [
             {
               "n": 8001,
-              "mean_predicted": 0.00383,
+              "mean_predicted": 0.00452,
               "observed": 0.00575
             },
             {
               "n": 8001,
-              "mean_predicted": 0.00811,
-              "observed": 0.01112
+              "mean_predicted": 0.00869,
+              "observed": 0.01025
             },
             {
               "n": 8000,
-              "mean_predicted": 0.01222,
+              "mean_predicted": 0.01286,
               "observed": 0.01588
             },
             {
               "n": 8000,
-              "mean_predicted": 0.01681,
-              "observed": 0.01963
+              "mean_predicted": 0.01812,
+              "observed": 0.02225
             },
             {
               "n": 8000,
-              "mean_predicted": 0.02242,
-              "observed": 0.03037
+              "mean_predicted": 0.02411,
+              "observed": 0.02438
             },
             {
               "n": 8000,
-              "mean_predicted": 0.03017,
-              "observed": 0.03562
+              "mean_predicted": 0.03185,
+              "observed": 0.037
             },
             {
               "n": 8000,
-              "mean_predicted": 0.04266,
-              "observed": 0.0525
+              "mean_predicted": 0.04377,
+              "observed": 0.05575
             },
             {
               "n": 8000,
-              "mean_predicted": 0.07055,
-              "observed": 0.08275
+              "mean_predicted": 0.069,
+              "observed": 0.07875
             },
             {
               "n": 8000,
-              "mean_predicted": 0.15969,
-              "observed": 0.16362
+              "mean_predicted": 0.1464,
+              "observed": 0.17125
             },
             {
               "n": 8000,
-              "mean_predicted": 0.50639,
-              "observed": 0.482
+              "mean_predicted": 0.50335,
+              "observed": 0.478
             }
           ]
         },
@@ -698,24 +680,34 @@
             "valid_roc_auc": 0.8213,
             "n_features": 5
           },
-          "logreg|context+history": {
+          "logreg|context+history_means": {
+            "valid_pr_auc": 0.5236,
+            "valid_roc_auc": 0.8661,
+            "n_features": 8
+          },
+          "hist_gbm|context+history_means": {
+            "valid_pr_auc": 0.5592,
+            "valid_roc_auc": 0.8814,
+            "n_features": 8
+          },
+          "logreg|context+history_means+counts": {
             "valid_pr_auc": 0.5216,
             "valid_roc_auc": 0.87,
             "n_features": 11
           },
-          "hist_gbm|context+history": {
+          "hist_gbm|context+history_means+counts": {
             "valid_pr_auc": 0.5666,
             "valid_roc_auc": 0.8855,
             "n_features": 11
           }
         },
         "calibrator_trial_logloss": {
-          "isotonic": 0.19326415178613285,
-          "platt": 0.19317246914423727
+          "isotonic": 0.1959313325219039,
+          "platt": 0.19550050706591746
         },
         "chosen": {
           "estimator": "hist_gbm",
-          "feature_set": "context+history"
+          "feature_set": "context+history_means"
         },
         "incomplete_row_handling": {
           "rows": 400000,
@@ -732,11 +724,19 @@
           "test_roc_auc": 0.7926,
           "test_pr_auc": 0.4028
         },
-        "logreg|context+history": {
+        "logreg|context+history_means": {
+          "test_roc_auc": 0.852,
+          "test_pr_auc": 0.4967
+        },
+        "hist_gbm|context+history_means": {
+          "test_roc_auc": 0.8636,
+          "test_pr_auc": 0.5191
+        },
+        "logreg|context+history_means+counts": {
           "test_roc_auc": 0.8471,
           "test_pr_auc": 0.4852
         },
-        "hist_gbm|context+history": {
+        "hist_gbm|context+history_means+counts": {
           "test_roc_auc": 0.8628,
           "test_pr_auc": 0.5175
         }
@@ -744,15 +744,15 @@
       "base_rate_train": 0.09965499601918483,
       "base_rate_valid": 0.0891985133581107,
       "band_thresholds": {
-        "elevated": 0.14389344491199071,
-        "high": 0.4580471210121809
+        "elevated": 0.14225901276774325,
+        "high": 0.4510432735435435
       },
       "caveats": [
         "Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.",
         "History features need a serving-time history store (resolved-before-as_of only)."
       ],
-      "trained_at": "2026-10-16T19:30:54",
-      "sha256": "bb8c3b54f7dac97c8e3e4c8674463872c61dd521e8f2c2b9a7ed53b645a99467",
+      "trained_at": "2026-10-16T20:22:38",
+      "sha256": "09d4693ef499ddd027d9c05903111bdd9d3cff10cac483fb00e6c04ee7083f1a",
       "valid_domains": [
         "lade"
       ],

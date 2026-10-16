@@ -214,3 +214,24 @@ export interface LiveReplay {
   sample_base_rate: number;
   rows: { features: Record<string, number>; probability: number | null; band: string | null; abstained: boolean; outcome: number }[];
 }
+
+export interface LiveReplay2 {
+  case_id: string;
+  label: string;
+  source: string;
+  accepted_at: string;
+  as_of: string;
+  timestamps_note: string;
+  slow_threshold_min: number;
+  steps: { tool: string; summary: string; facts: string[]; outcome: string | null; why: string; top: [string, number][] }[];
+  risk: { source: string | null; band: string | null; probability: number | null; level: string | null; meta?: { features_as_of?: string; base_rate_source?: number; test_roc_auc?: number; trained_models_considered?: { model: string; status: string; code: string; detail?: string }[]; why_heuristic?: string } | null };
+  decision: { type: string; headline: string; rationale: string; watch?: boolean; top_cause?: string; posterior?: number };
+}
+
+export interface LiveReplayOutcome {
+  case_id: string;
+  duration_min: number;
+  slow_threshold_min: number;
+  slow: boolean;
+  note: string;
+}

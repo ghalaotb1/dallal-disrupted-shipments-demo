@@ -52,34 +52,70 @@ def demo_coverage(models: dict) -> dict:
             "reading": "Demo and synthetic bundles are refused by the domain gate (source/origin), so the heuristic is used and labelled as such."}
 
 
-def lade_part(models: dict, n: int, seed: int = 0) -> dict:
+def _calib(y, p, bins: int = 10) -> dict:
+    y, p = np.asarray(y, dtype=float), np.asarray(p, dtype=float)
+    order = np.argsort(p)
+    chunks = np.array_split(order, bins)
+    ece = float(sum(len(c) / len(p) * abs(y[c].mean() - p[c].mean()) for c in chunks))
+    return {"mean_predicted": round(float(p.mean()), 4), "observed_rate": round(float(y.mean()), 4), "ece": round(ece, 4), "brier": round(float(np.mean((p - y) ** 2)), 4),
+            "brier_base_rate_forecast": round(float(np.mean((y.mean() - y) ** 2)), 4), "reliability_deciles": [{"n": int(len(c)), "pred": round(float(p[c].mean()), 4), "obs": round(float(y[c].mean()), 4)} for c in chunks]}
+
+
+def _operating_points(y, p, thresholds: dict) -> dict:
+    y, p = np.asarray(y), np.asarray(p)
+    out = {}
+    for name, thr in thresholds.items():
+        flag = p >= thr
+        tp = int((flag & (y == 1)).sum())
+        out[name] = {"threshold": round(float(thr), 4), "flag_rate": round(float(flag.mean()), 4), "precision": round(tp / max(int(flag.sum()), 1), 4), "recall": round(tp / max(int(y.sum()), 1), 4)}
+    for k in (0.05, 0.10, 0.20):
+        top = np.argsort(-p)[: max(1, int(len(p) * k))]
+        out[f"top{int(k * 100)}%"] = {"precision": round(float(y[top].mean()), 4), "recall": round(float(y[top].sum() / max(y.sum(), 1)), 4), "lift": round(float(y[top].mean() / max(y.mean(), 1e-9)), 2)}
+    return out
+
+
+def lade_part(models: dict, n: int, seed: int = 0, agent_cases: int = 150) -> dict:
+    from dallal.ml.adapters import ADAPTERS
+
     m = models["lade_slow_task_v1"]
     thr = float(m.card.extra["slow_threshold_min"])
+    t0 = time.time()
     cases, stream = lade_replay(n, seed, 10.0, m.card.split["cuts"]["test_start"], thr)
     rm = TrainedRiskModel({"lade_slow_task_v1": m})
+    store = rm._store("lade_slow_task_v1", m)  # builds the point-in-time store (cold start cost is reported)
+    cold = time.time() - t0
     heur = HeuristicRiskModel()
-    t0 = time.time()
-    recs = []
+    ad = ADAPTERS["lade_slow_task_v1"]
+    recs, lat = [], []
     for _, r in cases.iterrows():
         b = lade_bundle(r)
+        t1 = time.perf_counter()
         rs = rm.score(b, b.subject_id, {})
+        lat.append((time.perf_counter() - t1) * 1000)
+        o = ad.build(b, b.subject_id, m.card, store)
         note = rs.meta["trained_models_considered"][0]
-        h = heur.score(b, b.subject_id, {})
-        recs.append({"slow": int(r["slow"]), "row": int(r["_row"]), "code": note["code"], "p": rs.probability if rs.basis.startswith("trained:") else None, "h": h.score})
+        forced = float(m.calibrator(m.raw(m._frame(o.features)))[0]) if o.ok else None
+        oor = note.get("features_outside_training_range", [])
+        recs.append({"slow": int(r["slow"]), "row": int(r["_row"]), "code": note["code"], "p": rs.probability if rs.basis.startswith("trained:") else None, "forced": forced, "oor": oor,
+                     "band": rs.band if rs.basis.startswith("trained:") else None, "h": heur.score(b, b.subject_id, {}).score})
     df = pd.DataFrame(recs)
-    scored = df[df.p.notna()]
-    out = {"cases": int(len(df)), "as_of": "accept + 10 min, held-out TEST window only", "seconds_per_case": round((time.time() - t0) / len(df), 4), "abstention_codes": df.code.value_counts().to_dict(),
-           "coverage": round(float(len(scored) / len(df)), 3), "trained_model_via_bridge": _auc(scored.slow, scored.p), "heuristic_same_cases": _auc(scored.slow, scored.h),
-           "heuristic_distinct_scores": int(df.h.nunique())}
+    sc = df[df.p.notna()]
+    ab = df[df.p.isna() & df.forced.notna()]
+    thresholds = {"elevated_band": m.card.band_thresholds["elevated"], "high_band": m.card.band_thresholds["high"]}
+    out = {"cases": int(len(df)), "as_of": "accept + 10 min, held-out TEST window only", "latency_ms": {"p50": round(float(np.percentile(lat, 50)), 2), "p95": round(float(np.percentile(lat, 95)), 2), "mean": round(float(np.mean(lat)), 2),
+                                                                                                         "cold_store_build_s": round(cold, 1)},
+           "abstention_codes": df.code.value_counts().to_dict(), "coverage": round(float(len(sc) / len(df)), 3), "features_outside_range_when_abstaining": dict(Counter(f for l_ in df.oor for f in l_)),
+           "trained_model_via_bridge": _auc(sc.slow, sc.p), "heuristic_same_cases": _auc(sc.slow, sc.h), "heuristic_distinct_scores": int(df.h.nunique()),
+           "forced_scores_on_abstained_cases_if_range_check_were_off": _auc(ab.slow, ab.forced) if len(ab) else None, "calibration_on_replay": _calib(sc.slow, sc.p),
+           "operating_points": _operating_points(sc.slow, sc.p, thresholds)}
     # train/serve parity: bridged features vs the training-time frame built from the full stream
     full = F.lade_frame("sh", sample=None)
     cols = m.feature_names
     diffs = {c: 0.0 for c in cols}
-    exact = 0
-    cmp_n = 0
+    exact = cmp_n = 0
     for _, r in cases.head(400).iterrows():
         b = lade_bundle(r)
-        o = rm.models["lade_slow_task_v1"] and __import__("dallal.ml.adapters", fromlist=["x"]).ADAPTERS["lade_slow_task_v1"].build(b, b.subject_id, m.card, rm._store("lade_slow_task_v1", m))
+        o = ad.build(b, b.subject_id, m.card, store)
         if not o.ok:
             continue
         ref = full.iloc[int(r["_row"])]
@@ -92,27 +128,33 @@ def lade_part(models: dict, n: int, seed: int = 0) -> dict:
     # point in time: a store that has never seen anything accepted after T gives the same features for every case before T
     T = cases["as_of_ts"].median()
     trunc = LadeStore(stream[stream["as_of_ts"] <= T], m.card.extra["history_prior_logdur"], m.card.extra["history_prior_n"], m.card.extra.get("history_keys"))
-    full_store = rm._store("lade_slow_task_v1", m)
     bad = chk = 0
     for _, r in cases[cases["as_of_ts"] <= T].head(300).iterrows():
         t = pd.Timestamp(r["as_of_ts"])
-        a = (full_store.open_tasks(r["courier_id"], t), full_store.past_mean_logdur("aoi", r["dest_zone_id"], t), full_store.past_mean_logdur("courier", r["courier_id"], t))
-        b = (trunc.open_tasks(r["courier_id"], t), trunc.past_mean_logdur("aoi", r["dest_zone_id"], t), trunc.past_mean_logdur("courier", r["courier_id"], t))
+        a_ = (store.open_tasks(r["courier_id"], t), store.past_mean_logdur("aoi", r["dest_zone_id"], t), store.past_mean_logdur("courier", r["courier_id"], t))
+        b_ = (trunc.open_tasks(r["courier_id"], t), trunc.past_mean_logdur("aoi", r["dest_zone_id"], t), trunc.past_mean_logdur("courier", r["courier_id"], t))
         chk += 1
-        bad += a != b
+        bad += a_ != b_
     out["point_in_time_check"] = {"cases_checked": chk, "feature_mismatches_when_future_rows_removed": int(bad)}
-    # end to end through the agent
-    runs, used = [], Counter()
-    prov = DefaultProviders(risk=rm)
-    for _, r in cases.head(30).iterrows():
-        b = lade_bundle(r)
-        res = AgentRuntimeV2(mode="no_inquiry", providers=prov).start(b)
-        step = next((s for s in res.run.steps if s["tool"] == "predict_risk"), None)
-        used["ran_predict_risk" if step else "did_not_call_predict_risk"] += 1
-        if step:
-            used["model_scored" if (step["data"] or {}).get("risk", {}).get("source") == "model" else "heuristic_used"] += 1
-        runs.append(res.run.decision["type"])
-    out["agent_end_to_end"] = {"runs": len(runs), "predict_risk_usage": dict(used), "decisions": dict(Counter(runs))}
+    # end to end through the agent (screening trigger): model-backed vs heuristic-backed agent on the same real cases
+    rows = []
+    for _, r in cases.head(agent_cases).iterrows():
+        for label, risk in (("model", rm), ("heuristic", heur)):
+            res = AgentRuntimeV2(mode="no_inquiry", providers=DefaultProviders(risk=risk)).start(lade_bundle(r))
+            call = next((c for c in res.state.calls if c.tool == "predict_risk"), None)
+            rk = ((getattr(call, "data", None) or {}).get("risk") or {}) if call else {}
+            watch = bool(res.run.decision.get("watch"))
+            rows.append({"agent": label, "slow": int(r["slow"]), "called": call is not None, "source": rk.get("source"), "band": rk.get("band"), "decision": res.run.decision["type"], "watch": watch,
+                         "n_steps": len(res.run.steps)})
+    ad_df = pd.DataFrame(rows)
+    ag = {}
+    for label in ("model", "heuristic"):
+        d = ad_df[ad_df.agent == label]
+        flagged = d[(d.decision != "resolved") | d.watch]
+        ag[label] = {"runs": int(len(d)), "called_predict_risk": int(d.called.sum()), "risk_source": d.source.value_counts(dropna=False).to_dict(), "decisions": d.decision.value_counts().to_dict(), "watch_flags": int(d.watch.sum()), "band_distribution": d.band.value_counts(dropna=False).to_dict(),
+                     "flag_rate": round(float(len(flagged) / len(d)), 3), "precision_of_flagged": round(float(flagged.slow.mean()), 3) if len(flagged) else None,
+                     "recall_of_slow": round(float(flagged.slow.sum() / max(d.slow.sum(), 1)), 3), "base_rate": round(float(d.slow.mean()), 3)}
+    out["agent_end_to_end"] = ag
     return out
 
 

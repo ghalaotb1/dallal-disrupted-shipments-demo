@@ -8,6 +8,7 @@ import { useLive } from "@/store/live";
 import { Card, CardHeader, EmptyState, SectionLabel } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { Capabilities } from "@/components/live/Capabilities";
+import { ReplayDemo } from "@/components/models/ReplayDemo";
 import { LiveTag } from "@/components/live/LiveTags";
 import type { LiveModelCard, LiveModelSummary, LiveReplay, LiveScore } from "@/types/live";
 
@@ -214,6 +215,7 @@ export function ModelLab() {
       ) : (
         <>
           <Capabilities />
+          <ReplayDemo />
           {models.map((m) => (
             <ModelPanel key={m.model_id} m={m} />
           ))}

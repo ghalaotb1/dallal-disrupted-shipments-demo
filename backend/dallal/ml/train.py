@@ -237,7 +237,8 @@ def specs() -> dict[str, TaskSpec]:
         "lade": TaskSpec(
             "lade_slow_task_v1", "lade_slow_delivery_task", "accept-to-deliver duration above the training-period P90 (engineered)", "LaDe last-mile delivery (Cainiao), Shanghai", "Apache-2.0 per HF metadata; README restricts to research use",
             "delivery task", "courier accept time", _lade_frame, lambda x: time_split(x, "_t", origin_col="_origin"),
-            [("context", LADE_BASE), ("context+history", LADE_BASE + ["aoi_past_logdur", "aoi_past_n", "courier_past_logdur", "courier_past_n", "region_past_logdur", "region_past_n"])],
+            [("context", LADE_BASE), ("context+history_means", LADE_BASE + ["aoi_past_logdur", "courier_past_logdur", "region_past_logdur"]),
+             ("context+history_means+counts", LADE_BASE + ["aoi_past_logdur", "aoi_past_n", "courier_past_logdur", "courier_past_n", "region_past_logdur", "region_past_n"])],
             {"open_tasks_courier": "tasks the courier had accepted but not completed at accept time", "aoi_past_logdur": "shrunk mean log-duration of earlier-resolved tasks in the same AOI"},
             ["Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.", "History features need a serving-time history store (resolved-before-as_of only)."],
             _lade_label, _lade_extra, ("lade",)),

@@ -10,7 +10,11 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "routes:generate": "node scripts/generate-routes.mjs"
+    "routes:generate": "node scripts/generate-routes.mjs",
+    "demo": "./scripts/demo.sh",
+    "demo:reset": "./scripts/demo.sh --reset",
+    "demo:stop": "./scripts/demo.sh --stop",
+    "demo:check": "backend/.venv/bin/python -I backend/scripts/demo_check.py"
   },
   "dependencies": {
     "clsx": "^2.1.1",

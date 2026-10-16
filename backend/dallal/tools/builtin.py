@@ -134,7 +134,7 @@ def predict_risk(ctx: ToolContext, args: dict) -> ToolResult:
         status = "alert" if band == "high" else "warn" if band == "elevated" else "ok"
         meta = rs.meta or {}
         return ToolResult(status, f"{band.capitalize()} risk - P({meta.get('target', 'target')}) = {rs.probability:.1%} ({rs.basis}, calibrated on {meta.get('source_name', 'source data')})",
-                          [f"MODEL (trained, calibrated): {rs.model_id}", f"features as of {meta.get('features_as_of')}", f"base rate in source data {meta.get('base_rate_source', 0):.1%}",
+                          [f"MODEL (trained, calibrated): {rs.model_id}", f"features as of {str(meta.get('features_as_of')).replace('2000-', '', 1) + ' (source publishes no year)' if str(meta.get('features_as_of')).startswith('2000-') else meta.get('features_as_of')}", f"base rate in source data {meta.get('base_rate_source', 0):.1%}",
                            "source population differs from SPL: ranking evidence, not an SPL probability"], outcome=out,
                           data={"risk": {"score": rs.score, "level": band, "drivers": rs.drivers, "probability": rs.probability, "meta": meta, "band": band, "source": "model"}},
                           provenance=_prov(ctx, model_id=rs.model_id, model_basis=rs.basis))

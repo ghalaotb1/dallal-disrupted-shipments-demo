@@ -40,4 +40,5 @@ tool_latency_min: {default: 0.2, predict_risk: 0.1, check_incident_context: 0.3,
 autonomy:
   robust_effectiveness_quantile: 0.10   # lower tail across table-uncertainty particles
   robust_effectiveness_min: 0.62        # an automated action must be effective at least this likely even in the pessimistic tail
+  max_p_unknown: 0.03                   # no automation when the belief puts more than this mass on 'no known pattern fits' (chosen on development seeds; see docs/experiments)
   min_net_voi_sar: 0.40                 # do not gather evidence unless it is worth at least this much net

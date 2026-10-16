@@ -64,7 +64,7 @@ export const api = {
 
 export const lastEventId = () => request<{ id: number }>("GET", "/v1/events/last", undefined, 4000);
 
-import type { LiveModelCard, LiveModelSummary, LivePlan, LiveReplay, LiveScore, PlanSnapshot } from "@/types/live";
+import type { LiveReplay2, LiveReplayOutcome, LiveModelCard, LiveModelSummary, LivePlan, LiveReplay, LiveScore, PlanSnapshot } from "@/types/live";
 
 export const planApi = {
   create: (snapshot: PlanSnapshot, lang = "ar") => request<LivePlan>("POST", "/v1/frontend/incidents/plan", { snapshot, lang }),
@@ -77,5 +77,8 @@ export const modelApi = {
   card: (id: string) => request<LiveModelCard>("GET", `/v1/models/${encodeURIComponent(id)}`),
   score: (id: string, features: Record<string, number>) => request<LiveScore>("POST", `/v1/models/${encodeURIComponent(id)}/score`, { features }),
   replay: (id: string, n = 8, seed = 0) => request<LiveReplay>("GET", `/v1/models/${encodeURIComponent(id)}/replay?n=${n}&seed=${seed}`),
+  replayStatus: () => request<{ available: boolean; reason: string | null }>("GET", "/v1/replay/lade/status"),
+  replayRun: (seed: number) => request<LiveReplay2>("POST", `/v1/replay/lade?seed=${seed}`, undefined, 120_000),
+  replayOutcome: (id: string) => request<LiveReplayOutcome>("GET", `/v1/replay/lade/${encodeURIComponent(id)}/outcome`),
   experiment: <T,>(name: string) => request<T>("GET", `/v1/experiments/${name}`),
 };

@@ -380,6 +380,37 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True, set
         base = float(df["_label"].mean())
         return {"model_id": model_id, "source": m.card.source, "origin": "real-public-data", "sample": "random held-out test rows (chronologically after training)", "sample_base_rate": round(base, 4), "rows": out}
 
+    # ── real-data replay (demo A): a real held-out LaDe task goes through the agent; the outcome is revealed afterwards ──
+    @app.get("/v1/replay/lade/status")
+    def replay_status() -> dict[str, Any]:
+        from dallal.data.replay import HUB
+
+        return {"available": HUB.available(), "reason": None if HUB.available() else "the LaDe canonical tables are not on this host (they are not redistributed); build them locally with dallal-data"}
+
+    @app.post("/v1/replay/lade")
+    def replay_run(seed: int = 0, minutes_after: float = 10.0) -> dict[str, Any]:
+        from dallal.agent.v2.runtime import AgentRuntimeV2
+        from dallal.data.replay import HUB
+
+        if not HUB.available():
+            raise HTTPException(404, "replay data not available on this host")
+        cid, bundle, meta = HUB.new_case(seed, minutes_after)
+        res = AgentRuntimeV2(mode="no_inquiry", providers=svc.providers, book=svc.book).start(bundle, run_id=f"run-{cid}")
+        call = next((c for c in res.state.calls if c.tool == "predict_risk"), None)
+        risk = ((getattr(call, "data", None) or {}).get("risk") or {}) if call else {}
+        steps = [{"tool": s["tool"], "summary": s["summary"], "facts": s["facts"], "outcome": s["outcome"], "why": s["why"], "top": ((s.get("belief_after") or {}).get("top") or [])[:2]} for s in res.run.steps]
+        d = res.run.decision
+        return {**meta, "label": "REAL-DATA REPLAY", "steps": steps, "risk": {"source": risk.get("source"), "band": risk.get("band"), "probability": risk.get("probability"), "meta": risk.get("meta"), "level": risk.get("level")},
+                "decision": {k: d.get(k) for k in ("type", "headline", "rationale", "watch", "risk_flag", "top_cause", "posterior")}}
+
+    @app.get("/v1/replay/lade/{case_id}/outcome")
+    def replay_outcome(case_id: str) -> dict[str, Any]:
+        from dallal.data.replay import HUB
+
+        if case_id not in HUB.cases:
+            raise HTTPException(404, "unknown replay case")
+        return HUB.outcome(case_id)
+
     @app.get("/v1/experiments/{name}")
     def experiment(name: str) -> dict[str, Any]:
         """Committed experiment reports (docs/ml, docs/experiments). Whitelisted by name; each report states whether it is real-data or synthetic."""

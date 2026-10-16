@@ -61,7 +61,13 @@ def run(models: list[str]) -> dict:
             r["llm_raw"] = a
             r["llm_conf"] = c
             r["rules_then_llm"] = r["rules"] if r["rules"] is not None else r["llm"]
-        out["models"][m] = {"llm_only": _score(rows, "llm"), "rules_then_llm": _score(rows, "rules_then_llm"), "median_latency_s": round(float(pd.Series(lat).median()), 2),
+        for r in rows:
+            r["lang"] = "ar" if any("\u0600" <= ch <= "\u06ff" for ch in r["text"]) else "en"
+        by_lang = {}
+        for lg in ("ar", "en"):
+            sub = [r for r in rows if r["lang"] == lg]
+            by_lang[lg] = {"llm_only": _score(sub, "llm"), "rules_only": _score(sub, "rules")}
+        out["models"][m] = {"by_language": by_lang, "rows": [{k: r.get(k) for k in ("spec", "text", "expected", "rules", "llm", "llm_conf", "lang")} for r in rows], "llm_only": _score(rows, "llm"), "rules_then_llm": _score(rows, "rules_then_llm"), "median_latency_s": round(float(pd.Series(lat).median()), 2),
                             "errors": [{"spec": r["spec"], "text": r["text"], "expected": r["expected"], "got": r["llm"], "conf": r["llm_conf"]} for r in rows if r["llm"] is not None and r["llm"] != r["expected"]]}
         print(m, json.dumps({k: v for k, v in out["models"][m].items() if k != "errors"}))
     out["origin"] = "synthetic-handwritten (not real traffic)"

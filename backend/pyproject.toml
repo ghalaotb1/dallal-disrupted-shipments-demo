@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 llm = ["anthropic>=0.40"]
 ml = ["torch>=2.2"]  # only the sequence-model experiment (dallal.ml.sequence); serving needs scikit-learn + joblib only
+report = ["matplotlib>=3.8"]  # charts for the evaluation report (dallal.eval.charts)
 api = ["fastapi>=0.110", "uvicorn>=0.29"]
 dev = ["pytest>=8", "ruff>=0.5", "httpx>=0.27"]
 

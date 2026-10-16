@@ -55,6 +55,7 @@ def autonomy_check(state, option: Option, agreement: str) -> tuple[bool, list[st
         (f"parcel value <= SAR {lim['auto_value_max_sar']:,}", (facts.get("value") or 0) <= lim["auto_value_max_sar"]),
         (f"<= {lim['auto_max_prior_failures']} prior failed attempts", (facts.get("failed_attempts") or 0) <= lim["auto_max_prior_failures"]),
         ("recorded code does not conflict with the evidence", agreement != "conflicts"),
+        (f"P(cause outside the known patterns) <= {a.get('max_p_unknown', 1.0):.0%}", state.belief.p_cause().get(Cause.UNKNOWN, 0.0) <= a.get("max_p_unknown", 1.0)),
     ]
     failed = [n for n, ok in checks if not ok]
     return not failed, failed, robust

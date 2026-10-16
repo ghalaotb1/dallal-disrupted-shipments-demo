@@ -28,6 +28,8 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
   const plan = useLive((s) => s.plans[incidentId]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const before = useLive((s) => s.planBefore[incidentId]);
+  const changed = plan && plan.status !== "awaiting_evidence" && before ? Object.entries(plan.solution.per_parcel).filter(([k, v]) => before[k] !== v.option) : [];
 
   const create = useCallback(async () => {
     setBusy(true);
@@ -115,6 +117,13 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
             {plan.inquiries.map((q) => (
               <InquiryCard key={q.inquiry_id} inquiry={q} onChanged={refresh} />
             ))}
+
+            {plan.evidence.answer && before ? (
+              <p className="rounded-md bg-brand-25 px-2.5 py-1.5 text-xs text-ink-2">
+                The dispatcher&apos;s answer changed the decision for <b>{changed.length}</b> of {Object.keys(plan.solution.per_parcel).length} shipments
+                {changed.length ? `: ${changed.slice(0, 4).map(([k, v]) => `${k} ${(before[k] ?? "?").split(":")[0]} → ${v.option.split(":")[0]}`).join(", ")}${changed.length > 4 ? "…" : ""}` : " (the plan was already right for both outcomes)"}.
+              </p>
+            ) : null}
 
             <ul className="divide-y divide-line-soft rounded-lg border border-line text-xs">
               {Object.entries(plan.solution.per_parcel).map(([pid, v]) => (
