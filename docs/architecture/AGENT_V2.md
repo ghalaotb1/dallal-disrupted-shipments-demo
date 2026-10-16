@@ -68,9 +68,24 @@ Three models, three targets, never merged (`dallal/ml/train.py`, cards in `docs/
 
 Protocol: chronological split with embargo, choice of estimator / feature set / calibrator on validation only, test touched once, richer feature sets adopted only if >= 5% better on validation. A **feature contract** refuses missing features (no imputation) and abstains outside the training range. These models are trained on other countries' data: the agent uses them as ranking evidence when a case supplies a complete in-range feature row, and the Model Lab shows live scoring and real held-out replays. **A pre-registered GRU sequence model did not beat the tabular model** (valid PR-AUC 0.575 vs 0.582 for tabular with lag features), so tabular stays. Cause classification and recovery uplift remain unlearned: no public labels exist.
 
-## 7. LLM planner
+## 7. LLM planner and interpreter (Qwen3.5 via local Ollama)
 
-See section 8 of the experiments README and the final report. The LLM may choose the *next investigation step* only; beliefs, tool results, the closing pipeline (diagnosis -> expected-utility ranking -> policy gates) and permissions are deterministic. Invalid, ineligible or missing tool calls fall back to the EVOI planner and are counted.
+**Model choice.** Candidates were Qwen3.5 4B (3.3 GB) and 9B (6.6 GB): both advertise native tool calling, both fit a 16 GB laptop, and the family is multilingual (Arabic is a stated language; we measured it ourselves on a hand-written set). Larger variants (27B and up) do not fit the target hardware and were not tried. Bigger was not assumed better; it was measured.
+
+**What the LLM is allowed to do** (`agent/v2/llm_planner.py`): choose the *next investigation step* from an eligible menu by calling a function. Beliefs, tool results, the closing pipeline (diagnosis -> expected-utility ranking -> policy gates) and permissions remain deterministic. Unknown / ineligible / repeated names, missing calls and backend errors fall back to the EVOI step and are counted. Tests use a scripted stand-in (no model needed).
+
+**Measured (24 paired simulator episodes, [details](../experiments/README.md)):**
+
+| planner | paired regret vs EVOI | agrees with EVOI | valid tool calls | latency / step |
+|---|---|---|---|---|
+| EVOI (no LLM) | 0 | - | - | ~ms |
+| Qwen3.5-4B pure (no advisor numbers) | +8.4 (worse) | 25% | 100% | ~10 s |
+| Qwen3.5-4B hybrid (sees EVOI table) | +0.6 | 99% | 100% | ~12 s |
+| Qwen3.5-9B hybrid | 0.0 | 99% | 99% (1 timeout) | ~22 s |
+
+Conclusion: tool calling is reliable at both sizes, but judgement without the decision-theoretic numbers is worse than the numbers, and with them the LLM merely follows. **The shipped planner stays EVOI**; the LLM planner is an optional, guarded component useful for explanation and for operators who want to override. No fine-tuning was attempted: there was no demonstrated need.
+
+**Where the LLM does help: reading replies.** On 96 hand-written Arabic/English replies, the keyword rules cover 38% of answerable replies; Qwen3.5 covers 95-97% (false-accept 2.6-3.8% vs 6.2% for the rules, which have no lexicon for courier/dispatcher answers). But its self-reported confidence is not calibrated (a contradictory "yes and no" came back at 0.95), and Ollama does not enforce JSON-schema `format` for Qwen3.5 (enum-constrained **tool calls** do work). So the interpreter's output is a **suggestion shown to a human reviewer with one-click accept** (`dallal/llm/interpret.py`, enabled with `DALLAL_LLM_INTERPRET_MODEL`); it never becomes evidence by itself. Verified live: an Arabic free-text courier reply ("I'm standing at the door and the customer doesn't answer") produced the suggestion *At address, nobody answered*; the analyst accepted it; belief moved to recipient-unavailable 78% and a recommendation was produced.
 
 ## 8. Limits, stated plainly
 

@@ -1,0 +1,96 @@
+{
+  "set": {
+    "n": 96,
+    "answerable": 78,
+    "note": "hand-written by the team; not real traffic"
+  },
+  "rules_only": {
+    "n": 96,
+    "coverage_of_answerable": 0.385,
+    "accepted": 32,
+    "false_accept_rate": 0.062,
+    "false_accepts": 2,
+    "abstain_correct_on_unanswerable": 0.944
+  },
+  "models": {
+    "qwen3.5:4b": {
+      "llm_only": {
+        "n": 96,
+        "coverage_of_answerable": 0.962,
+        "accepted": 78,
+        "false_accept_rate": 0.038,
+        "false_accepts": 3,
+        "abstain_correct_on_unanswerable": 0.889
+      },
+      "rules_then_llm": {
+        "n": 96,
+        "coverage_of_answerable": 0.962,
+        "accepted": 79,
+        "false_accept_rate": 0.051,
+        "false_accepts": 4,
+        "abstain_correct_on_unanswerable": 0.889
+      },
+      "median_latency_s": 4.57,
+      "errors": [
+        {
+          "spec": "ask_recipient_availability",
+          "text": "نعم ولا",
+          "expected": null,
+          "got": "avail_yes",
+          "conf": 0.95
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حاضر",
+          "expected": null,
+          "got": "avail_yes",
+          "conf": 1.0
+        },
+        {
+          "spec": "ask_corridor_status",
+          "text": "الطريق مسكر لين الليل",
+          "expected": "blocked_long",
+          "got": "dont_know",
+          "conf": 1.0
+        }
+      ]
+    },
+    "qwen3.5:9b": {
+      "llm_only": {
+        "n": 96,
+        "coverage_of_answerable": 0.949,
+        "accepted": 76,
+        "false_accept_rate": 0.026,
+        "false_accepts": 2,
+        "abstain_correct_on_unanswerable": 0.944
+      },
+      "rules_then_llm": {
+        "n": 96,
+        "coverage_of_answerable": 0.974,
+        "accepted": 79,
+        "false_accept_rate": 0.038,
+        "false_accepts": 3,
+        "abstain_correct_on_unanswerable": 0.889
+      },
+      "median_latency_s": 8.99,
+      "errors": [
+        {
+          "spec": "ask_recipient_availability",
+          "text": "ليس اليوم، غدا افضل",
+          "expected": "reschedule",
+          "got": "avail_no",
+          "conf": 0.95
+        },
+        {
+          "spec": "ask_recipient_availability",
+          "text": "حاضر",
+          "expected": null,
+          "got": "avail_yes",
+          "conf": 1.0
+        }
+      ]
+    }
+  },
+  "origin": "synthetic-handwritten (not real traffic)",
+  "generated": "2026-10-16T17:47:18"
+}

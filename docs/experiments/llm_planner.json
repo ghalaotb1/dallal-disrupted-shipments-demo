@@ -1,0 +1,88 @@
+{
+  "origin": "synthetic simulator (misspecified-likelihood, paired seeds); relative comparison under stated assumptions",
+  "n_episodes": 24,
+  "contenders": {
+    "evoi": {
+      "summary": {
+        "episodes": 24,
+        "mean_regret": 30.94,
+        "median_regret": 21.49,
+        "mean_utility": -27.69,
+        "unsafe_auto_rate": 0.0,
+        "mean_questions": 0.62,
+        "mean_tools": 9.08,
+        "escalation_rate": 0.333,
+        "cause_accuracy": 0.708
+      }
+    },
+    "qwen3.5:4b|pure": {
+      "summary": {
+        "episodes": 24,
+        "mean_regret": 39.39,
+        "median_regret": 35.08,
+        "mean_utility": -36.14,
+        "unsafe_auto_rate": 0.0,
+        "mean_questions": 2.0,
+        "mean_tools": 9.62,
+        "escalation_rate": 0.208,
+        "cause_accuracy": 0.75
+      },
+      "planning_steps": 185,
+      "valid_call_rate": 1.0,
+      "failures": {},
+      "agreement_with_evoi": 0.254,
+      "median_latency_s": 9.77,
+      "p95_latency_s": 12.0,
+      "mean_output_tokens": 46.2,
+      "chose_finish_first": 0.043,
+      "paired_regret_diff_vs_evoi": 8.45
+    },
+    "qwen3.5:4b|hybrid": {
+      "summary": {
+        "episodes": 24,
+        "mean_regret": 31.54,
+        "median_regret": 21.49,
+        "mean_utility": -28.29,
+        "unsafe_auto_rate": 0.0,
+        "mean_questions": 0.75,
+        "mean_tools": 9.0,
+        "escalation_rate": 0.333,
+        "cause_accuracy": 0.708
+      },
+      "planning_steps": 159,
+      "valid_call_rate": 1.0,
+      "failures": {},
+      "agreement_with_evoi": 0.987,
+      "median_latency_s": 12.2,
+      "p95_latency_s": 14.08,
+      "mean_output_tokens": 47.4,
+      "chose_finish_first": 0.145,
+      "paired_regret_diff_vs_evoi": 0.6
+    },
+    "qwen3.5:9b|hybrid": {
+      "summary": {
+        "episodes": 24,
+        "mean_regret": 30.94,
+        "median_regret": 21.49,
+        "mean_utility": -27.69,
+        "unsafe_auto_rate": 0.0,
+        "mean_questions": 0.62,
+        "mean_tools": 8.96,
+        "escalation_rate": 0.333,
+        "cause_accuracy": 0.708
+      },
+      "planning_steps": 151,
+      "valid_call_rate": 0.993,
+      "failures": {
+        "llm_error": 1
+      },
+      "agreement_with_evoi": 0.987,
+      "median_latency_s": 21.93,
+      "p95_latency_s": 25.39,
+      "mean_output_tokens": 48.7,
+      "chose_finish_first": 0.152,
+      "paired_regret_diff_vs_evoi": 0.0
+    }
+  },
+  "generated": "2026-10-16T17:47:23"
+}

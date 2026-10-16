@@ -67,8 +67,8 @@ def main() -> None:
                "| contender | mean regret | paired regret diff vs EVOI | questions/case | valid tool-call rate | agrees with EVOI | median / p95 latency per step (s) | failures |", "|---|---|---|---|---|---|---|---|"]
         for k, v in lp["contenders"].items():
             s = v["summary"]
-            md.append(f"| `{k}` | {s['mean_regret']:.1f} | {v.get('paired_regret_diff_vs_evoi', 0):+.1f} | {s['mean_questions']:.2f} | {v.get('valid_call_rate', '')} | {v.get('agreement_with_evoi', '')} | {v.get('median_latency_s', '')} / {v.get('p95_latency_s', '')} | {v.get('failures', '')} |")
-        md.append("")
+            md.append(f"| `{k.replace('|', ' / ')}` | {s['mean_regret']:.1f} | {v.get('paired_regret_diff_vs_evoi', 0):+.1f} | {s['mean_questions']:.2f} | {v.get('valid_call_rate', '')} | {v.get('agreement_with_evoi', '')} | {v.get('median_latency_s', '')} / {v.get('p95_latency_s', '')} | {v.get('failures', '')} |")
+        md += ["", "Reading: the model may only choose the next investigation step (closing pipeline and policy gates are deterministic). With the advisor table (`hybrid`) both Qwen3.5 sizes follow the decision-theoretic planner 99% of the time and match its decision quality - the LLM adds no measurable decision value here, only 12-22 s per planning step on a shared 16 GB Apple-silicon laptop (indicative, not a clean latency benchmark). Without the advisor (`pure`) the 4B model agrees with EVOI on 25% of steps, always spends both allowed questions and is worse (paired regret +8.4). Qwen3.5-9B `pure` was not run (time). One 9B call hit the client timeout and fell back to the EVOI step. Valid tool-call rate is 99-100%: tool calling works; judgement without the numbers is the weak part. 24 episodes: the CI on the paired difference is wide; treat the ordering, not the decimals, as the result.", ""]
     rb = _load(EXP / "reply_interpretation.json")
     if rb:
         md += [f"### B4. Free-text reply interpretation ({rb['set']['n']} hand-written Arabic/English replies, {rb['set']['answerable']} answerable)", "",
@@ -79,7 +79,7 @@ def main() -> None:
             for k in ("llm_only", "rules_then_llm"):
                 x = v[k]
                 md.append(f"| {m} {k.replace('_', ' ')} | {x['coverage_of_answerable']:.0%} | {x['false_accept_rate']:.1%} ({x['false_accepts']}) | {x['abstain_correct_on_unanswerable']:.0%} | {v['median_latency_s']} |")
-        md += ["", "Set authored by the team (not real traffic). A false accept would become evidence, so it is the metric that matters.", ""]
+        md += ["", "Set authored by the team (not real traffic). A false accept would become evidence, so it is the metric that matters. Findings: the LLM reads 95-97% of answerable replies versus 38% for the keyword rules (the rules have no lexicon for courier / dispatcher answers), but it still accepts contradictory or vague replies (\"yes and no\", \"حاضر\") with confidence 0.95-1.0, so its stated confidence is not calibrated. Qwen3.5 under Ollama does not enforce `format` JSON schemas (first attempt: 0% parsed); enum-constrained **tool calling** works. Therefore the LLM output is a *suggestion shown to a human reviewer*, never evidence by itself.", ""]
     md += ["## Reproduce", "", "```bash", "cd backend", "python -I -m dallal.ml.train                       # real-data models (needs built canonical tables)", "python -I -m dallal.ml.sequence                    # needs `pip install torch`",
            "python -I -m dallal.sim.single_exp 400            # B1", "python -I -m dallal.sim.network_exp 300           # B2", "python -I -m dallal.eval.headline                 # end-to-end trace",
            "python -I -m dallal.eval.llm_planner_bench 24 qwen3.5:4b qwen3.5:9b   # B3 (local Ollama)", "python -I -m dallal.eval.reply_bench qwen3.5:4b qwen3.5:9b           # B4", "python -I -m dallal.eval.report", "```", ""]
