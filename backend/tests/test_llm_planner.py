@@ -78,3 +78,25 @@ def test_valid_choice_is_executed_and_logged_with_rationale():
     rr, pl = _run(chat)
     assert FINISH in seen["first_menu"] and any(r["valid"] and r["chosen"] != FINISH for r in pl.log)
     assert any("LLM planner (stub, hybrid)" in (s.get("why") or "") for s in rr.run.steps)
+
+
+def test_llm_reply_suggestion_is_attached_for_review_but_never_becomes_evidence(monkeypatch):
+    from dallal.data.augment.scenarios import SCENARIOS
+    from dallal.llm import interpret as li
+    from dallal.service import OpsService
+    from dallal.store import Store
+
+    monkeypatch.setattr(li, "suggest", lambda model, spec, text, facts=None: li.Suggestion("at_address_no_answer", 0.95, 0.1, model))
+    svc = OpsService(Store(":memory:"), time_scale=1.0)
+    svc.llm_interpret_model = "stub"
+    r0 = svc.investigate(SCENARIOS["developing_disruption"](11), "ar")
+    rid = r0["run_id"] if "run_id" in r0 else r0["run"]["run_id"]
+    iid = svc.view_run(rid)["inquiries_live"][0]["inquiry_id"]
+    svc.sandbox_reply(iid, "text", text="انا واقف عند الباب والعميل ما يرد")
+    v = svc.view_run(rid)
+    inq = v["inquiries_live"][0]
+    assert inq["status"] == "awaiting"  # still waiting for a human: the suggestion is not evidence
+    msg = next(m for m in inq["messages"] if m["direction"] == "in")
+    assert msg["interpretation"]["needs_review"] and msg["interpretation"]["details"]["llm_suggestion"]["answer_id"] == "at_address_no_answer"
+    svc.resolve_review(iid, "at_address_no_answer", "analyst")
+    assert svc.view_run(rid)["inquiries_live"][0]["status"] == "answered"

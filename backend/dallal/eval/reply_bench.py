@@ -18,27 +18,12 @@ from dallal.channels.interpret import interpret
 from dallal.channels.whatsapp import Inbound
 from dallal.config import PATHS
 from dallal.eval.reply_set import REPLIES
-from dallal.llm import ollama
+from dallal.llm.interpret import suggest
 
 ACCEPT_CONF = 0.8
-SYSTEM = ("You read a short WhatsApp reply (Arabic, Saudi dialect, English or mixed) from a person who was asked one question by a postal operator. "
-          "Map the reply to exactly one of the allowed answer ids, or to \"none\" if the reply does not clearly answer the question, answers something else, "
-          "asks a question back, or is contradictory. Do not guess. Give your confidence between 0 and 1.")
-
-
 def llm_interpret(model: str, spec: iq.InquirySpec, text: str) -> tuple[str | None, float, float]:
-    ids = [a["id"] for a in spec.answers]
-    schema = {"type": "object", "properties": {"answer_id": {"type": "string", "enum": [*ids, "none"]}, "confidence": {"type": "number"}}, "required": ["answer_id", "confidence"]}
-    q = iq.render_question(spec, {"window_text": "14:00-18:00", "corridor_id": "DK-04", "branch_name": "Dammam", "shipment_id": "DL-1"}, "en")
-    opts = "; ".join(f"{a['id']} = {a['en']}" for a in spec.answers)
-    user = f"Question asked: {q}\nAllowed answers: {opts}\nReply: {text}"
-    r = ollama.chat(model, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}], schema=schema, num_predict=60)
-    try:
-        d = r.json()
-        a = d["answer_id"]
-        return (None if a == "none" else a), float(d["confidence"]), r.latency_s
-    except (ValueError, KeyError, TypeError):
-        return None, 0.0, r.latency_s
+    sg = suggest(model, spec, text)
+    return sg.answer_id, sg.confidence, sg.latency_s
 
 
 def rules_interpret(spec: iq.InquirySpec, text: str) -> str | None:
@@ -79,6 +64,9 @@ def run(models: list[str]) -> dict:
     out["generated"] = pd.Timestamp.now().isoformat(timespec="seconds")
     p = PATHS.docs / "experiments"
     p.mkdir(parents=True, exist_ok=True)
+    prev = p / "reply_interpretation.json"
+    if prev.exists():  # keep earlier models when benchmarking one at a time
+        out["models"] = {**json.loads(prev.read_text()).get("models", {}), **out["models"]}
     (p / "reply_interpretation.json").write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
     return out
 

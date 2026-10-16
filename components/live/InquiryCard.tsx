@@ -37,6 +37,8 @@ export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onCh
   const sandbox = inquiry.delivery_mode === "sandbox";
   const awaiting = inquiry.status === "awaiting";
   const needsReview = awaiting && inquiry.messages.some((m) => m.direction === "in" && m.interpretation?.needs_review);
+  const suggestion = [...inquiry.messages].reverse().find((m) => m.direction === "in" && m.interpretation?.details?.llm_suggestion)?.interpretation?.details?.llm_suggestion;
+  const suggested = suggestion ? inquiry.answers.find((a) => a.id === suggestion.answer_id) : undefined;
   const st = STATUS[inquiry.status] ?? { label: inquiry.status, cls: "bg-muted text-ink-3 ring-line" };
   const who = WHO[inquiry.target] ?? inquiry.target;
 
@@ -109,6 +111,16 @@ export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onCh
             <p className="flex items-center gap-1 text-xs font-medium text-warn-700">
               <AlertTriangle className="size-3.5" aria-hidden /> The reply could not be read safely - a person decides how to use it
             </p>
+            {suggestion && suggested ? (
+              <div className="mt-1.5 rounded-md bg-surface px-2 py-1.5 text-xs text-ink-2 ring-1 ring-line">
+                <p>
+                  Language model ({suggestion.model}) suggests <b dir="auto">{suggested.title_en ?? suggested.title}</b> - its own confidence {suggestion.confidence.toFixed(2)} is not calibrated, so a person confirms.
+                </p>
+                <Button className="mt-1" size="xs" variant="primary" disabled={busy} onClick={() => act(() => api.review(inquiry.inquiry_id, { answer_id: suggestion.answer_id, reviewer: analystName }))}>
+                  Accept suggestion
+                </Button>
+              </div>
+            ) : null}
             <div className="mt-1.5 flex flex-wrap gap-1">
               {inquiry.answers.map((a) => (
                 <Button key={a.id} size="xs" variant="secondary" disabled={busy} onClick={() => act(() => api.review(inquiry.inquiry_id, { answer_id: a.id, reviewer: analystName }))}>

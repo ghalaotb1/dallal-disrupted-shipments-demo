@@ -4,9 +4,9 @@
 
 Dallal helps an exception-desk analyst see which shipments need attention, catch failures *before* they happen, understand what really happened from journey evidence (not a single exception code), recover with transparent, ranked actions, let a tool-using agent investigate each case — and recognise when many failures are really **one operational incident**.
 
-> **Prototype notice.** This is the interactive product prototype for the qualification stage. Roads and places are real (OpenStreetMap, Dammam · Al Khobar · Dhahran). Shipments, recipients, events, risk scores and incidents are **simulated** and labelled `SIM` in the UI. No machine-learning model is trained or claimed in this phase, no SPL system or data is used, and no email leaves the browser.
+> **Prototype notice.** This is the interactive product prototype for the qualification stage. Roads and places are real (OpenStreetMap, Dammam · Al Khobar · Dhahran). Shipments, recipients, events, risk scores and incidents are **simulated** and labelled `SIM` in the UI. The in-browser risk scores are prototype heuristics; trained models live only in the optional backend (below). No SPL system or data is used, and no email leaves the browser.
 
-> **AI/ML backend (final-stage work in progress).** The intelligence shown in this UI is still the prototype logic described below. A real data foundation, ML baselines and a tool-using agent now live in [`backend/`](backend/) — see [AI/ML backend](#aiml-backend). Nothing in the UI is yet wired to it.
+> **Live AI backend (optional).** `backend/` is a real Python service: a decision-theoretic agent that can *ask people on WhatsApp* when the databases cannot settle a case, coordinated recovery for shared-cause incidents, and three trained risk models. The UI connects to it when reachable (top-bar pill **Live backend** / **WA SANDBOX**) and otherwise runs on the in-browser prototype logic (**Simulated**). Anything produced by the backend is tagged `LIVE`; sandbox WhatsApp is tagged `SANDBOX` and never reaches a phone. Shipments, couriers, recipients, spare capacity and outcomes remain simulated. See [AI/ML backend](#aiml-backend).
 
 ---
 
@@ -209,26 +209,31 @@ All real computation, clearly labelled, running on simulated inputs:
 
 ## AI/ML backend
 
-`backend/` (Python 3.11+) holds the real data pipeline, ML baselines and the agent. The frontend is unchanged.
+`backend/` (Python 3.11+, FastAPI, SQLite) holds the data pipeline, trained models, the v2 agent, the WhatsApp channel and the coordinated-recovery solver. The frontend talks to it through `lib/live/*` and falls back gracefully when it is absent.
 
 | What | Where | Doc |
 |---|---|---|
-| Dataset audit (select / secondary / reject, with licenses and measured facts) | `backend/registry/datasets.yaml` | [Dataset decision report](docs/data/DATASET_DECISION_REPORT.md) |
-| Canonical operational data model, provenance, leakage rules | `backend/dallal/data/` | [Canonical schema](docs/data/CANONICAL_SCHEMA.md) |
-| Synthetic augmentation (tagged, never evaluated as real) | `backend/dallal/data/augment/` | [Augmentation](docs/data/AUGMENTATION.md) |
-| ML tasks, real-data baselines, incident-detection backtest | `backend/dallal/ml/` | [Tasks and baselines](docs/ml/TASKS_AND_BASELINES.md) |
-| Stateful tool-using agent (belief, EVOI planner, policy, ledger) | `backend/dallal/agent/`, `tools/`, `recovery/` | [Agent architecture](docs/architecture/AGENT_ARCHITECTURE.md) · [Evaluation traces](docs/architecture/EVAL_TRACES.md) |
+| Critical review of v1 and the v2 decision architecture (ensemble belief, net value of information, bounded autonomy) | `backend/dallal/agent/v2/` | [Agent v2](docs/architecture/AGENT_V2.md) |
+| Active inquiries over WhatsApp (sandbox + Cloud API), durable pause/resume, idempotent webhooks | `backend/dallal/channels/`, `service.py`, `store.py` | [WhatsApp](docs/integration/WHATSAPP.md) |
+| Coordinated network recovery (joint MILP, one shared question with recourse, supervisor approval) | `backend/dallal/recovery/network.py`, `plans.py` | [Agent v2 §5](docs/architecture/AGENT_V2.md#5-coordinated-network-recovery) |
+| Real-data risk models (calibrated, feature-contract, abstaining) and the Model Lab page | `backend/dallal/ml/`, `backend/artifacts/`, `/models` | [Experiments, Part A](docs/experiments/README.md) |
+| Guarded LLM planner (Qwen via Ollama) and reply-interpretation benchmark | `backend/dallal/agent/v2/llm_planner.py`, `eval/` | [Experiments](docs/experiments/README.md) |
+| Experiments (synthetic decisions kept apart from real-data metrics) | `backend/dallal/sim/`, `eval/` | [Experiments](docs/experiments/README.md) · [headline trace](docs/experiments/headline_trace.md) |
+| Dataset audit, canonical schema, augmentation, baselines | `backend/registry/`, `dallal/data/`, `dallal/ml/` | [Dataset report](docs/data/DATASET_DECISION_REPORT.md) · [Schema](docs/data/CANONICAL_SCHEMA.md) · [Augmentation](docs/data/AUGMENTATION.md) · [Baselines](docs/ml/TASKS_AND_BASELINES.md) |
+| Deployment (Vercel frontend + container backend) | `backend/Dockerfile`, `render.yaml`, `app/api/dallal` | [Deployment](docs/deployment/DEPLOYMENT.md) |
 
 ```bash
-cd backend && uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
-python -I -m dallal.data.cli fetch selected --all     # ~1.6 GB, hash-verified, git-ignored
-python -I -m dallal.data.cli build olist amazon_lmrrc lade route_deviation spl_open_data ocel_order_management labels
-python -I -m pytest -q                                  # 69 tests
-python -I evals/run_cases.py && python -I evals/render_traces.py
-dallal-agent route_blockage                             # run one case; add --frontend for the UI-shaped run
+# backend
+cd backend && uv venv && source .venv/bin/activate && uv pip install -e ".[dev,api]"
+python -I -m pytest -q
+DALLAL_TIME_SCALE=30 python -m uvicorn dallal.api.app:app --port 8000     # sandbox WhatsApp; no secrets needed
+# frontend (another terminal): the dev server connects to http://localhost:8000 automatically
+npm run dev            # open /shipments/DL-20764?demo=manual  (live agent asks the courier), /incidents/INC-2417 (Plan with the backend), /models
 ```
 
-**Status, honestly:** no public dataset contains failure reasons, root-cause labels, incidents or recovery action→outcome pairs. The agent therefore uses expert-assumption probabilities and a policy-based (non-causal) recovery ranking, and its evaluation cases are synthetic. Real SPL operational data is the main missing input.
+Datasets are never committed: `python -I -m dallal.data.cli fetch selected --all` reproduces them (hash-verified); training needs them (`python -I -m dallal.ml.train`), serving does not (the three small calibrated artifacts are committed and SHA-256 checked on load).
+
+**Status, honestly.** Real: the three trained models and their held-out metrics (other countries' data, not SPL); the agent, solver, durable runtime and sandbox channel running live in the UI. Not real: any SPL data, any delivered WhatsApp message (the Cloud API provider is implemented but has never talked to Meta), every shipment/courier/recipient, spare-courier capacity, response rates and utilities (assumptions), and all decision experiments (synthetic, assumption-based). The backend is packaged for deployment but not deployed from this environment.
 
 ## Data sources & attribution
 

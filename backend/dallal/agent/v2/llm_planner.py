@@ -76,7 +76,8 @@ class LLMPlanner(PlannerV2):
             parts.append("Decision-theory advisor (expected net value of information in SAR-equivalents, higher is better; a source below ~0.4 is not worth its cost):")
             for r in table[:6]:
                 parts.append(f"- {r['source']}: net {r['net_voi']:+.2f}, chance it changes the best action {r['p_decision_change']:.0%}" + (f", reply chance {r['p_response']:.0%}, ~{r['latency_min']:.0f} min" if r["kind"] == "inquiry" else ""))
-            parts.append(f"The advisor would now: {'finish the investigation' if base.kind == 'stop' or base.phase in ('close', 'stop') else base.name}. You may follow or override it.")
+            nxt = "finish the investigation" if base.kind == "stop" or base.phase in ("close", "stop") else base.name
+            parts.append(f"The advisor would now: {nxt} (its reason: {base.reason[:220]}). You may follow or override it.")
         parts.append("Choose the next step.")
         return "\n".join(parts)
 

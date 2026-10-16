@@ -72,3 +72,8 @@ No public dataset labels incidents. So: **real noise** (hourly counts of slow co
 * SPL event data with real exception codes and resolutions (the single biggest gap).
 * A scan-event history per parcel (Olist/Amazon/LaDe have milestones, not scans).
 * A short randomised pilot on reversible actions to make recovery uplift identifiable (see `dallal/agent/ledger.py`).
+
+
+## From baselines to registered models
+
+The feasibility baselines above were followed by calibrated, contract-checked models (`dallal/ml/train.py`, cards in [`models.json`](models.json), summary and the sequence-model decision in [`../experiments/README.md`](../experiments/README.md)). Selection used the validation window only; the baseline tables above report test numbers for every candidate for transparency and were not used for selection.

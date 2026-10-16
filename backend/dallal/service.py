@@ -43,6 +43,7 @@ class OpsService:
         self.provider = provider or wa.SandboxProvider()
         self.time_scale = float(time_scale if time_scale is not None else os.environ.get("DALLAL_TIME_SCALE", "1"))
         self.mode = mode
+        self.llm_interpret_model = os.environ.get("DALLAL_LLM_INTERPRET_MODEL", "")  # e.g. qwen3.5:4b via local Ollama; empty = rules only
         self.book = default_book()
         self.providers = DefaultProviders()
         self.channel = WhatsAppChannel(self.provider, on_sent=self._on_sent)
@@ -206,6 +207,15 @@ class OpsService:
             facts = ((rec["checkpoint"] or {}).get("facts") or {}) if rec else {}
             spec = iq.spec(inq["spec_id"])
             it = interpret(m, spec, inq["inquiry_id"], facts)
+            if it.needs_review and m.kind == "text" and m.text and self.llm_interpret_model:
+                from dallal.llm.interpret import (
+                    suggest,  # optional stage; suggestions go to a human, never straight into the belief
+                )
+
+                sg = suggest(self.llm_interpret_model, spec, m.text, facts)
+                if sg.answer_id:
+                    it.details["llm_suggestion"] = {"answer_id": sg.answer_id, "confidence": sg.confidence, "model": sg.model, "latency_s": sg.latency_s,
+                                                    "note": "model-reported confidence, not calibrated; requires human confirmation"}
             body = {"kind": m.kind, "text": m.text if m.kind == "text" else None, "button_text": m.button_text, "choice_title": m.choice_title, "lat": m.lat, "lng": m.lng, "media_id": m.media_id,
                     "interpretation": asdict(it)}
             self.store.add_message(inq["inquiry_id"], "in", "whatsapp", m.wamid, self.provider.mode, "received", m.kind, body)

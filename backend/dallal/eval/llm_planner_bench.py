@@ -9,6 +9,7 @@ Run: python -I -m dallal.eval.llm_planner_bench N qwen3.5:4b [qwen3.5:9b ...]  -
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 
@@ -31,8 +32,13 @@ def main(n: int, models: list[str]) -> None:
     rows = [run_episode("v2_value", s, tm) | {"contender": "evoi"} for s in range(n)]
     out: dict = {"origin": "synthetic simulator (misspecified-likelihood, paired seeds); relative comparison under stated assumptions", "n_episodes": n, "contenders": {}, "generated": pd.Timestamp.now().isoformat(timespec="seconds")}
     out["contenders"]["evoi"] = {"summary": summarise(pd.DataFrame(rows))}
+    prev = PATHS.docs / "experiments" / "llm_planner.json"
+    if prev.exists():  # keep earlier models when benchmarking one at a time (same seeds, so comparable)
+        old = json.loads(prev.read_text())
+        if old.get("n_episodes") == n:
+            out["contenders"] = {**old["contenders"], **out["contenders"]}
     for m in models:
-        for mode in ("pure", "hybrid"):
+        for mode in os.environ.get("DALLAL_BENCH_MODES", "pure,hybrid").split(","):
             key = f"{m}|{mode}"
             ep_rows, logs = [], []
             t0 = time.time()

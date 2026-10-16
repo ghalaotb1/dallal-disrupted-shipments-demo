@@ -1,5 +1,7 @@
 # Dallal — Agent Architecture
 
+> **Superseded in part.** This describes the v1 agent. The v2 decision architecture (ensemble belief, net value of information, active WhatsApp inquiries, coordinated recovery) and a critical review of v1 are in [AGENT_V2.md](AGENT_V2.md). The tool framework, provenance and safety invariants described here are unchanged.
+
 *Code: [`backend/dallal/agent/`](../../backend/dallal/agent/), [`tools/`](../../backend/dallal/tools/), [`recovery/`](../../backend/dallal/recovery/) · Traces: [`EVAL_TRACES.md`](EVAL_TRACES.md)*
 
 ## Design in one paragraph

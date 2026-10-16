@@ -24,7 +24,7 @@ export interface LiveMessage {
   text?: string | null;
   buttons: { id: string; title: string }[];
   at: number;
-  interpretation?: { answer_id?: string | null; confidence?: number; method?: string; needs_review?: boolean } | null;
+  interpretation?: { answer_id?: string | null; confidence?: number; method?: string; needs_review?: boolean; details?: { llm_suggestion?: { answer_id: string; confidence: number; model: string; note?: string } } } | null;
 }
 
 export interface LiveInquiry {
