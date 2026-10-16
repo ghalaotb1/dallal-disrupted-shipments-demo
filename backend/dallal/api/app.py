@@ -66,6 +66,10 @@ class ReviewRequest(BaseModel):
     reviewer: str
 
 
+class ScoreRequest(BaseModel):
+    features: dict[str, float]
+
+
 class PlanRequest(BaseModel):
     snapshot: dict[str, Any]
     lang: str = "ar"
@@ -211,6 +215,93 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
         except ValueError as e:
             raise HTTPException(422, str(e)) from e
         return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
+
+    # ── trained risk models (real public data; see docs/ml/models.json) ──
+    def _models() -> dict[str, Any]:
+        from dallal.ml import registry
+
+        out = {}
+        for mid in registry.available():
+            try:
+                out[mid] = registry.load(mid)
+            except Exception:  # noqa: BLE001 - corrupt artifact is simply not served
+                continue
+        return out
+
+    @app.get("/v1/models")
+    def list_models() -> list[dict[str, Any]]:
+        res = []
+        for mid, m in _models().items():
+            c = m.card
+            res.append({"model_id": mid, "task_id": c.task_id, "target": c.target, "source": c.source, "licence": c.licence, "algorithm": c.algorithm, "calibration": c.calibration,
+                        "features": [f.name for f in c.features], "split": c.split, "test": {k: c.metrics["test"][k] for k in ("n", "prevalence", "roc_auc", "pr_auc", "lift@top10%", "brier", "brier_prevalence_baseline", "ece")},
+                        "test_auc_95ci": c.metrics["test_auc_95ci"], "trained_at": c.trained_at, "sha256": c.sha256[:16], "origin": "real-public-data"})
+        return res
+
+    @app.get("/v1/models/{model_id}")
+    def get_model(model_id: str) -> dict[str, Any]:
+        m = _models().get(model_id)
+        if m is None:
+            raise HTTPException(404, "unknown model")
+        return m.card.to_json()
+
+    @app.post("/v1/models/{model_id}/score")
+    def score_model(model_id: str, req: ScoreRequest) -> dict[str, Any]:
+        from dallal.ml.registry import ContractError
+
+        m = _models().get(model_id)
+        if m is None:
+            raise HTTPException(404, "unknown model")
+        try:
+            pred = m.predict(req.features)
+        except ContractError as e:
+            raise HTTPException(422, str(e)) from e
+        c = m.card
+        base = {"model_id": model_id, "target": c.target, "source": c.source, "base_rate_source": round(c.base_rate_valid, 5), "origin": "real-public-data"}
+        if pred is None:
+            return {**base, "abstained": True, "reason": "input outside the range this model was trained on", "features_outside_range": m.out_of_domain_features(req.features)}
+        return {**base, "abstained": False, "probability": round(pred.probability, 5), "band": pred.band, "lift_over_base_rate": round(pred.probability / c.base_rate_valid, 2),
+                "note": "Calibrated probability of this model's target in the SOURCE population - not an SPL probability."}
+
+    @app.get("/v1/models/{model_id}/replay")
+    def replay_model(model_id: str, n: int = 12, seed: int = 0) -> dict[str, Any]:
+        """Real held-out rows with the model's prediction and the outcome that actually happened (needs the source data on this host)."""
+        import numpy as np
+        import pandas as pd
+
+        from dallal.config import PATHS
+
+        m = _models().get(model_id)
+        f = PATHS.data / "replay" / f"{model_id}.parquet"
+        if m is None:
+            raise HTTPException(404, "unknown model")
+        if not f.exists():
+            raise HTTPException(404, "replay sample not available on this host (source data is not redistributed); run dallal.ml.train locally")
+        df = pd.read_parquet(f)
+        rows = df.iloc[np.random.default_rng(seed).choice(len(df), size=min(n, len(df)), replace=False)]
+        out = []
+        for _, r in rows.iterrows():
+            feats = {k: float(r[k]) for k in m.feature_names}
+            pred = m.predict(feats)
+            out.append({"features": feats, "probability": None if pred is None else round(pred.probability, 5), "band": None if pred is None else pred.band, "abstained": pred is None, "outcome": int(r["_label"])})
+        base = float(df["_label"].mean())
+        return {"model_id": model_id, "source": m.card.source, "origin": "real-public-data", "sample": "random held-out test rows (chronologically after training)", "sample_base_rate": round(base, 4), "rows": out}
+
+    @app.get("/v1/experiments/{name}")
+    def experiment(name: str) -> dict[str, Any]:
+        """Committed experiment reports (docs/ml, docs/experiments). Whitelisted by name; each report states whether it is real-data or synthetic."""
+        import json as _json
+        import re
+
+        from dallal.config import PATHS
+
+        if not re.fullmatch(r"[a-z0-9_]+", name):
+            raise HTTPException(404, "unknown experiment")
+        for d in (PATHS.docs / "ml", PATHS.docs / "experiments"):
+            f = d / f"{name}.json"
+            if f.exists():
+                return _json.loads(f.read_text())
+        raise HTTPException(404, "unknown experiment")
 
     # ── coordinated recovery plans ──
     @app.post("/v1/frontend/incidents/plan", dependencies=[Depends(guard)])

@@ -1,0 +1,254 @@
+{
+  "model_id": "lade_slow_task_v1",
+  "task_id": "lade_slow_delivery_task",
+  "target": "accept-to-deliver duration above the training-period P90 (engineered)",
+  "source": "LaDe last-mile delivery (Cainiao), Shanghai",
+  "licence": "Apache-2.0 per HF metadata; README restricts to research use",
+  "unit": "delivery task",
+  "as_of": "courier accept time",
+  "algorithm": "HistGradientBoosting (250 it, lr .06, 31 leaves, L2 1.0)",
+  "calibration": "platt fitted on the validation window (60001 rows)",
+  "features": [
+    {
+      "name": "hour",
+      "lo": 7.0,
+      "hi": 21.0,
+      "describe": ""
+    },
+    {
+      "name": "dow",
+      "lo": 0.0,
+      "hi": 6.0,
+      "describe": ""
+    },
+    {
+      "name": "aoi_type",
+      "lo": 0.0,
+      "hi": 14.0,
+      "describe": ""
+    },
+    {
+      "name": "open_tasks_courier",
+      "lo": 0.0,
+      "hi": 30.0,
+      "describe": "tasks the courier had accepted but not completed at accept time"
+    },
+    {
+      "name": "accept_dist_m",
+      "lo": 121.91109941366383,
+      "hi": 9188.007360304966,
+      "describe": ""
+    },
+    {
+      "name": "aoi_past_logdur",
+      "lo": 3.3958109202096556,
+      "hi": 5.762304937122527,
+      "describe": "shrunk mean log-duration of earlier-resolved tasks in the same AOI"
+    },
+    {
+      "name": "aoi_past_n",
+      "lo": 0.0,
+      "hi": 3146.0,
+      "describe": ""
+    },
+    {
+      "name": "courier_past_logdur",
+      "lo": 3.3910805271479814,
+      "hi": 5.5563288877581005,
+      "describe": ""
+    },
+    {
+      "name": "courier_past_n",
+      "lo": 0.0,
+      "hi": 3996.0,
+      "describe": ""
+    },
+    {
+      "name": "region_past_logdur",
+      "lo": 3.813964282000936,
+      "hi": 4.9827417419828155,
+      "describe": ""
+    },
+    {
+      "name": "region_past_n",
+      "lo": 94.0,
+      "hi": 40463.0,
+      "describe": ""
+    }
+  ],
+  "split": {
+    "train": 259997,
+    "valid": 60001,
+    "test": 80002,
+    "train_prevalence": 0.09965,
+    "valid_prevalence": 0.0892,
+    "test_prevalence": 0.08992,
+    "cuts": {
+      "valid_start": 969190860000000.0,
+      "test_start": 971017500000000.0,
+      "embargo": 0.0
+    },
+    "time_min": 957166680000000.0,
+    "time_max": 973033980000000.0
+  },
+  "metrics": {
+    "valid": {
+      "n": 60001,
+      "prevalence": 0.0892,
+      "roc_auc": 0.8855,
+      "pr_auc": 0.5666,
+      "pr_auc_lift_over_prevalence": 6.35,
+      "precision@top10%": 0.5235,
+      "recall@top10%": 0.5869,
+      "lift@top10%": 5.87,
+      "brier": 0.05459,
+      "brier_prevalence_baseline": 0.08124,
+      "ece": 0.00235
+    },
+    "test": {
+      "n": 80002,
+      "prevalence": 0.08992,
+      "roc_auc": 0.8628,
+      "pr_auc": 0.5175,
+      "pr_auc_lift_over_prevalence": 5.76,
+      "precision@top10%": 0.482,
+      "recall@top10%": 0.536,
+      "lift@top10%": 5.36,
+      "brier": 0.05926,
+      "brier_prevalence_baseline": 0.08184,
+      "ece": 0.00752
+    },
+    "test_auc_95ci": [
+      0.8567,
+      0.8673
+    ],
+    "test_calibration": {
+      "mean_predicted": 0.08728,
+      "observed": 0.08992,
+      "ece_uncalibrated_raw": 0.00626,
+      "ece_calibrated": 0.00752,
+      "reliability_deciles": [
+        {
+          "n": 8001,
+          "mean_predicted": 0.00383,
+          "observed": 0.00575
+        },
+        {
+          "n": 8001,
+          "mean_predicted": 0.00811,
+          "observed": 0.01112
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.01222,
+          "observed": 0.01588
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.01681,
+          "observed": 0.01963
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.02242,
+          "observed": 0.03037
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.03017,
+          "observed": 0.03562
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.04266,
+          "observed": 0.0525
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.07055,
+          "observed": 0.08275
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.15969,
+          "observed": 0.16362
+        },
+        {
+          "n": 8000,
+          "mean_predicted": 0.50639,
+          "observed": 0.482
+        }
+      ]
+    },
+    "valid_trials": {
+      "logreg|context": {
+        "valid_pr_auc": 0.3553,
+        "valid_roc_auc": 0.8056,
+        "n_features": 5
+      },
+      "hist_gbm|context": {
+        "valid_pr_auc": 0.4314,
+        "valid_roc_auc": 0.8213,
+        "n_features": 5
+      },
+      "logreg|context+history": {
+        "valid_pr_auc": 0.5216,
+        "valid_roc_auc": 0.87,
+        "n_features": 11
+      },
+      "hist_gbm|context+history": {
+        "valid_pr_auc": 0.5666,
+        "valid_roc_auc": 0.8855,
+        "n_features": 11
+      }
+    },
+    "calibrator_trial_logloss": {
+      "isotonic": 0.19326415178613285,
+      "platt": 0.19317246914423727
+    },
+    "chosen": {
+      "estimator": "hist_gbm",
+      "feature_set": "context+history"
+    },
+    "incomplete_row_handling": {
+      "rows": 400000,
+      "dropped_incomplete": 0,
+      "fraction": 0.0
+    }
+  },
+  "baselines": {
+    "logreg|context": {
+      "test_roc_auc": 0.7802,
+      "test_pr_auc": 0.3517
+    },
+    "hist_gbm|context": {
+      "test_roc_auc": 0.7926,
+      "test_pr_auc": 0.4028
+    },
+    "logreg|context+history": {
+      "test_roc_auc": 0.8471,
+      "test_pr_auc": 0.4852
+    },
+    "hist_gbm|context+history": {
+      "test_roc_auc": 0.8628,
+      "test_pr_auc": 0.5175
+    }
+  },
+  "base_rate_train": 0.09965499601918483,
+  "base_rate_valid": 0.0891985133581107,
+  "band_thresholds": {
+    "elevated": 0.14389344491199071,
+    "high": 0.4580471210121809
+  },
+  "caveats": [
+    "Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.",
+    "History features need a serving-time history store (resolved-before-as_of only)."
+  ],
+  "trained_at": "2026-10-16T15:46:12",
+  "sha256": "bb8c3b54f7dac97c8e3e4c8674463872c61dd521e8f2c2b9a7ed53b645a99467",
+  "extrapolation_tolerance": 0.25,
+  "extra": {
+    "slow_threshold_min": 216.0,
+    "city": "sh"
+  }
+}

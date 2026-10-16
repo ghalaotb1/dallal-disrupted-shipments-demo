@@ -1,0 +1,257 @@
+{
+  "model_id": "amazon_failed_attempt_v1",
+  "task_id": "amazon_package_failed_attempt",
+  "target": "any non-delivered visit for this package on its route",
+  "source": "Amazon Last Mile Routing Research Challenge (public)",
+  "licence": "CC BY-NC 4.0 (non-commercial; research/hackathon use)",
+  "unit": "package",
+  "as_of": "planned route departure",
+  "algorithm": "HistGradientBoosting (250 it, lr .06, 31 leaves, L2 1.0)",
+  "calibration": "platt fitted on the validation window (140151 rows)",
+  "features": [
+    {
+      "name": "volume_cm3",
+      "lo": 215.385,
+      "hi": 85077.3,
+      "describe": ""
+    },
+    {
+      "name": "planned_service_s",
+      "lo": 18.0,
+      "hi": 1587.2,
+      "describe": ""
+    },
+    {
+      "name": "pk_at_stop",
+      "lo": 1.0,
+      "hi": 23.0,
+      "describe": ""
+    },
+    {
+      "name": "pk_on_route",
+      "lo": 164.0,
+      "hi": 298.0,
+      "describe": ""
+    },
+    {
+      "name": "n_stops",
+      "lo": 56.0,
+      "hi": 211.0,
+      "describe": ""
+    },
+    {
+      "name": "capacity",
+      "lo": 3313071.0,
+      "hi": 4247527.0,
+      "describe": ""
+    },
+    {
+      "name": "load_ratio",
+      "lo": 1.25,
+      "hi": 3.828125,
+      "describe": "packages on route / stops"
+    },
+    {
+      "name": "has_window",
+      "lo": 0.0,
+      "hi": 1.0,
+      "describe": ""
+    },
+    {
+      "name": "window_h",
+      "lo": 0.0,
+      "hi": 23.983333333333334,
+      "describe": ""
+    },
+    {
+      "name": "dep_hour",
+      "lo": 11.0,
+      "hi": 17.0,
+      "describe": ""
+    },
+    {
+      "name": "dep_dow",
+      "lo": 0.0,
+      "hi": 6.0,
+      "describe": ""
+    },
+    {
+      "name": "svc_per_pkg",
+      "lo": 11.0,
+      "hi": 383.35249999997905,
+      "describe": "planned service seconds per package at the stop"
+    }
+  ],
+  "split": {
+    "train": 859260,
+    "valid": 140151,
+    "test": 355664,
+    "train_prevalence": 0.00765,
+    "valid_prevalence": 0.00997,
+    "test_prevalence": 0.00612,
+    "cuts": {
+      "valid_start": 40.0,
+      "test_start": 44.0,
+      "embargo": 1.0
+    },
+    "time_min": 18.0,
+    "time_max": 56.0
+  },
+  "metrics": {
+    "valid": {
+      "n": 140151,
+      "prevalence": 0.00997,
+      "roc_auc": 0.7809,
+      "pr_auc": 0.0591,
+      "pr_auc_lift_over_prevalence": 5.93,
+      "precision@top10%": 0.0413,
+      "recall@top10%": 0.4145,
+      "lift@top10%": 4.14,
+      "brier": 0.00963,
+      "brier_prevalence_baseline": 0.00987,
+      "ece": 0.00066
+    },
+    "test": {
+      "n": 355664,
+      "prevalence": 0.00612,
+      "roc_auc": 0.7711,
+      "pr_auc": 0.0278,
+      "pr_auc_lift_over_prevalence": 4.55,
+      "precision@top10%": 0.025,
+      "recall@top10%": 0.4092,
+      "lift@top10%": 4.09,
+      "brier": 0.00603,
+      "brier_prevalence_baseline": 0.00608,
+      "ece": 0.002
+    },
+    "test_auc_95ci": [
+      0.7537,
+      0.7905
+    ],
+    "test_calibration": {
+      "mean_predicted": 0.00811,
+      "observed": 0.00612,
+      "ece_uncalibrated_raw": 0.0008,
+      "ece_calibrated": 0.002,
+      "reliability_deciles": [
+        {
+          "n": 35567,
+          "mean_predicted": 0.00146,
+          "observed": 0.00104
+        },
+        {
+          "n": 35567,
+          "mean_predicted": 0.00199,
+          "observed": 0.0016
+        },
+        {
+          "n": 35567,
+          "mean_predicted": 0.00245,
+          "observed": 0.0016
+        },
+        {
+          "n": 35567,
+          "mean_predicted": 0.00299,
+          "observed": 0.00208
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.00369,
+          "observed": 0.00278
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.00472,
+          "observed": 0.00335
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.00638,
+          "observed": 0.00512
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.00927,
+          "observed": 0.00725
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.01494,
+          "observed": 0.0113
+        },
+        {
+          "n": 35566,
+          "mean_predicted": 0.03322,
+          "observed": 0.02502
+        }
+      ]
+    },
+    "valid_trials": {
+      "logreg|plan": {
+        "valid_pr_auc": 0.0306,
+        "valid_roc_auc": 0.7142,
+        "n_features": 12
+      },
+      "hist_gbm|plan": {
+        "valid_pr_auc": 0.0591,
+        "valid_roc_auc": 0.7809,
+        "n_features": 12
+      },
+      "logreg|plan+history": {
+        "valid_pr_auc": 0.0345,
+        "valid_roc_auc": 0.7484,
+        "n_features": 16
+      },
+      "hist_gbm|plan+history": {
+        "valid_pr_auc": 0.0609,
+        "valid_roc_auc": 0.7921,
+        "n_features": 16
+      }
+    },
+    "calibrator_trial_logloss": {
+      "isotonic": 0.0508277192855824,
+      "platt": 0.050717399835244543
+    },
+    "chosen": {
+      "estimator": "hist_gbm",
+      "feature_set": "plan"
+    },
+    "incomplete_row_handling": {
+      "rows": 1455743,
+      "dropped_incomplete": 0,
+      "fraction": 0.0
+    }
+  },
+  "baselines": {
+    "logreg|plan": {
+      "test_roc_auc": 0.6945,
+      "test_pr_auc": 0.0163
+    },
+    "hist_gbm|plan": {
+      "test_roc_auc": 0.7711,
+      "test_pr_auc": 0.0278
+    },
+    "logreg|plan+history": {
+      "test_roc_auc": 0.7198,
+      "test_pr_auc": 0.0193
+    },
+    "hist_gbm|plan+history": {
+      "test_roc_auc": 0.7615,
+      "test_pr_auc": 0.0267
+    }
+  },
+  "base_rate_train": 0.007647277890277681,
+  "base_rate_valid": 0.00996782042225885,
+  "band_thresholds": {
+    "elevated": 0.018172813516288813,
+    "high": 0.03434646510685288
+  },
+  "caveats": [
+    "Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.",
+    "0.6-0.8% prevalence: expect many false alarms at any useful recall."
+  ],
+  "trained_at": "2026-10-16T15:46:01",
+  "sha256": "d2bba7b0ae253951776083062d29bb60a91e644fae9b4d4eb467a4aa7250a146",
+  "extrapolation_tolerance": 0.25,
+  "extra": {}
+}

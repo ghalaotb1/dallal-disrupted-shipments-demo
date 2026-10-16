@@ -1,0 +1,135 @@
+{
+  "task": "lade_slow_delivery_task (Shanghai)",
+  "k_lags": 16,
+  "n": {
+    "train": 259997,
+    "valid": 60001,
+    "test": 80002
+  },
+  "contenders": {
+    "tabular_hgb": {
+      "valid": {
+        "n": 60001,
+        "prevalence": 0.0892,
+        "roc_auc": 0.8855,
+        "pr_auc": 0.5666,
+        "pr_auc_lift_over_prevalence": 6.35,
+        "precision@top10%": 0.5235,
+        "recall@top10%": 0.5869,
+        "lift@top10%": 5.87,
+        "brier": 0.05457,
+        "brier_prevalence_baseline": 0.08124,
+        "ece": 0.00407
+      },
+      "test": {
+        "n": 80002,
+        "prevalence": 0.08992,
+        "roc_auc": 0.8628,
+        "pr_auc": 0.5175,
+        "pr_auc_lift_over_prevalence": 5.76,
+        "precision@top10%": 0.482,
+        "recall@top10%": 0.536,
+        "lift@top10%": 5.36,
+        "brier": 0.05926,
+        "brier_prevalence_baseline": 0.08184,
+        "ece": 0.00626
+      }
+    },
+    "tabular_hgb_lags": {
+      "valid": {
+        "n": 60001,
+        "prevalence": 0.0892,
+        "roc_auc": 0.8938,
+        "pr_auc": 0.5824,
+        "pr_auc_lift_over_prevalence": 6.53,
+        "precision@top10%": 0.5372,
+        "recall@top10%": 0.6022,
+        "lift@top10%": 6.02,
+        "brier": 0.05317,
+        "brier_prevalence_baseline": 0.08124,
+        "ece": 0.00504
+      },
+      "test": {
+        "n": 80002,
+        "prevalence": 0.08992,
+        "roc_auc": 0.8763,
+        "pr_auc": 0.5467,
+        "pr_auc_lift_over_prevalence": 6.08,
+        "precision@top10%": 0.4994,
+        "recall@top10%": 0.5553,
+        "lift@top10%": 5.55,
+        "brier": 0.05689,
+        "brier_prevalence_baseline": 0.08184,
+        "ece": 0.00472
+      }
+    },
+    "gru_sequence": {
+      "valid": {
+        "n": 60001,
+        "prevalence": 0.0892,
+        "roc_auc": 0.8899,
+        "pr_auc": 0.5747,
+        "pr_auc_lift_over_prevalence": 6.44,
+        "precision@top10%": 0.5298,
+        "recall@top10%": 0.594,
+        "lift@top10%": 5.94,
+        "brier": 0.05406,
+        "brier_prevalence_baseline": 0.08124,
+        "ece": 0.00606
+      },
+      "test": {
+        "n": 80002,
+        "prevalence": 0.08992,
+        "roc_auc": 0.8666,
+        "pr_auc": 0.5371,
+        "pr_auc_lift_over_prevalence": 5.97,
+        "precision@top10%": 0.4951,
+        "recall@top10%": 0.5506,
+        "lift@top10%": 5.51,
+        "brier": 0.05759,
+        "brier_prevalence_baseline": 0.08184,
+        "ece": 0.00347
+      }
+    }
+  },
+  "gru_valid_curve": [
+    {
+      "epoch": 1,
+      "valid_pr_auc": 0.5438,
+      "valid_roc_auc": 0.879
+    },
+    {
+      "epoch": 2,
+      "valid_pr_auc": 0.5654,
+      "valid_roc_auc": 0.8855
+    },
+    {
+      "epoch": 3,
+      "valid_pr_auc": 0.5702,
+      "valid_roc_auc": 0.8868
+    },
+    {
+      "epoch": 4,
+      "valid_pr_auc": 0.5714,
+      "valid_roc_auc": 0.8876
+    },
+    {
+      "epoch": 5,
+      "valid_pr_auc": 0.5733,
+      "valid_roc_auc": 0.8888
+    },
+    {
+      "epoch": 6,
+      "valid_pr_auc": 0.5747,
+      "valid_roc_auc": 0.8899
+    }
+  ],
+  "decision": {
+    "best_tabular_on_valid": "tabular_hgb_lags",
+    "sequence_beats_by_5pct_on_valid": false,
+    "holds_on_test": false,
+    "adopt_sequence_model": false,
+    "reading": "Tabular retained: the sequence model did not clear the pre-registered margin on both windows."
+  },
+  "seconds": 28.6
+}

@@ -98,7 +98,15 @@ class SimulatedExecutor:
         return ExecResult("simulated_ok", f"[simulated] {tool} for {subject_id}")
 
 
+def _default_risk() -> RiskModel:
+    from dallal.ml.risk import (
+        default_risk_model,  # local import: sklearn/joblib are only needed when artifacts exist
+    )
+
+    return default_risk_model()
+
+
 @dataclass
 class DefaultProviders:
-    risk: RiskModel = field(default_factory=HeuristicRiskModel)
+    risk: RiskModel = field(default_factory=lambda: _default_risk())
     executor: ActionExecutor = field(default_factory=SimulatedExecutor)

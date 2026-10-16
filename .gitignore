@@ -52,8 +52,8 @@ next-env.d.ts
 /backend/.ruff_cache/
 /backend/*.egg-info/
 /backend/evals/traces/_scratch/
-# model artifacts / large generated tables
-/backend/artifacts/
+# generated tables. Calibrated model artifacts (<1 MB each, content-hashed in card.json) ARE committed so a hosted backend can serve them;
+# the training data they were fitted on is never committed.
 *.parquet
 !/backend/tests/data/*.parquet
 /backend/.fetch*.log

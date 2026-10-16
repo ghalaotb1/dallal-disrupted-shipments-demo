@@ -157,3 +157,53 @@ export interface PlanSnapshot {
     alt: { available: boolean; extraMin: number };
   };
 }
+
+export interface LiveModelSummary {
+  model_id: string;
+  task_id: string;
+  target: string;
+  source: string;
+  licence: string;
+  algorithm: string;
+  calibration: string;
+  features: string[];
+  split: { train: number; valid: number; test: number; train_prevalence: number; valid_prevalence: number; test_prevalence: number };
+  test: { n: number; prevalence: number; roc_auc: number; pr_auc: number; "lift@top10%": number; brier: number; brier_prevalence_baseline: number; ece: number };
+  test_auc_95ci: [number, number];
+  trained_at: string;
+  sha256: string;
+  origin: string;
+}
+
+export interface LiveModelCard {
+  model_id: string;
+  features: { name: string; lo: number; hi: number; describe: string }[];
+  caveats: string[];
+  base_rate_valid: number;
+  band_thresholds: { elevated: number; high: number };
+  metrics: {
+    test_calibration: { mean_predicted: number; observed: number; ece_uncalibrated_raw: number; ece_calibrated: number; reliability_deciles: { n: number; mean_predicted: number; observed: number }[] };
+    valid_trials: Record<string, { valid_pr_auc: number; valid_roc_auc: number; n_features: number }>;
+    chosen: { estimator: string; feature_set: string };
+  };
+  baselines: Record<string, { test_roc_auc: number; test_pr_auc: number }>;
+}
+
+export interface LiveScore {
+  model_id: string;
+  abstained: boolean;
+  probability?: number;
+  band?: string;
+  lift_over_base_rate?: number;
+  base_rate_source: number;
+  reason?: string;
+  features_outside_range?: string[];
+  note?: string;
+}
+
+export interface LiveReplay {
+  model_id: string;
+  sample: string;
+  sample_base_rate: number;
+  rows: { features: Record<string, number>; probability: number | null; band: string | null; abstained: boolean; outcome: number }[];
+}

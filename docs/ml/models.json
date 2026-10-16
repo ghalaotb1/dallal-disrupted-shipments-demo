@@ -1,0 +1,759 @@
+{
+  "generated": "2026-10-16T15:48:14",
+  "protocol": "(fixed before looking at test): chronological train / valid / test with an embargo; candidates and feature sets are\ncompared on VALID only; a richer feature set must beat the simpler one by >= 5% relative valid PR-AUC to be adopted; the\ncalibrator (isotonic vs Platt) is chosen on the second half of valid after fitting on the first, then refit on all of valid;\nTEST is touched once, for the chosen model. Rows with a missing feature are dropped (the serving contract refuses to impute).",
+  "models": {
+    "olist_late_at_handoff_v1": {
+      "model_id": "olist_late_at_handoff_v1",
+      "task_id": "olist_late_at_handoff",
+      "target": "delivered after the promised calendar day (engineered from observed timestamps)",
+      "source": "Olist Brazilian e-commerce (public)",
+      "licence": "CC BY-NC-SA 4.0 (non-commercial research use)",
+      "unit": "order",
+      "as_of": "carrier hand-off timestamp",
+      "algorithm": "Standardised logistic regression",
+      "calibration": "platt fitted on the validation window (7610 rows)",
+      "features": [
+        {
+          "name": "lead_days_at_handoff",
+          "lo": 2.2127958912037036,
+          "hi": 48.3264324074074,
+          "describe": "promised date minus hand-off date (days)"
+        },
+        {
+          "name": "promised_total_days",
+          "lo": 9.941568981481481,
+          "hi": 53.98107957175947,
+          "describe": "promised date minus purchase (days)"
+        },
+        {
+          "name": "distance_km",
+          "lo": 3.9630996323140772,
+          "hi": 2685.1587213081452,
+          "describe": "seller to destination (km)"
+        },
+        {
+          "name": "same_state",
+          "lo": 0.0,
+          "hi": 1.0,
+          "describe": ""
+        },
+        {
+          "name": "value",
+          "lo": 9.9,
+          "hi": 1300.5122000000003,
+          "describe": ""
+        },
+        {
+          "name": "weight_g",
+          "lo": 50.0,
+          "hi": 30000.0,
+          "describe": ""
+        },
+        {
+          "name": "freight_value",
+          "lo": 7.78,
+          "hi": 126.51,
+          "describe": ""
+        },
+        {
+          "name": "n_items",
+          "lo": 1.0,
+          "hi": 4.0,
+          "describe": ""
+        },
+        {
+          "name": "purchase_to_approval_h",
+          "lo": 0.0,
+          "hi": 108.6025763888889,
+          "describe": ""
+        },
+        {
+          "name": "approval_to_handoff_h",
+          "lo": 0.7936777777777778,
+          "hi": 519.884922222223,
+          "describe": ""
+        },
+        {
+          "name": "handoff_hour",
+          "lo": 0.0,
+          "hi": 23.0,
+          "describe": ""
+        },
+        {
+          "name": "handoff_dow",
+          "lo": 0.0,
+          "hi": 5.0,
+          "describe": ""
+        }
+      ],
+      "split": {
+        "train": 54804,
+        "valid": 7610,
+        "test": 19156,
+        "train_prevalence": 0.05972,
+        "valid_prevalence": 0.0657,
+        "test_prevalence": 0.03592,
+        "cuts": {
+          "valid_start": 572.0,
+          "test_start": 636.0,
+          "embargo": 30.0
+        },
+        "time_min": 127.0,
+        "time_max": 729.0
+      },
+      "metrics": {
+        "valid": {
+          "n": 7610,
+          "prevalence": 0.0657,
+          "roc_auc": 0.7966,
+          "pr_auc": 0.3589,
+          "pr_auc_lift_over_prevalence": 5.46,
+          "precision@top10%": 0.2943,
+          "recall@top10%": 0.448,
+          "lift@top10%": 4.48,
+          "brier": 0.05121,
+          "brier_prevalence_baseline": 0.06139,
+          "ece": 0.00637
+        },
+        "test": {
+          "n": 19156,
+          "prevalence": 0.03592,
+          "roc_auc": 0.8384,
+          "pr_auc": 0.3035,
+          "pr_auc_lift_over_prevalence": 8.45,
+          "precision@top10%": 0.1833,
+          "recall@top10%": 0.5102,
+          "lift@top10%": 5.1,
+          "brier": 0.03346,
+          "brier_prevalence_baseline": 0.03463,
+          "ece": 0.04663
+        },
+        "test_auc_95ci": [
+          0.822,
+          0.8541
+        ],
+        "test_calibration": {
+          "mean_predicted": 0.08255,
+          "observed": 0.03592,
+          "ece_uncalibrated_raw": 0.03574,
+          "ece_calibrated": 0.04663,
+          "reliability_deciles": [
+            {
+              "n": 1916,
+              "mean_predicted": 0.00418,
+              "observed": 0.00313
+            },
+            {
+              "n": 1916,
+              "mean_predicted": 0.01172,
+              "observed": 0.00261
+            },
+            {
+              "n": 1916,
+              "mean_predicted": 0.02056,
+              "observed": 0.00574
+            },
+            {
+              "n": 1916,
+              "mean_predicted": 0.03036,
+              "observed": 0.00783
+            },
+            {
+              "n": 1916,
+              "mean_predicted": 0.04178,
+              "observed": 0.012
+            },
+            {
+              "n": 1916,
+              "mean_predicted": 0.05624,
+              "observed": 0.01514
+            },
+            {
+              "n": 1915,
+              "mean_predicted": 0.07434,
+              "observed": 0.02977
+            },
+            {
+              "n": 1915,
+              "mean_predicted": 0.10042,
+              "observed": 0.03708
+            },
+            {
+              "n": 1915,
+              "mean_predicted": 0.15008,
+              "observed": 0.06266
+            },
+            {
+              "n": 1915,
+              "mean_predicted": 0.33597,
+              "observed": 0.18329
+            }
+          ]
+        },
+        "valid_trials": {
+          "logreg|plan": {
+            "valid_pr_auc": 0.3589,
+            "valid_roc_auc": 0.7966,
+            "n_features": 12
+          },
+          "hist_gbm|plan": {
+            "valid_pr_auc": 0.3329,
+            "valid_roc_auc": 0.7876,
+            "n_features": 12
+          }
+        },
+        "calibrator_trial_logloss": {
+          "isotonic": 0.19765442146060472,
+          "platt": 0.19576154752001867
+        },
+        "chosen": {
+          "estimator": "logreg",
+          "feature_set": "plan"
+        },
+        "incomplete_row_handling": {
+          "rows": 96174,
+          "dropped_incomplete": 493,
+          "fraction": 0.0051
+        }
+      },
+      "baselines": {
+        "logreg|plan": {
+          "test_roc_auc": 0.8384,
+          "test_pr_auc": 0.3035
+        },
+        "hist_gbm|plan": {
+          "test_roc_auc": 0.8621,
+          "test_pr_auc": 0.4876
+        }
+      },
+      "base_rate_train": 0.059721918108167286,
+      "base_rate_valid": 0.0657030223390276,
+      "band_thresholds": {
+        "elevated": 0.10298374369337755,
+        "high": 0.20669219831669267
+      },
+      "caveats": [
+        "Source: Brazilian multi-day e-commerce, 2017-2018. Not Saudi same-day delivery; probabilities describe that population.",
+        "Right-censored edge months excluded.",
+        "The late rate drifted between the validation and test windows; calibration-in-the-large does not survive that shift, so treat probabilities as ranking evidence.",
+        "History features (seller/state/zip late rates) were evaluated and rejected: they hurt on the later period.",
+        "Used by Dallal only when the case satisfies the feature contract and sits inside the training range."
+      ],
+      "trained_at": "2026-10-16T15:48:15",
+      "sha256": "ce36b1377f3409092d293976b1be50a204cf374ecd35debbcb7b42d323cc3328",
+      "extrapolation_tolerance": 0.25,
+      "extra": {}
+    },
+    "amazon_failed_attempt_v1": {
+      "model_id": "amazon_failed_attempt_v1",
+      "task_id": "amazon_package_failed_attempt",
+      "target": "any non-delivered visit for this package on its route",
+      "source": "Amazon Last Mile Routing Research Challenge (public)",
+      "licence": "CC BY-NC 4.0 (non-commercial; research/hackathon use)",
+      "unit": "package",
+      "as_of": "planned route departure",
+      "algorithm": "HistGradientBoosting (250 it, lr .06, 31 leaves, L2 1.0)",
+      "calibration": "platt fitted on the validation window (140151 rows)",
+      "features": [
+        {
+          "name": "volume_cm3",
+          "lo": 215.385,
+          "hi": 85077.3,
+          "describe": ""
+        },
+        {
+          "name": "planned_service_s",
+          "lo": 18.0,
+          "hi": 1587.2,
+          "describe": ""
+        },
+        {
+          "name": "pk_at_stop",
+          "lo": 1.0,
+          "hi": 23.0,
+          "describe": ""
+        },
+        {
+          "name": "pk_on_route",
+          "lo": 164.0,
+          "hi": 298.0,
+          "describe": ""
+        },
+        {
+          "name": "n_stops",
+          "lo": 56.0,
+          "hi": 211.0,
+          "describe": ""
+        },
+        {
+          "name": "capacity",
+          "lo": 3313071.0,
+          "hi": 4247527.0,
+          "describe": ""
+        },
+        {
+          "name": "load_ratio",
+          "lo": 1.25,
+          "hi": 3.828125,
+          "describe": "packages on route / stops"
+        },
+        {
+          "name": "has_window",
+          "lo": 0.0,
+          "hi": 1.0,
+          "describe": ""
+        },
+        {
+          "name": "window_h",
+          "lo": 0.0,
+          "hi": 23.983333333333334,
+          "describe": ""
+        },
+        {
+          "name": "dep_hour",
+          "lo": 11.0,
+          "hi": 17.0,
+          "describe": ""
+        },
+        {
+          "name": "dep_dow",
+          "lo": 0.0,
+          "hi": 6.0,
+          "describe": ""
+        },
+        {
+          "name": "svc_per_pkg",
+          "lo": 11.0,
+          "hi": 383.35249999997905,
+          "describe": "planned service seconds per package at the stop"
+        }
+      ],
+      "split": {
+        "train": 859260,
+        "valid": 140151,
+        "test": 355664,
+        "train_prevalence": 0.00765,
+        "valid_prevalence": 0.00997,
+        "test_prevalence": 0.00612,
+        "cuts": {
+          "valid_start": 40.0,
+          "test_start": 44.0,
+          "embargo": 1.0
+        },
+        "time_min": 18.0,
+        "time_max": 56.0
+      },
+      "metrics": {
+        "valid": {
+          "n": 140151,
+          "prevalence": 0.00997,
+          "roc_auc": 0.7809,
+          "pr_auc": 0.0591,
+          "pr_auc_lift_over_prevalence": 5.93,
+          "precision@top10%": 0.0413,
+          "recall@top10%": 0.4145,
+          "lift@top10%": 4.14,
+          "brier": 0.00963,
+          "brier_prevalence_baseline": 0.00987,
+          "ece": 0.00066
+        },
+        "test": {
+          "n": 355664,
+          "prevalence": 0.00612,
+          "roc_auc": 0.7711,
+          "pr_auc": 0.0278,
+          "pr_auc_lift_over_prevalence": 4.55,
+          "precision@top10%": 0.025,
+          "recall@top10%": 0.4092,
+          "lift@top10%": 4.09,
+          "brier": 0.00603,
+          "brier_prevalence_baseline": 0.00608,
+          "ece": 0.002
+        },
+        "test_auc_95ci": [
+          0.7537,
+          0.7905
+        ],
+        "test_calibration": {
+          "mean_predicted": 0.00811,
+          "observed": 0.00612,
+          "ece_uncalibrated_raw": 0.0008,
+          "ece_calibrated": 0.002,
+          "reliability_deciles": [
+            {
+              "n": 35567,
+              "mean_predicted": 0.00146,
+              "observed": 0.00104
+            },
+            {
+              "n": 35567,
+              "mean_predicted": 0.00199,
+              "observed": 0.0016
+            },
+            {
+              "n": 35567,
+              "mean_predicted": 0.00245,
+              "observed": 0.0016
+            },
+            {
+              "n": 35567,
+              "mean_predicted": 0.00299,
+              "observed": 0.00208
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.00369,
+              "observed": 0.00278
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.00472,
+              "observed": 0.00335
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.00638,
+              "observed": 0.00512
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.00927,
+              "observed": 0.00725
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.01494,
+              "observed": 0.0113
+            },
+            {
+              "n": 35566,
+              "mean_predicted": 0.03322,
+              "observed": 0.02502
+            }
+          ]
+        },
+        "valid_trials": {
+          "logreg|plan": {
+            "valid_pr_auc": 0.0306,
+            "valid_roc_auc": 0.7142,
+            "n_features": 12
+          },
+          "hist_gbm|plan": {
+            "valid_pr_auc": 0.0591,
+            "valid_roc_auc": 0.7809,
+            "n_features": 12
+          },
+          "logreg|plan+history": {
+            "valid_pr_auc": 0.0345,
+            "valid_roc_auc": 0.7484,
+            "n_features": 16
+          },
+          "hist_gbm|plan+history": {
+            "valid_pr_auc": 0.0609,
+            "valid_roc_auc": 0.7921,
+            "n_features": 16
+          }
+        },
+        "calibrator_trial_logloss": {
+          "isotonic": 0.0508277192855824,
+          "platt": 0.050717399835244543
+        },
+        "chosen": {
+          "estimator": "hist_gbm",
+          "feature_set": "plan"
+        },
+        "incomplete_row_handling": {
+          "rows": 1455743,
+          "dropped_incomplete": 0,
+          "fraction": 0.0
+        }
+      },
+      "baselines": {
+        "logreg|plan": {
+          "test_roc_auc": 0.6945,
+          "test_pr_auc": 0.0163
+        },
+        "hist_gbm|plan": {
+          "test_roc_auc": 0.7711,
+          "test_pr_auc": 0.0278
+        },
+        "logreg|plan+history": {
+          "test_roc_auc": 0.7198,
+          "test_pr_auc": 0.0193
+        },
+        "hist_gbm|plan+history": {
+          "test_roc_auc": 0.7615,
+          "test_pr_auc": 0.0267
+        }
+      },
+      "base_rate_train": 0.007647277890277681,
+      "base_rate_valid": 0.00996782042225885,
+      "band_thresholds": {
+        "elevated": 0.018172813516288813,
+        "high": 0.03434646510685288
+      },
+      "caveats": [
+        "Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.",
+        "0.6-0.8% prevalence: expect many false alarms at any useful recall."
+      ],
+      "trained_at": "2026-10-16T15:46:01",
+      "sha256": "d2bba7b0ae253951776083062d29bb60a91e644fae9b4d4eb467a4aa7250a146",
+      "extrapolation_tolerance": 0.25,
+      "extra": {}
+    },
+    "lade_slow_task_v1": {
+      "model_id": "lade_slow_task_v1",
+      "task_id": "lade_slow_delivery_task",
+      "target": "accept-to-deliver duration above the training-period P90 (engineered)",
+      "source": "LaDe last-mile delivery (Cainiao), Shanghai",
+      "licence": "Apache-2.0 per HF metadata; README restricts to research use",
+      "unit": "delivery task",
+      "as_of": "courier accept time",
+      "algorithm": "HistGradientBoosting (250 it, lr .06, 31 leaves, L2 1.0)",
+      "calibration": "platt fitted on the validation window (60001 rows)",
+      "features": [
+        {
+          "name": "hour",
+          "lo": 7.0,
+          "hi": 21.0,
+          "describe": ""
+        },
+        {
+          "name": "dow",
+          "lo": 0.0,
+          "hi": 6.0,
+          "describe": ""
+        },
+        {
+          "name": "aoi_type",
+          "lo": 0.0,
+          "hi": 14.0,
+          "describe": ""
+        },
+        {
+          "name": "open_tasks_courier",
+          "lo": 0.0,
+          "hi": 30.0,
+          "describe": "tasks the courier had accepted but not completed at accept time"
+        },
+        {
+          "name": "accept_dist_m",
+          "lo": 121.91109941366383,
+          "hi": 9188.007360304966,
+          "describe": ""
+        },
+        {
+          "name": "aoi_past_logdur",
+          "lo": 3.3958109202096556,
+          "hi": 5.762304937122527,
+          "describe": "shrunk mean log-duration of earlier-resolved tasks in the same AOI"
+        },
+        {
+          "name": "aoi_past_n",
+          "lo": 0.0,
+          "hi": 3146.0,
+          "describe": ""
+        },
+        {
+          "name": "courier_past_logdur",
+          "lo": 3.3910805271479814,
+          "hi": 5.5563288877581005,
+          "describe": ""
+        },
+        {
+          "name": "courier_past_n",
+          "lo": 0.0,
+          "hi": 3996.0,
+          "describe": ""
+        },
+        {
+          "name": "region_past_logdur",
+          "lo": 3.813964282000936,
+          "hi": 4.9827417419828155,
+          "describe": ""
+        },
+        {
+          "name": "region_past_n",
+          "lo": 94.0,
+          "hi": 40463.0,
+          "describe": ""
+        }
+      ],
+      "split": {
+        "train": 259997,
+        "valid": 60001,
+        "test": 80002,
+        "train_prevalence": 0.09965,
+        "valid_prevalence": 0.0892,
+        "test_prevalence": 0.08992,
+        "cuts": {
+          "valid_start": 969190860000000.0,
+          "test_start": 971017500000000.0,
+          "embargo": 0.0
+        },
+        "time_min": 957166680000000.0,
+        "time_max": 973033980000000.0
+      },
+      "metrics": {
+        "valid": {
+          "n": 60001,
+          "prevalence": 0.0892,
+          "roc_auc": 0.8855,
+          "pr_auc": 0.5666,
+          "pr_auc_lift_over_prevalence": 6.35,
+          "precision@top10%": 0.5235,
+          "recall@top10%": 0.5869,
+          "lift@top10%": 5.87,
+          "brier": 0.05459,
+          "brier_prevalence_baseline": 0.08124,
+          "ece": 0.00235
+        },
+        "test": {
+          "n": 80002,
+          "prevalence": 0.08992,
+          "roc_auc": 0.8628,
+          "pr_auc": 0.5175,
+          "pr_auc_lift_over_prevalence": 5.76,
+          "precision@top10%": 0.482,
+          "recall@top10%": 0.536,
+          "lift@top10%": 5.36,
+          "brier": 0.05926,
+          "brier_prevalence_baseline": 0.08184,
+          "ece": 0.00752
+        },
+        "test_auc_95ci": [
+          0.8567,
+          0.8673
+        ],
+        "test_calibration": {
+          "mean_predicted": 0.08728,
+          "observed": 0.08992,
+          "ece_uncalibrated_raw": 0.00626,
+          "ece_calibrated": 0.00752,
+          "reliability_deciles": [
+            {
+              "n": 8001,
+              "mean_predicted": 0.00383,
+              "observed": 0.00575
+            },
+            {
+              "n": 8001,
+              "mean_predicted": 0.00811,
+              "observed": 0.01112
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.01222,
+              "observed": 0.01588
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.01681,
+              "observed": 0.01963
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.02242,
+              "observed": 0.03037
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.03017,
+              "observed": 0.03562
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.04266,
+              "observed": 0.0525
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.07055,
+              "observed": 0.08275
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.15969,
+              "observed": 0.16362
+            },
+            {
+              "n": 8000,
+              "mean_predicted": 0.50639,
+              "observed": 0.482
+            }
+          ]
+        },
+        "valid_trials": {
+          "logreg|context": {
+            "valid_pr_auc": 0.3553,
+            "valid_roc_auc": 0.8056,
+            "n_features": 5
+          },
+          "hist_gbm|context": {
+            "valid_pr_auc": 0.4314,
+            "valid_roc_auc": 0.8213,
+            "n_features": 5
+          },
+          "logreg|context+history": {
+            "valid_pr_auc": 0.5216,
+            "valid_roc_auc": 0.87,
+            "n_features": 11
+          },
+          "hist_gbm|context+history": {
+            "valid_pr_auc": 0.5666,
+            "valid_roc_auc": 0.8855,
+            "n_features": 11
+          }
+        },
+        "calibrator_trial_logloss": {
+          "isotonic": 0.19326415178613285,
+          "platt": 0.19317246914423727
+        },
+        "chosen": {
+          "estimator": "hist_gbm",
+          "feature_set": "context+history"
+        },
+        "incomplete_row_handling": {
+          "rows": 400000,
+          "dropped_incomplete": 0,
+          "fraction": 0.0
+        }
+      },
+      "baselines": {
+        "logreg|context": {
+          "test_roc_auc": 0.7802,
+          "test_pr_auc": 0.3517
+        },
+        "hist_gbm|context": {
+          "test_roc_auc": 0.7926,
+          "test_pr_auc": 0.4028
+        },
+        "logreg|context+history": {
+          "test_roc_auc": 0.8471,
+          "test_pr_auc": 0.4852
+        },
+        "hist_gbm|context+history": {
+          "test_roc_auc": 0.8628,
+          "test_pr_auc": 0.5175
+        }
+      },
+      "base_rate_train": 0.09965499601918483,
+      "base_rate_valid": 0.0891985133581107,
+      "band_thresholds": {
+        "elevated": 0.14389344491199071,
+        "high": 0.4580471210121809
+      },
+      "caveats": [
+        "Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.",
+        "History features need a serving-time history store (resolved-before-as_of only)."
+      ],
+      "trained_at": "2026-10-16T15:46:12",
+      "sha256": "bb8c3b54f7dac97c8e3e4c8674463872c61dd521e8f2c2b9a7ed53b645a99467",
+      "extrapolation_tolerance": 0.25,
+      "extra": {
+        "slow_threshold_min": 216.0,
+        "city": "sh"
+      }
+    }
+  }
+}

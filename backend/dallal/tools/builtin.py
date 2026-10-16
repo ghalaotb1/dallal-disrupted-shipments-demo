@@ -128,6 +128,15 @@ def get_pickup_context(ctx: ToolContext, args: dict) -> ToolResult:
 # ── analysis ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 def predict_risk(ctx: ToolContext, args: dict) -> ToolResult:
     rs = ctx.providers.risk.score(ctx.world, ctx.state.subject_id, ctx.state.facts or {})
+    if rs.basis.startswith("trained:") and rs.probability is not None and rs.band:  # calibrated probability of the model's own target; bands are relative to its validation distribution
+        band = rs.band or "low"
+        out = "low" if band == "low" else "generic_high"
+        status = "alert" if band == "high" else "warn" if band == "elevated" else "ok"
+        meta = rs.meta or {}
+        return ToolResult(status, f"{band.capitalize()} risk - P({meta.get('target', 'target')}) = {rs.probability:.1%} ({rs.basis}, calibrated on {meta.get('source', 'source data')})",
+                          [f"base rate in source data {meta.get('base_rate_source', 0):.1%}", "different population from SPL: ranking evidence, not an SPL probability"], outcome=out,
+                          data={"risk": {"score": rs.score, "level": band, "drivers": rs.drivers, "probability": rs.probability, "meta": meta, "band": band}},
+                          provenance=_prov(ctx, model_id=rs.model_id, model_basis=rs.basis))
     if rs.score < 0.35:
         out = "low"
     else:

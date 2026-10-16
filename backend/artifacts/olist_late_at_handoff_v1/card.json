@@ -1,0 +1,242 @@
+{
+  "model_id": "olist_late_at_handoff_v1",
+  "task_id": "olist_late_at_handoff",
+  "target": "delivered after the promised calendar day (engineered from observed timestamps)",
+  "source": "Olist Brazilian e-commerce (public)",
+  "licence": "CC BY-NC-SA 4.0 (non-commercial research use)",
+  "unit": "order",
+  "as_of": "carrier hand-off timestamp",
+  "algorithm": "Standardised logistic regression",
+  "calibration": "platt fitted on the validation window (7610 rows)",
+  "features": [
+    {
+      "name": "lead_days_at_handoff",
+      "lo": 2.2127958912037036,
+      "hi": 48.3264324074074,
+      "describe": "promised date minus hand-off date (days)"
+    },
+    {
+      "name": "promised_total_days",
+      "lo": 9.941568981481481,
+      "hi": 53.98107957175947,
+      "describe": "promised date minus purchase (days)"
+    },
+    {
+      "name": "distance_km",
+      "lo": 3.9630996323140772,
+      "hi": 2685.1587213081452,
+      "describe": "seller to destination (km)"
+    },
+    {
+      "name": "same_state",
+      "lo": 0.0,
+      "hi": 1.0,
+      "describe": ""
+    },
+    {
+      "name": "value",
+      "lo": 9.9,
+      "hi": 1300.5122000000003,
+      "describe": ""
+    },
+    {
+      "name": "weight_g",
+      "lo": 50.0,
+      "hi": 30000.0,
+      "describe": ""
+    },
+    {
+      "name": "freight_value",
+      "lo": 7.78,
+      "hi": 126.51,
+      "describe": ""
+    },
+    {
+      "name": "n_items",
+      "lo": 1.0,
+      "hi": 4.0,
+      "describe": ""
+    },
+    {
+      "name": "purchase_to_approval_h",
+      "lo": 0.0,
+      "hi": 108.6025763888889,
+      "describe": ""
+    },
+    {
+      "name": "approval_to_handoff_h",
+      "lo": 0.7936777777777778,
+      "hi": 519.884922222223,
+      "describe": ""
+    },
+    {
+      "name": "handoff_hour",
+      "lo": 0.0,
+      "hi": 23.0,
+      "describe": ""
+    },
+    {
+      "name": "handoff_dow",
+      "lo": 0.0,
+      "hi": 5.0,
+      "describe": ""
+    }
+  ],
+  "split": {
+    "train": 54804,
+    "valid": 7610,
+    "test": 19156,
+    "train_prevalence": 0.05972,
+    "valid_prevalence": 0.0657,
+    "test_prevalence": 0.03592,
+    "cuts": {
+      "valid_start": 572.0,
+      "test_start": 636.0,
+      "embargo": 30.0
+    },
+    "time_min": 127.0,
+    "time_max": 729.0
+  },
+  "metrics": {
+    "valid": {
+      "n": 7610,
+      "prevalence": 0.0657,
+      "roc_auc": 0.7966,
+      "pr_auc": 0.3589,
+      "pr_auc_lift_over_prevalence": 5.46,
+      "precision@top10%": 0.2943,
+      "recall@top10%": 0.448,
+      "lift@top10%": 4.48,
+      "brier": 0.05121,
+      "brier_prevalence_baseline": 0.06139,
+      "ece": 0.00637
+    },
+    "test": {
+      "n": 19156,
+      "prevalence": 0.03592,
+      "roc_auc": 0.8384,
+      "pr_auc": 0.3035,
+      "pr_auc_lift_over_prevalence": 8.45,
+      "precision@top10%": 0.1833,
+      "recall@top10%": 0.5102,
+      "lift@top10%": 5.1,
+      "brier": 0.03346,
+      "brier_prevalence_baseline": 0.03463,
+      "ece": 0.04663
+    },
+    "test_auc_95ci": [
+      0.822,
+      0.8541
+    ],
+    "test_calibration": {
+      "mean_predicted": 0.08255,
+      "observed": 0.03592,
+      "ece_uncalibrated_raw": 0.03574,
+      "ece_calibrated": 0.04663,
+      "reliability_deciles": [
+        {
+          "n": 1916,
+          "mean_predicted": 0.00418,
+          "observed": 0.00313
+        },
+        {
+          "n": 1916,
+          "mean_predicted": 0.01172,
+          "observed": 0.00261
+        },
+        {
+          "n": 1916,
+          "mean_predicted": 0.02056,
+          "observed": 0.00574
+        },
+        {
+          "n": 1916,
+          "mean_predicted": 0.03036,
+          "observed": 0.00783
+        },
+        {
+          "n": 1916,
+          "mean_predicted": 0.04178,
+          "observed": 0.012
+        },
+        {
+          "n": 1916,
+          "mean_predicted": 0.05624,
+          "observed": 0.01514
+        },
+        {
+          "n": 1915,
+          "mean_predicted": 0.07434,
+          "observed": 0.02977
+        },
+        {
+          "n": 1915,
+          "mean_predicted": 0.10042,
+          "observed": 0.03708
+        },
+        {
+          "n": 1915,
+          "mean_predicted": 0.15008,
+          "observed": 0.06266
+        },
+        {
+          "n": 1915,
+          "mean_predicted": 0.33597,
+          "observed": 0.18329
+        }
+      ]
+    },
+    "valid_trials": {
+      "logreg|plan": {
+        "valid_pr_auc": 0.3589,
+        "valid_roc_auc": 0.7966,
+        "n_features": 12
+      },
+      "hist_gbm|plan": {
+        "valid_pr_auc": 0.3329,
+        "valid_roc_auc": 0.7876,
+        "n_features": 12
+      }
+    },
+    "calibrator_trial_logloss": {
+      "isotonic": 0.19765442146060472,
+      "platt": 0.19576154752001867
+    },
+    "chosen": {
+      "estimator": "logreg",
+      "feature_set": "plan"
+    },
+    "incomplete_row_handling": {
+      "rows": 96174,
+      "dropped_incomplete": 493,
+      "fraction": 0.0051
+    }
+  },
+  "baselines": {
+    "logreg|plan": {
+      "test_roc_auc": 0.8384,
+      "test_pr_auc": 0.3035
+    },
+    "hist_gbm|plan": {
+      "test_roc_auc": 0.8621,
+      "test_pr_auc": 0.4876
+    }
+  },
+  "base_rate_train": 0.059721918108167286,
+  "base_rate_valid": 0.0657030223390276,
+  "band_thresholds": {
+    "elevated": 0.10298374369337755,
+    "high": 0.20669219831669267
+  },
+  "caveats": [
+    "Source: Brazilian multi-day e-commerce, 2017-2018. Not Saudi same-day delivery; probabilities describe that population.",
+    "Right-censored edge months excluded.",
+    "The late rate drifted between the validation and test windows; calibration-in-the-large does not survive that shift, so treat probabilities as ranking evidence.",
+    "History features (seller/state/zip late rates) were evaluated and rejected: they hurt on the later period.",
+    "Used by Dallal only when the case satisfies the feature contract and sits inside the training range."
+  ],
+  "trained_at": "2026-10-16T15:48:15",
+  "sha256": "ce36b1377f3409092d293976b1be50a204cf374ecd35debbcb7b42d323cc3328",
+  "extrapolation_tolerance": 0.25,
+  "extra": {}
+}

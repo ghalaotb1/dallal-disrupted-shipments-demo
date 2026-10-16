@@ -12,10 +12,12 @@ dependencies = [
   "pyarrow>=16",
   "openpyxl>=3.1",
   "scikit-learn>=1.5",
+  "joblib>=1.3",
 ]
 
 [project.optional-dependencies]
 llm = ["anthropic>=0.40"]
+ml = ["torch>=2.2"]  # only the sequence-model experiment (dallal.ml.sequence); serving needs scikit-learn + joblib only
 api = ["fastapi>=0.110", "uvicorn>=0.29"]
 dev = ["pytest>=8", "ruff>=0.5", "httpx>=0.27"]
 

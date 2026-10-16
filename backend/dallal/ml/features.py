@@ -120,7 +120,8 @@ def amazon_frame() -> pd.DataFrame:
     return x
 
 
-def lade_frame(code: str = "sh", sample: int | None = 400_000, seed: int = 0) -> pd.DataFrame:
+def lade_stream(code: str = "sh") -> pd.DataFrame:
+    """The LaDe task stream sorted by as_of (row position = `_row` in `lade_frame`)."""
     from dallal.config import PATHS
 
     base = PATHS.canonical / "lade"
@@ -130,7 +131,11 @@ def lade_frame(code: str = "sh", sample: int | None = 400_000, seed: int = 0) ->
     lab = pd.read_parquet(base / f"label.delivery_{code}.parquet", columns=["entity_id", "value", "as_of_ts", "available_at_ts", "origin"]).rename(columns={"entity_id": "shipment_id"})
     df = lab.merge(sh, on="shipment_id").join(acc[["lat", "lng"]].rename(columns={"lat": "acc_lat", "lng": "acc_lng"}), on="shipment_id")
     df["log_dur"] = np.log1p(df["value"])
-    df = df.sort_values("as_of_ts").reset_index(drop=True)
+    return df.sort_values("as_of_ts").reset_index(drop=True)
+
+
+def lade_frame(code: str = "sh", sample: int | None = 400_000, seed: int = 0) -> pd.DataFrame:
+    df = lade_stream(code)
     x = pd.DataFrame(index=df.index)
     x["hour"], x["dow"] = df["as_of_ts"].dt.hour, df["as_of_ts"].dt.dayofweek
     x["aoi_type"] = pd.to_numeric(df["dest_zone_type"], errors="coerce")
@@ -142,6 +147,7 @@ def lade_frame(code: str = "sh", sample: int | None = 400_000, seed: int = 0) ->
         m, c = past_stat(df[key], df["as_of_ts"], df["available_at_ts"], df["log_dur"], prior=prior, prior_n=10.0)
         x[f"{name}_past_logdur"], x[f"{name}_past_n"] = m, c
     x["_dur"], x["_t"], x["_origin"] = df["value"].values, df["as_of_ts"].astype("int64").values, df["origin"].values
+    x["_row"] = np.arange(len(x))  # position in the as_of-sorted stream (lets sequence features be aligned after sampling)
     if sample and len(x) > sample:
         x = x.sample(sample, random_state=seed).sort_values("_t").reset_index(drop=True)  # sampling AFTER history features: they used the full stream
     return x
@@ -151,4 +157,4 @@ def keep_dense_months(df: pd.DataFrame, min_rows: int = 500) -> pd.DataFrame:
     return drop_sparse_periods(df, "_month", min_rows)
 
 
-__all__ = ["Origin", "amazon_frame", "concurrent_open", "keep_dense_months", "lade_frame", "olist_frame", "past_stat"]
+__all__ = ["Origin", "amazon_frame", "concurrent_open", "keep_dense_months", "lade_frame", "lade_stream", "olist_frame", "past_stat"]

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, Info, LayoutDashboard, Package, PanelLeftClose, PanelLeftOpen, Siren, Sparkles } from "lucide-react";
+import { Bell, FlaskConical, Info, LayoutDashboard, Package, PanelLeftClose, PanelLeftOpen, Siren, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { people } from "@/data/people";
 import { SHIFT } from "@/lib/time";
@@ -39,6 +39,7 @@ export function Sidebar() {
     { href: "/", label: "Overview", icon: LayoutDashboard, match: (p: string) => p === "/" },
     { href: "/shipments", label: "Shipments", icon: Package, match: (p: string) => p.startsWith("/shipments"), count: kpis.disrupted + kpis.atRisk + kpis.review || undefined },
     { href: "/incidents", label: "Incidents", icon: Siren, match: (p: string) => p.startsWith("/incidents"), count: kpis.incidents || undefined, alert: !!kpis.criticalIncident },
+    { href: "/models", label: "Model Lab", icon: FlaskConical, match: (p: string) => p.startsWith("/models") },
     { href: "/notifications", label: "Notifications", icon: Bell, match: (p: string) => p.startsWith("/notifications"), count: unread || undefined },
   ];
 
