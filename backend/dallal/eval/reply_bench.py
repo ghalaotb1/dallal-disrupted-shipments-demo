@@ -1,0 +1,89 @@
+"""Free-text reply interpretation: rule interpreter vs LLM stage vs rules-then-LLM, on the hand-written set (dallal.eval.reply_set).
+
+An LLM answer is accepted only if it is one of the inquiry's own answer ids (schema-constrained) AND its stated confidence >= 0.8;
+trust is capped at 0.9 by the runtime. The costly error is a FALSE ACCEPT (a wrong answer id, or an answer where abstaining was right):
+it would become evidence. Run: python -I -m dallal.eval.reply_bench qwen3.5:4b [qwen3.5:9b ...]  -> docs/experiments/reply_interpretation.json
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import time
+
+import pandas as pd
+
+from dallal.agent.v2 import inquiry as iq
+from dallal.channels.interpret import interpret
+from dallal.channels.whatsapp import Inbound
+from dallal.config import PATHS
+from dallal.eval.reply_set import REPLIES
+from dallal.llm import ollama
+
+ACCEPT_CONF = 0.8
+SYSTEM = ("You read a short WhatsApp reply (Arabic, Saudi dialect, English or mixed) from a person who was asked one question by a postal operator. "
+          "Map the reply to exactly one of the allowed answer ids, or to \"none\" if the reply does not clearly answer the question, answers something else, "
+          "asks a question back, or is contradictory. Do not guess. Give your confidence between 0 and 1.")
+
+
+def llm_interpret(model: str, spec: iq.InquirySpec, text: str) -> tuple[str | None, float, float]:
+    ids = [a["id"] for a in spec.answers]
+    schema = {"type": "object", "properties": {"answer_id": {"type": "string", "enum": [*ids, "none"]}, "confidence": {"type": "number"}}, "required": ["answer_id", "confidence"]}
+    q = iq.render_question(spec, {"window_text": "14:00-18:00", "corridor_id": "DK-04", "branch_name": "Dammam", "shipment_id": "DL-1"}, "en")
+    opts = "; ".join(f"{a['id']} = {a['en']}" for a in spec.answers)
+    user = f"Question asked: {q}\nAllowed answers: {opts}\nReply: {text}"
+    r = ollama.chat(model, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}], schema=schema, num_predict=60)
+    try:
+        d = r.json()
+        a = d["answer_id"]
+        return (None if a == "none" else a), float(d["confidence"]), r.latency_s
+    except (ValueError, KeyError, TypeError):
+        return None, 0.0, r.latency_s
+
+
+def rules_interpret(spec: iq.InquirySpec, text: str) -> str | None:
+    m = Inbound("w", "x", 0, "text", text=text)
+    r = interpret(m, spec, "inq", {})
+    return None if r.needs_review else r.answer_id
+
+
+def _score(rows: list[dict], col: str) -> dict:
+    df = pd.DataFrame(rows)
+    acc = df[df[col].notna()]
+    pos = df[df["expected"].notna()]
+    wrong = acc[acc[col] != acc["expected"]]  # includes accepting where abstaining was right (expected NaN)
+    return {"n": int(len(df)), "coverage_of_answerable": round(float((pos[col] == pos["expected"]).mean()), 3), "accepted": int(len(acc)),
+            "false_accept_rate": round(float(len(wrong) / max(len(acc), 1)), 3), "false_accepts": int(len(wrong)),
+            "abstain_correct_on_unanswerable": round(float(df[df["expected"].isna()][col].isna().mean()), 3)}
+
+
+def run(models: list[str]) -> dict:
+    rows = []
+    for sid, text, exp in REPLIES:
+        s = iq.spec(sid)
+        rows.append({"spec": sid, "text": text, "expected": exp, "rules": rules_interpret(s, text)})
+    out: dict = {"set": {"n": len(rows), "answerable": sum(r["expected"] is not None for r in rows), "note": "hand-written by the team; not real traffic"}, "rules_only": _score(rows, "rules"), "models": {}}
+    for m in models:
+        lat = []
+        for r in rows:
+            a, c, l_ = llm_interpret(m, iq.spec(r["spec"]), r["text"])
+            lat.append(l_)
+            r["llm"] = a if c >= ACCEPT_CONF else None
+            r["llm_raw"] = a
+            r["llm_conf"] = c
+            r["rules_then_llm"] = r["rules"] if r["rules"] is not None else r["llm"]
+        out["models"][m] = {"llm_only": _score(rows, "llm"), "rules_then_llm": _score(rows, "rules_then_llm"), "median_latency_s": round(float(pd.Series(lat).median()), 2),
+                            "errors": [{"spec": r["spec"], "text": r["text"], "expected": r["expected"], "got": r["llm"], "conf": r["llm_conf"]} for r in rows if r["llm"] is not None and r["llm"] != r["expected"]]}
+        print(m, json.dumps({k: v for k, v in out["models"][m].items() if k != "errors"}))
+    out["origin"] = "synthetic-handwritten (not real traffic)"
+    out["generated"] = pd.Timestamp.now().isoformat(timespec="seconds")
+    p = PATHS.docs / "experiments"
+    p.mkdir(parents=True, exist_ok=True)
+    (p / "reply_interpretation.json").write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
+    return out
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    res = run(sys.argv[1:])
+    print("rules_only", res["rules_only"], f"({time.time() - t0:.0f}s)")

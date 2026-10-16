@@ -46,17 +46,22 @@ class PlannerV2:
         self.mode = mode
         self.name = f"v2-{mode}"
 
-    def next(self, state: CaseStateV2, tools: ToolRegistry, opts: list[Option] | None, stk: Stakes | None) -> Step:
-        if state.facts is None:
-            return Step("tool", "get_shipment", "bootstrap: shipment facts are needed to form a prior", "bootstrap")
-        assert opts is not None and stk is not None
+    def candidates(self, state: CaseStateV2, tools: ToolRegistry, opts: list[Option], stk: Stakes, *, allow_inquiries: bool = True) -> tuple[list[Candidate], list[Candidate]]:
+        """Every evidence source currently eligible, scored. Shared with planners that choose differently (e.g. the LLM planner)."""
         tool_c: list[Candidate] = []
         inq_c: list[Candidate] = []
         if state.info_calls() < state.budget:
             names = [s.name for s in tools.eligible(state, informative_only=True)]
             tool_c = tool_candidates(state.belief, names, opts, stk)
-        if self.mode != "no_inquiry" and len(state.asked) < MAX_INQUIRIES and state.pending is None:
+        if allow_inquiries and self.mode != "no_inquiry" and len(state.asked) < MAX_INQUIRIES and state.pending is None:
             inq_c = inquiry_candidates(state.belief, state.facts, state.now, set(state.asked), opts, stk)
+        return tool_c, inq_c
+
+    def next(self, state: CaseStateV2, tools: ToolRegistry, opts: list[Option] | None, stk: Stakes | None) -> Step:
+        if state.facts is None:
+            return Step("tool", "get_shipment", "bootstrap: shipment facts are needed to form a prior", "bootstrap")
+        assert opts is not None and stk is not None
+        tool_c, inq_c = self.candidates(state, tools, opts, stk)
         table = [c.as_row() for c in sorted(tool_c + inq_c, key=lambda c: -c.net_voi)][:8]
 
         # "Ask only for what you cannot look up": free, instant database evidence is exhausted BEFORE any question to a person is
