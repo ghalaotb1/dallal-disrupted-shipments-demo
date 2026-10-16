@@ -6,6 +6,8 @@ import { cn } from "@/lib/cn";
 import { fmtTime } from "@/lib/time";
 import { Tooltip } from "@/components/common/Tooltip";
 import { Button } from "@/components/common/Button";
+import { InquiryCard } from "@/components/live/InquiryCard";
+import { LiveTag } from "@/components/live/LiveTags";
 import type { AgentOutcome, AgentRun, AgentStep } from "@/types/domain";
 
 const STATUS = {
@@ -15,7 +17,7 @@ const STATUS = {
   alert: { icon: OctagonAlert, cls: "bg-crit-50 text-crit-600 ring-crit-200" },
 } as const;
 
-const KIND = { read: "Read", analysis: "Analysis", action: "Action" } as const;
+const KIND = { read: "Read", analysis: "Analysis", action: "Action", inquiry: "Question" } as const;
 
 export function AgentPanel({
   investigation,
@@ -41,10 +43,19 @@ export function AgentPanel({
             <Bot className="size-[18px]" aria-hidden />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-ink">Agent investigation</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+              Agent investigation
+              {(investigation ?? running)?.source === "live" ? <LiveTag /> : null}
+            </h2>
             <p className="text-xs text-ink-3">
               {running ? (
-                <span className="text-brand-700">{running.mode === "execution" ? "Executing action…" : "Investigating — choosing tools from evidence…"}</span>
+                <span className="text-brand-700">
+                  {running.mode === "execution"
+                    ? "Executing action…"
+                    : running.backendStatus === "awaiting_response"
+                      ? "Paused — waiting for an answer to a question the agent asked"
+                      : "Investigating — choosing tools from evidence…"}
+                </span>
               ) : investigation ? (
                 <>
                   Run at {fmtTime(investigation.startedAt)} · {investigation.steps.length} tool calls
@@ -93,7 +104,14 @@ export function AgentPanel({
 
       <footer className="flex items-start gap-2 border-t border-line-soft px-4 py-2.5 text-2xs leading-4 text-ink-4">
         <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-        <span>Prototype planner: a deterministic policy over the same tool interface an LLM agent will call. The agent never invents numbers — tools produce them. Action tools only touch the demo environment.</span>
+        {(investigation ?? running)?.source === "live" ? (
+          <span>
+            Live backend: a Bayesian belief over causes, tools and questions chosen by net value of information, bounded-autonomy policy. The agent never invents numbers — tools produce them. Probabilities are expert assumptions, not fitted
+            to SPL data. Actions only touch the simulated environment.
+          </span>
+        ) : (
+          <span>Prototype planner: a deterministic policy over the same tool interface an LLM agent will call. The agent never invents numbers — tools produce them. Action tools only touch the demo environment.</span>
+        )}
       </footer>
     </section>
   );
@@ -122,12 +140,13 @@ function RunTrace({ run, title }: { run: AgentRun; title?: string }) {
             >
               {i < run.steps.length - 1 ? <span className="absolute top-7 bottom-0 left-[13px] w-px bg-line" aria-hidden /> : null}
               <StepIcon status={step.status} />
-              <StepBody step={step} />
+              <StepBody step={step} run={run} />
             </motion.li>
           ))}
         </AnimatePresence>
       </ol>
       <AnimatePresence>{run.outcome ? <OutcomeBox key="outcome" outcome={run.outcome} /> : null}</AnimatePresence>
+      {run.backend?.utility_table?.length && run.outcome ? <UtilityTable run={run} /> : null}
     </div>
   );
 }
@@ -167,7 +186,7 @@ function StepIcon({ status }: { status: AgentStep["status"] }) {
   );
 }
 
-function StepBody({ step }: { step: AgentStep }) {
+function StepBody({ step, run }: { step: AgentStep; run: AgentRun }) {
   const running = step.status === "running";
   return (
     <div className="min-w-0 flex-1 pt-0.5">
@@ -186,14 +205,23 @@ function StepBody({ step }: { step: AgentStep }) {
           ) : null}
           {step.facts?.length ? (
             <ul className="mt-1 space-y-0.5">
-              {step.facts.map((f) => (
-                <li key={f} className="flex gap-1.5 text-xs text-ink-2">
+              {step.facts.map((f, fi) => (
+                <li key={`${fi}-${f}`} className="flex gap-1.5 text-xs text-ink-2">
                   <span className="mt-[7px] size-1 shrink-0 rounded-full bg-ink-5" aria-hidden />
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
           ) : null}
+          {step.belief ? (
+            <p className="mt-1 font-mono text-[10.5px] leading-4 text-ink-4" title="Belief after this step (mixture over uncertain likelihood tables)">
+              belief: {step.belief.top.slice(0, 3).map(([c, p]) => `${c.replace(/_/g, " ")} ${Math.round(p * 100)}%`).join(" · ")} · systemic {Math.round(step.belief.p_systemic * 100)}%
+            </p>
+          ) : null}
+          {step.kind === "inquiry" ? (() => {
+            const inq = run.backend?.inquiries.find((i) => i.inquiry_id === step.inquiryId);
+            return inq ? <InquiryCard inquiry={inq} /> : null;
+          })() : null}
         </>
       )}
     </div>
@@ -220,5 +248,39 @@ function OutcomeBox({ outcome }: { outcome: AgentOutcome }) {
       <p className="mt-0.5 text-xs text-ink-2">{outcome.rationale}</p>
       {outcome.type === "escalate" ? <p className="mt-1.5 text-xs text-ink-2">Open question: “{outcome.question}”</p> : null}
     </motion.div>
+  );
+}
+
+function UtilityTable({ run }: { run: AgentRun }) {
+  const b = run.backend!;
+  return (
+    <details className="mt-2 rounded-lg border border-line-soft bg-subtle px-2.5 py-1.5 text-xs">
+      <summary className="cursor-pointer text-2xs font-semibold tracking-[0.06em] text-ink-4 uppercase">
+        Why this option · expected utility (SAR-equivalent, assumed) · stability {Math.round((b.decision.decision_stability ?? 0) * 100)}% · {b.virtual_minutes.toFixed(0)} min elapsed
+      </summary>
+      <table className="mt-1.5 w-full text-left tabular">
+        <thead className="text-ink-4">
+          <tr>
+            <th className="font-medium">Option</th>
+            <th className="font-medium">EU</th>
+            <th className="font-medium">Approval</th>
+            <th className="font-medium">Delay</th>
+            <th className="font-medium">Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          {b.utility_table.map((r, i) => (
+            <tr key={r.option} className={cn(i === 0 && "font-semibold text-ink")}>
+              <td className="font-mono">{r.option}</td>
+              <td>{r.eu.toFixed(1)}</td>
+              <td>{r.approval}</td>
+              <td>{r.delay_min.toFixed(0)}m</td>
+              <td>{r.cost.toFixed(0)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-1 text-ink-4">Decision stability = share of table-uncertainty particles that agree on this option. Values depend on stated assumptions, not SPL accounting.</p>
+    </details>
   );
 }

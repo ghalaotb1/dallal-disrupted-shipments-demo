@@ -29,6 +29,7 @@ export const CAUSE_LABEL: Record<CauseCode, string> = {
   pickup_point_unavailable: "Pickup point unavailable",
   capacity_sequence: "Route capacity / stop sequence",
   custody_anomaly: "Unexplained custody pattern",
+  unknown: "Unknown pattern",
   none: "No disruption signal",
 };
 

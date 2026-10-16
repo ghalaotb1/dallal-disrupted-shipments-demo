@@ -205,6 +205,12 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
     def events(after: int = 0, limit: int = 200, subject_id: str | None = None) -> list[dict[str, Any]]:
         return svc.store.timeline(after, limit, subject_id)
 
+    @app.get("/v1/events/last")
+    def events_last() -> dict[str, int]:
+        """Cursor for a new subscriber: start from 'now' instead of replaying every past event."""
+        rows = svc.store.q("SELECT MAX(id) AS m FROM timeline")
+        return {"id": int(rows[0]["m"] or 0)}
+
     @app.get("/v1/events/stream")
     async def stream(request: Request, after: int = 0):
         async def gen():

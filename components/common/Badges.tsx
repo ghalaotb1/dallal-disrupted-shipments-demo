@@ -62,6 +62,7 @@ export function RiskMeter({ risk, showLabel = true, className }: { risk: RiskAss
 const AGENT_COPY: Record<AgentState, { label: string; tone: string; spin?: boolean }> = {
   monitoring: { label: "Monitoring", tone: "text-ink-3" },
   investigating: { label: "Investigating", tone: "text-brand-700", spin: true },
+  awaiting_reply: { label: "Waiting for an answer", tone: "text-review-700" },
   recommendation: { label: "Recommendation ready", tone: "text-brand-700" },
   auto_eligible: { label: "Can act automatically", tone: "text-ok-700" },
   acting: { label: "Acting", tone: "text-brand-700", spin: true },

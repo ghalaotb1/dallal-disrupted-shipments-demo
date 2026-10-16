@@ -337,6 +337,39 @@ export const seedShipments: ShipmentSeed[] = [
     },
   },
 
+  // ── Developing disruption · van parked beside the address, no scan, no exception (headline for active evidence acquisition) ─────
+  {
+    id: "DL-20764",
+    orderRef: "ZHR-884102",
+    merchant: "Zahrat Jewellery",
+    service: "Express",
+    cod: 1850,
+    contents: "Gold bracelet · 1 pc · 0.1 kg",
+    valueSar: 1850,
+    recipient: ["F. Al-Mutairi", "+966 56 ••• 2208"],
+    address: ["Bldg 1207, King Abdullah St", "Al Hizam Al Akhdar", "Al Khobar", "KHZA1207"],
+    origin: "br-khobar",
+    corridor: "KH-01",
+    route: "DL-20562",
+    courier: ["C-318", "Yousef", "KHB-318"],
+    created: "09:10",
+    window: ["14:30", "17:30"],
+    sla: "17:30",
+    health: "at_risk",
+    stage: "out_for_delivery",
+    move: { d: 6380, v: 0, hold: 6380, stops: 1, stationarySince: "14:40" },
+    caseType: "stalled_no_scan",
+    headline: "Van parked beside the address for 30 min — no scan, no exception",
+    journey: [
+      ...firstMile({ created: "09:10", merchant: "Zahrat Jewellery", service: "Express", received: "11:25", facility: "br-khobar", sorted: "12:10", corridor: "KH-01 · Khobar Local", loaded: "14:00", vehicle: "KHB-318", ofd: "14:15" }),
+      ["14:40", "Van KHB-318 parked near Al Hizam Al Akhdar", "gps", "neutral", "Stationary within 100 m of the delivery address", "Al Khobar"],
+    ],
+    ctx: {
+      address: { confidence: 0.9 },
+      recipient: { preferredChannel: "WhatsApp", responsiveness: "high", missedWindows: [] },
+    },
+  },
+
   // ── Unknown pattern · agent refused to guess, escalated to supervisor ─────
   {
     id: "DL-20598",

@@ -97,7 +97,7 @@ def _policy_v2(ctx: ToolContext, args: dict) -> ToolResult:
     if ok:
         return ToolResult("ok", "Automated action permitted", [f"robust effectiveness {robust:.0%} in the pessimistic tail", "all autonomy bounds satisfied"], data={"policy": st.policy},
                           provenance={"policy": "policy-v2"})
-    return ToolResult("warn", f"Human approval required ({top['approval']})" if top["approval"] != "none" else "Automation not permitted", [top["approval_reason"] or "; ".join(failed), *failed[:2]],
+    return ToolResult("warn", f"Human approval required ({top['approval']})" if top["approval"] != "none" else "Automation not permitted", list(dict.fromkeys([*( [top["approval_reason"]] if top["approval_reason"] else [] ), *failed[:3]])),
                       data={"policy": st.policy}, provenance={"policy": "policy-v2"})
 
 

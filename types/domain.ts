@@ -123,6 +123,7 @@ export interface RiskAssessment {
 export type AgentState =
   | "monitoring"
   | "investigating"
+  | "awaiting_reply"
   | "recommendation"
   | "auto_eligible"
   | "acting"
@@ -256,6 +257,7 @@ export type CauseCode =
   | "pickup_point_unavailable"
   | "capacity_sequence"
   | "custody_anomaly"
+  | "unknown"
   | "none";
 
 export interface Evidence {
@@ -326,14 +328,24 @@ export type ToolName =
   | "contact_recipient"
   | "reschedule_delivery"
   | "redirect_to_pickup"
-  | "escalate_case";
+  | "escalate_case"
+  | "ask_inquiry"
+  | "get_recipient_context"
+  | "get_facility_context"
+  | "get_pickup_context";
 
 export interface AgentStep {
   id: string;
   tool: ToolName;
   args: string;
   checking: string;
-  kind: "read" | "analysis" | "action";
+  kind: "read" | "analysis" | "action" | "inquiry";
+  /** Live backend only: the question asked to a person, its status, and the belief after this step. */
+  inquiryId?: string;
+  target?: string;
+  inquiryStatus?: string;
+  backendTool?: string;
+  belief?: { top: [string, number][]; p_systemic: number; entropy_bits: number };
   status: "running" | "ok" | "warn" | "alert";
   summary?: string;
   facts?: string[];
@@ -357,6 +369,10 @@ export type AgentOutcome =
 
 export interface AgentRun {
   id: string;
+  /** "live" = produced by the real backend; absent/"demo" = the in-browser prototype planner. */
+  source?: "live" | "demo";
+  backendStatus?: string;
+  backend?: import("@/types/live").LiveRunMeta;
   shipmentId: string;
   mode: "investigation" | "execution";
   trigger: "analyst" | "scheduled" | "auto";

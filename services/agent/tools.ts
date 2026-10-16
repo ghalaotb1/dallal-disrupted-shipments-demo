@@ -65,6 +65,10 @@ export const TOOL_META: Record<ToolName, { kind: AgentStep["kind"]; durationMs: 
   reschedule_delivery: { kind: "action", durationMs: 1100 },
   redirect_to_pickup: { kind: "action", durationMs: 1100 },
   escalate_case: { kind: "action", durationMs: 900 },
+  ask_inquiry: { kind: "inquiry", durationMs: 0 },
+  get_recipient_context: { kind: "read", durationMs: 900 },
+  get_facility_context: { kind: "read", durationMs: 900 },
+  get_pickup_context: { kind: "read", durationMs: 700 },
 };
 
 export function describeTool(tool: ToolName, s: Shipment): { args: string; checking: string } {
@@ -95,6 +99,14 @@ export function describeTool(tool: ToolName, s: Shipment): { args: string; check
       return { args: `id="${s.id}"`, checking: "Redirecting parcel to pickup point" };
     case "escalate_case":
       return { args: `to="shift_supervisor"`, checking: "Opening escalation for human review" };
+    case "ask_inquiry":
+      return { args: `to="person"`, checking: "Asking a person for the missing evidence" };
+    case "get_recipient_context":
+      return { args: `id="${s.id}"`, checking: "Reading contact history and confirmed windows" };
+    case "get_facility_context":
+      return { args: `node="${s.originId}"`, checking: "Reading branch backlog and last scan" };
+    case "get_pickup_context":
+      return { args: `id="${s.id}"`, checking: "Checking the assigned pickup point" };
   }
 }
 

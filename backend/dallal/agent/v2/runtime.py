@@ -167,7 +167,7 @@ class AgentRuntimeV2:
         ref = {"recipient": facts.get("recipient_phone"), "courier": facts.get("courier_id"), "dispatcher": f"dispatch:{facts.get('corridor_id')}",
                "branch_supervisor": f"branch:{facts.get('origin_node_id')}"}.get(s.target, "unknown")
         pend = PendingInquiry(inquiry_id, s.id, cand.source, s.target, s.scope, lang, iq.render_question(s, facts, lang), iq.answer_labels(s, lang), s.raw["mode"],
-                              s.raw.get("template"), round(st.virtual_min, 2), float(s.raw["response"]["timeout_min"]), cand.p_response, str(ref), {}, round(cand.net_voi, 3))
+                              s.raw.get("template"), round(st.virtual_min, 2), float(s.raw["response"]["timeout_min"]), cand.p_response, str(ref), {}, round(cand.net_voi, 3), False, iq.render_question(s, facts, "en"))
         if self.channel is not None:
             pend.receipt = self.channel.send_inquiry(pend, facts, run_id=run.run_id)
         else:

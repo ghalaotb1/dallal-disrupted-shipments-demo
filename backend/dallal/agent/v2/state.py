@@ -50,6 +50,7 @@ class PendingInquiry:
     receipt: dict[str, Any] = field(default_factory=dict)
     net_voi_at_ask: float = 0.0
     needs_review: bool = False
+    question_en: str = ""  # English gloss shown to operators next to the message the recipient actually receives
 
 
 @dataclass

@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { startSimulation } from "@/simulation/engine";
+import { startLiveFeed } from "@/lib/live/feed";
 import { useWorld } from "@/store/world";
 import { LogoMark } from "@/components/layout/Logo";
 
@@ -9,6 +10,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const ready = useWorld((w) => w.ready);
   useEffect(() => {
     startSimulation();
+    startLiveFeed();
   }, []);
   if (!ready) {
     return (

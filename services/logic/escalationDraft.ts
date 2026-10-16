@@ -19,6 +19,10 @@ export const TOOL_LABEL: Record<ToolName, string> = {
   reschedule_delivery: "Delivery plan update",
   redirect_to_pickup: "Pickup point redirect",
   escalate_case: "Escalation",
+  ask_inquiry: "Question to a person (WhatsApp)",
+  get_recipient_context: "Recipient contact history & confirmed windows",
+  get_facility_context: "Branch backlog & last scan",
+  get_pickup_context: "Pickup point status",
 };
 
 export interface EscalationDraft extends EscalationInput {

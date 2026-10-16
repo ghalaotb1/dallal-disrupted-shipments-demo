@@ -228,7 +228,7 @@ def test_frontend_adapter_matches_ui_contract():
     assert ui["outcome"]["type"] == "incident"
     allowed = {"get_shipment", "get_journey", "get_address_context", "get_route_context", "predict_risk", "analyze_disruption",
                "check_incident_context", "rank_recovery_actions", "retrieve_policy_constraints", "contact_recipient",
-               "reschedule_delivery", "redirect_to_pickup", "escalate_case"}
+               "reschedule_delivery", "redirect_to_pickup", "escalate_case", "get_recipient_context", "get_facility_context", "get_pickup_context", "ask_inquiry"}  # = types/domain.ts ToolName
     assert all(s["tool"] in allowed for s in ui["steps"])
     json.dumps(ui)
 

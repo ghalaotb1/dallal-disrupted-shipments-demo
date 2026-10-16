@@ -101,7 +101,7 @@ class OpsService:
             self.store.save_inquiry(inquiry_id=p.inquiry_id, run_id=run.run_id, spec_id=p.spec_id, target=p.target, scope=p.scope, recipient_hash=wa.hash_ref(p.recipient_ref),
                                     recipient_ref=p.recipient_ref, delivery_mode=p.receipt.get("mode"), status="awaiting", asked_real=now, deadline_real=now + p.timeout_min * 60.0 / self.time_scale,
                                     answered_real=None, outcome=None, question=p.question, answers_json=p.answers, payload_json={"receipt": p.receipt, "net_voi_at_ask": p.net_voi_at_ask,
-                                    "p_response": p.p_response, "mode": p.mode, "template": p.template}, subject_id=run.subject_id)
+                                    "p_response": p.p_response, "mode": p.mode, "template": p.template, "question_en": p.question_en}, subject_id=run.subject_id)
             self.store.emit("inquiry_sent", run.subject_id, run.run_id, {"inquiry_id": p.inquiry_id, "target": p.target, "spec": p.spec_id, "question": p.question, "receipt": p.receipt,
                                                                          "timeout_min": p.timeout_min, "net_voi": p.net_voi_at_ask})
         self.store.emit("run_" + res.status, run.subject_id, run.run_id, {"decision": run.decision.get("type"), "headline": run.decision.get("headline"), "top_cause": run.decision.get("top_cause"),
@@ -142,7 +142,7 @@ class OpsService:
         payload = json.loads(i["payload_json"]) if i["payload_json"] else {}
         msgs = self.store.messages_for(i["inquiry_id"])
         return {"inquiry_id": i["inquiry_id"], "run_id": i["run_id"], "subject_id": i["subject_id"], "spec": i["spec_id"], "target": i["target"], "scope": i["scope"], "status": i["status"],
-                "delivery_mode": i["delivery_mode"], "question": i["question"], "answers": json.loads(i["answers_json"]) if i["answers_json"] else [], "outcome": i["outcome"],
+                "delivery_mode": i["delivery_mode"], "question": i["question"], "question_en": payload.get("question_en", ""), "answers": json.loads(i["answers_json"]) if i["answers_json"] else [], "outcome": i["outcome"],
                 "asked_real": i["asked_real"], "deadline_real": i["deadline_real"], "answered_real": i["answered_real"], "net_voi": payload.get("net_voi_at_ask"), "p_response": payload.get("p_response"),
                 "recipient_hash": i["recipient_hash"], "real_delivery": any(m["status"] in ("delivered", "read") and m["mode"] == "cloud" for m in msgs),
                 "messages": [{"direction": m["direction"], "status": m["status"], "kind": m["kind"], "mode": m["mode"], "wamid": m["wamid"], "text": (m["body"].get("rendered") or {}).get("text") or m["body"].get("text"),
@@ -202,7 +202,7 @@ class OpsService:
             body = {"kind": m.kind, "text": m.text if m.kind == "text" else None, "button_text": m.button_text, "choice_title": m.choice_title, "lat": m.lat, "lng": m.lng, "media_id": m.media_id,
                     "interpretation": asdict(it)}
             self.store.add_message(inq["inquiry_id"], "in", "whatsapp", m.wamid, self.provider.mode, "received", m.kind, body)
-            self.store.emit("reply_received", inq["subject_id"], run_id, {"inquiry_id": inq["inquiry_id"], "kind": m.kind, "answer": it.answer_id, "confidence": it.confidence, "method": it.method,
+            self.store.emit("reply_received", inq["subject_id"], run_id, {"inquiry_id": inq["inquiry_id"], "target": inq["target"], "kind": m.kind, "answer": it.answer_id, "confidence": it.confidence, "method": it.method,
                                                                          "needs_review": it.needs_review, "mode": self.provider.mode})
             if it.opt_out:
                 self.store.opt_out(inq["recipient_hash"])

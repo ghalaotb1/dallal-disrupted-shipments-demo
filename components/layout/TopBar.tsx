@@ -9,6 +9,7 @@ import { Kbd } from "@/components/common/Badges";
 import { Button } from "@/components/common/Button";
 import { DemoClock } from "@/components/layout/DemoControl";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { BackendStatus } from "@/components/live/BackendStatus";
 
 export function TopBar() {
   const set = useUi((s) => s.set);
@@ -37,6 +38,7 @@ export function TopBar() {
       </button>
 
       <div className="ml-auto flex items-center gap-2">
+        <BackendStatus />
         <DemoClock />
         <NotificationBell />
         <Button variant="soft" size="md" onClick={() => set({ assistantOpen: true })} className="hidden md:inline-flex">

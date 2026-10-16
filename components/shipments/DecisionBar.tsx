@@ -55,8 +55,9 @@ export function DecisionBar({
     tone = "brand";
     Icon = Loader2;
     const step = running.steps[running.steps.length - 1];
-    title = running.mode === "execution" ? "Executing action in the demo environment…" : "Investigating the case…";
-    body = step ? `${step.tool}() — ${step.checking}` : "Planning first tool call";
+    const asking = running.backendStatus === "awaiting_response";
+    title = running.mode === "execution" ? "Executing action in the demo environment…" : asking ? "Paused — the agent asked a person and is waiting for the answer" : "Investigating the case…";
+    body = asking ? `${step?.summary ?? "Question sent"} · reply in the WhatsApp card on the right` : step ? `${step.tool}() — ${step.checking}` : "Planning first tool call";
   } else if (s.closed) {
     tone = "ok";
     Icon = CircleCheck;

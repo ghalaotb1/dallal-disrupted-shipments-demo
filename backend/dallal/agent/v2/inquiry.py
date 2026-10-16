@@ -136,4 +136,4 @@ def render_question(s: InquirySpec, facts: dict[str, Any], lang: str = "ar") -> 
 
 
 def answer_labels(s: InquirySpec, lang: str = "ar") -> list[dict[str, str]]:
-    return [{"id": a["id"], "title": a[lang]} for a in s.answers]
+    return [{"id": a["id"], "title": a[lang], "title_en": a["en"]} for a in s.answers]
