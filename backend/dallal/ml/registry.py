@@ -61,6 +61,7 @@ class ModelCard:
     caveats: list[str]
     trained_at: str
     sha256: str = ""
+    valid_domains: list[str] = field(default_factory=list)  # source systems whose data this model may score (e.g. ['lade']); empty = no automatic scoring
     extrapolation_tolerance: float = 0.25  # fraction of range beyond [lo, hi] tolerated per feature before abstaining
     extra: dict[str, Any] = field(default_factory=dict)
 

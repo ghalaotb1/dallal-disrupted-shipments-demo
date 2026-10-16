@@ -15,7 +15,7 @@ export function BackendStatus() {
       content={
         connected ? (
           <span className="block max-w-[260px] text-xs leading-4">
-            Live backend connected · engine {meta?.engine} · policy {meta?.policy} · WhatsApp {meta?.whatsapp_mode}. {meta?.notice} Shipments, vehicles and roads are still simulated.
+            Live backend connected{meta?.env ? ` (${meta.env})` : ""} · engine {meta?.engine} · policy {meta?.policy} · WhatsApp {meta?.whatsapp_mode}. {meta?.notice} Actions are {meta?.execution?.mode ?? "simulated"}. Shipments, vehicles and roads are still simulated.
           </span>
         ) : (
           <span className="block max-w-[260px] text-xs leading-4">No backend reachable: agent decisions come from the in-browser prototype planner and are simulated. Add ?backend=URL to connect.</span>
@@ -35,6 +35,7 @@ export function BackendStatus() {
         {connected ? (
           <>
             Live backend
+            {meta?.env === "staging" ? <span className="rounded bg-review-50 px-1 text-[9.5px] font-semibold text-review-700 uppercase">staging</span> : null}
             {meta?.whatsapp_mode === "sandbox" ? <span className="rounded bg-warn-50 px-1 text-[9.5px] font-semibold text-warn-700 uppercase">WA sandbox</span> : null}
           </>
         ) : (

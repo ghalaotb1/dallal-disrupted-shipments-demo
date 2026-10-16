@@ -38,11 +38,15 @@ STANDING = ("dispatch:", "branch:", "dallal-demo:courier", "sim:courier")  # ope
 
 
 class OpsService:
-    def __init__(self, store: Store | None = None, provider: Any = None, time_scale: float | None = None, mode: str = "value"):
+    def __init__(self, store: Store | None = None, provider: Any = None, time_scale: float | None = None, mode: str = "value", settings: Any = None):
         self.store = store or Store(os.environ.get("DALLAL_DB", ":memory:"))
         self.provider = provider or wa.SandboxProvider()
         self.time_scale = float(time_scale if time_scale is not None else os.environ.get("DALLAL_TIME_SCALE", "1"))
         self.mode = mode
+        from dallal.api.security import Settings
+
+        self.settings = settings or Settings.from_env()
+        self.hold_expiry_s = float(os.environ.get("DALLAL_HOLD_EXPIRY_H", "12")) * 3600.0
         self.llm_interpret_model = os.environ.get("DALLAL_LLM_INTERPRET_MODEL", "")  # e.g. qwen3.5:4b via local Ollama; empty = rules only
         self.book = default_book()
         self.providers = DefaultProviders()
@@ -56,11 +60,14 @@ class OpsService:
         with self._glock:
             return self.locks.setdefault(run_id, threading.Lock())
 
+    def _guard(self) -> _Guard:
+        return _Guard(self.channel, self.store, hold_for_approval=self.provider.mode == "cloud" and self.settings.require_send_approval)
+
     def _guard_send(self, pending: Any, facts: dict[str, Any]) -> dict[str, Any]:
-        return _Guard(self.channel, self.store).send_inquiry(pending, facts)
+        return self._guard().send_inquiry(pending, facts)
 
     def _runtime(self) -> AgentRuntimeV2:
-        return AgentRuntimeV2(mode=self.mode, book=self.book, providers=self.providers, channel=_Guard(self.channel, self.store))
+        return AgentRuntimeV2(mode=self.mode, book=self.book, providers=self.providers, channel=self._guard())
 
     def meta(self) -> dict[str, Any]:
         return {"service": "dallal-backend", "engine": "v2", "decision_mode": self.mode, "whatsapp_mode": self.provider.mode, "real_delivery_possible": self.provider.mode == "cloud",
@@ -105,11 +112,12 @@ class OpsService:
             p = res.pending
             now = time.time()
             self.store.save_inquiry(inquiry_id=p.inquiry_id, run_id=run.run_id, spec_id=p.spec_id, target=p.target, scope=p.scope, recipient_hash=wa.hash_ref(p.recipient_ref),
-                                    recipient_ref=p.recipient_ref, delivery_mode=p.receipt.get("mode"), status="awaiting", asked_real=now, deadline_real=now + p.timeout_min * 60.0 / self.time_scale,
+                                    recipient_ref=p.recipient_ref, delivery_mode=p.receipt.get("mode"), status="awaiting", asked_real=now, deadline_real=now + (self.hold_expiry_s if p.receipt.get("status") == "held_for_approval" else p.timeout_min * 60.0 / self.time_scale),
                                     answered_real=None, outcome=None, question=p.question, answers_json=p.answers, payload_json={"receipt": p.receipt, "net_voi_at_ask": p.net_voi_at_ask,
-                                    "p_response": p.p_response, "mode": p.mode, "template": p.template, "question_en": p.question_en}, subject_id=run.subject_id)
-            self.store.emit("inquiry_sent", run.subject_id, run.run_id, {"inquiry_id": p.inquiry_id, "target": p.target, "spec": p.spec_id, "question": p.question, "receipt": p.receipt,
-                                                                         "timeout_min": p.timeout_min, "net_voi": p.net_voi_at_ask})
+                                    "p_response": p.p_response, "mode": p.mode, "template": p.template, "question_en": p.question_en, "timeout_min": p.timeout_min}, subject_id=run.subject_id)
+            held = p.receipt.get("status") == "held_for_approval"
+            self.store.emit("inquiry_held" if held else "inquiry_sent", run.subject_id, run.run_id, {"inquiry_id": p.inquiry_id, "target": p.target, "spec": p.spec_id, "question": p.question, "receipt": p.receipt,
+                                                                                                    "timeout_min": p.timeout_min, "net_voi": p.net_voi_at_ask})
         self.store.emit("run_" + res.status, run.subject_id, run.run_id, {"decision": run.decision.get("type"), "headline": run.decision.get("headline"), "top_cause": run.decision.get("top_cause"),
                                                                         "tool_path": run.tool_path})
         if res.status == "completed":
@@ -252,6 +260,45 @@ class OpsService:
             self.store.update_inquiry(inquiry_id, status="answered", answered_real=time.time(), outcome=answer_id)
             return self._continue(inq["run_id"], InquiryResponse(inquiry_id, answer_id, elapsed, {"method": "human_review", "reviewer": reviewer}, {"method": "human_review"}))
 
+    # ── outbound approval (cloud mode only: real messages are HELD until a supervisor approves) ──
+    def approve_send(self, inquiry_id: str, approver: str, role: str) -> dict[str, Any]:
+        if role != "supervisor":
+            raise PermissionError("sending a real WhatsApp message needs supervisor approval")
+        inq = self.store.get_inquiry(inquiry_id)
+        if inq is None or inq["status"] != "awaiting":
+            raise KeyError(inquiry_id)
+        held = self.store.held_message(inquiry_id)
+        if held is None:
+            raise ValueError("this inquiry has no message held for approval")
+        with self._lock(inq["run_id"]):
+            payload = held["body"]["payload"]
+            try:
+                rec = self.provider.send(payload).asdict()
+            except wa.SendRefused as e:
+                self.store.finalize_message(held["id"], None, "refused", {**held["body"], "receipt": {"status": "refused", "error": {"message": str(e)}}})
+                self.store.update_inquiry(inquiry_id, status="send_refused")
+                self.store.emit("inquiry_refused", inq["subject_id"], inq["run_id"], {"inquiry_id": inquiry_id, "error": {"message": str(e)}, "approved_by": approver})
+                return self._continue(inq["run_id"], InquiryTimeout(inquiry_id, "send_refused"))
+            self.store.finalize_message(held["id"], rec.get("wamid"), rec["status"], {**held["body"], "receipt": rec, "approved_by": approver})
+            pend = json.loads(inq["payload_json"] or "{}")
+            timeout_min = float(pend.get("timeout_min") or 0) or 30.0
+            self.store.update_inquiry(inquiry_id, deadline_real=time.time() + timeout_min * 60.0 / self.time_scale, payload_json={**pend, "receipt": rec, "send_approved_by": approver})
+            self.store.emit("send_approved", inq["subject_id"], inq["run_id"], {"inquiry_id": inquiry_id, "approved_by": approver, "receipt_status": rec["status"], "real_delivery": rec.get("real_delivery", False)})
+            return self.view_run(inq["run_id"]) if not inq["run_id"].startswith("plan-") else self.plans.view(inq["run_id"])
+
+    def decline_send(self, inquiry_id: str, approver: str, role: str) -> dict[str, Any]:
+        if role != "supervisor":
+            raise PermissionError("declining a held message needs supervisor role")
+        inq = self.store.get_inquiry(inquiry_id)
+        if inq is None or inq["status"] != "awaiting" or self.store.held_message(inquiry_id) is None:
+            raise KeyError(inquiry_id)
+        with self._lock(inq["run_id"]):
+            held = self.store.held_message(inquiry_id)
+            self.store.finalize_message(held["id"], None, "declined", {**held["body"], "declined_by": approver})  # type: ignore[index]
+            self.store.update_inquiry(inquiry_id, status="send_refused")
+            self.store.emit("send_declined", inq["subject_id"], inq["run_id"], {"inquiry_id": inquiry_id, "declined_by": approver})
+            return self._continue(inq["run_id"], InquiryTimeout(inquiry_id, "send_declined"))
+
     # ── timeouts ──
     def tick(self, now: float | None = None) -> list[str]:
         """Apply the timeout for every overdue inquiry. Called by a background loop; also callable explicitly by tests/UI."""
@@ -266,6 +313,12 @@ class OpsService:
         if inq is None or inq["status"] != "awaiting":
             raise KeyError(inquiry_id)
         with self._lock(inq["run_id"]):
+            held = self.store.held_message(inquiry_id)
+            if held is not None:  # never approved: the message was never sent, so this is not a recipient timeout
+                self.store.finalize_message(held["id"], None, "expired_unsent", held["body"])
+                self.store.update_inquiry(inquiry_id, status="send_refused")
+                self.store.emit("send_declined", inq["subject_id"], inq["run_id"], {"inquiry_id": inquiry_id, "declined_by": "system:hold-expired"})
+                return self._continue(inq["run_id"], InquiryTimeout(inquiry_id, "send_declined"))
             self.store.update_inquiry(inquiry_id, status="timed_out", outcome=iq.NO_RESPONSE)
             self.store.emit("inquiry_timed_out", inq["subject_id"], inq["run_id"], {"inquiry_id": inquiry_id})
             return self._continue(inq["run_id"], InquiryTimeout(inquiry_id))
@@ -362,8 +415,8 @@ class OpsService:
 class _Guard:
     """Channel wrapper enforcing recipient opt-out before anything is sent."""
 
-    def __init__(self, ch: WhatsAppChannel, store: Store):
-        self.ch, self.store = ch, store
+    def __init__(self, ch: WhatsAppChannel, store: Store, hold_for_approval: bool = False):
+        self.ch, self.store, self.hold = ch, store, hold_for_approval
 
     def send_inquiry(self, pending: Any, facts: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
         if self.ch.provider.mode == "sandbox" and pending.target != "recipient":
@@ -371,6 +424,17 @@ class _Guard:
         if self.store.is_opted_out(wa.hash_ref(pending.recipient_ref)):
             rd = {"mode": self.ch.provider.mode, "status": "refused", "real_delivery": False, "wamid": None, "error": {"message": "recipient opted out", "code": None}}
             self.ch.on_sent(pending, rd, None)
+            return rd
+        if self.hold:  # cloud mode: build the exact payload, store it, and wait for a supervisor. Nothing leaves the process.
+            try:
+                payload = self.ch.build_payload(pending, facts)
+            except wa.SendRefused as e:
+                rd = {"mode": self.ch.provider.mode, "status": "refused", "real_delivery": False, "wamid": None, "error": {"message": str(e), "code": e.code}}
+                self.ch.on_sent(pending, rd, None)
+                return rd
+            rd = {"mode": self.ch.provider.mode, "status": "held_for_approval", "real_delivery": False, "wamid": None, "error": None,
+                  "note": "held: nothing is sent to the recipient until a supervisor approves this message"}
+            self.ch.on_sent(pending, rd, payload)
             return rd
         return self.ch.send_inquiry(pending, facts, run_id)
 

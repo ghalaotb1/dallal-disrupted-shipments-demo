@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from dallal import llm
 from dallal.agent.v2 import inquiry as iq
-from dallal.llm import ollama
 
 SYSTEM = ("You read a short WhatsApp reply (Arabic, Saudi dialect, English or mixed) from a person who was asked one question by a postal operator. "
           "Map the reply to exactly one of the allowed answer ids, or to \"none\" if the reply does not clearly answer the question, answers something else, "
@@ -36,8 +36,8 @@ def suggest(model: str, spec: iq.InquirySpec, text: str, facts: dict | None = No
     opts = "; ".join(f"{a['id']} = {a['en']}" for a in spec.answers)
     user = f"Question asked: {q}\nAllowed answers: {opts}\nReply: {text}\nCall report_answer."
     try:
-        r = ollama.chat(model, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}], tools=[tool], num_predict=120, timeout=60.0)
-    except ollama.LLMError:
+        r = llm.chat(model, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}], tools=[tool], num_predict=120, timeout=60.0)
+    except llm.LLMError:
         return Suggestion(None, 0.0, 0.0, model)
     if not r.tool_calls or r.tool_calls[0]["name"] != "report_answer":
         return Suggestion(None, 0.0, r.latency_s, model)

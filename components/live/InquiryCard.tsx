@@ -14,6 +14,8 @@ const WHO: Record<string, string> = { recipient: "the recipient", courier: "the 
 
 /** What a delivery state truthfully means. Sandbox and Cloud statuses are never conflated. */
 function stateLabel(m: LiveMessage): { text: string; tone: string } {
+  if (m.status === "held_for_approval") return { text: "Held - NOT sent. A supervisor must approve before anything reaches the recipient", tone: "text-review-700" };
+  if (m.status === "declined" || m.status === "expired_unsent") return { text: "Never sent (declined or hold expired)", tone: "text-ink-3" };
   if (m.mode === "sandbox") return { text: m.status === "sandbox_delivered" ? "Delivered (sandbox)" : m.status === "sandbox_read" ? "Read (sandbox)" : "Recorded in sandbox · not sent to a phone", tone: "text-warn-700" };
   if (m.status === "accepted") return { text: "Accepted by WhatsApp · delivery unconfirmed", tone: "text-ink-3" };
   if (m.status === "delivered" || m.status === "sent") return { text: m.status === "sent" ? "Sent" : "Delivered", tone: "text-ok-700" };
@@ -35,6 +37,7 @@ export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onCh
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const sandbox = inquiry.delivery_mode === "sandbox";
+  const held = inquiry.messages.some((m) => m.status === "held_for_approval");
   const awaiting = inquiry.status === "awaiting";
   const needsReview = awaiting && inquiry.messages.some((m) => m.direction === "in" && m.interpretation?.needs_review);
   const suggestion = [...inquiry.messages].reverse().find((m) => m.direction === "in" && m.interpretation?.details?.llm_suggestion)?.interpretation?.details?.llm_suggestion;
@@ -134,6 +137,20 @@ export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onCh
           </div>
         ) : null}
 
+        {awaiting && held ? (
+          <div className="rounded-md border border-review-200 bg-review-50 px-2 py-1.5">
+            <p className="text-xs font-medium text-review-700">Real WhatsApp message held for approval - it has not been sent.</p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              <Button size="xs" variant="primary" disabled={busy} onClick={() => act(() => api.sendApprove(inquiry.inquiry_id, { approver: analystName, role: "supervisor" }))}>
+                Approve and send
+              </Button>
+              <Button size="xs" variant="ghost" disabled={busy} onClick={() => act(() => api.sendDecline(inquiry.inquiry_id, { approver: analystName, role: "supervisor" }))}>
+                Decline
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {awaiting && sandbox && !needsReview ? (
           <div className="rounded-md border border-dashed border-line-strong bg-surface px-2 py-2">
             <p className="text-2xs font-semibold tracking-[0.06em] text-ink-4 uppercase">Simulated recipient device · reply as {who}</p>
@@ -169,7 +186,7 @@ export function InquiryCard({ inquiry, onChanged }: { inquiry: LiveInquiry; onCh
               </Button>
             </div>
           </div>
-        ) : awaiting && !sandbox ? (
+        ) : awaiting && !sandbox && !held ? (
           <p className="flex items-center gap-1 text-xs text-ink-3">
             <Clock className="size-3.5" aria-hidden /> Waiting for {who} to reply on WhatsApp.
           </p>

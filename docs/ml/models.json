@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-16T15:48:14",
+  "generated": "2026-10-16T19:30:18",
   "protocol": "(fixed before looking at test): chronological train / valid / test with an embargo; candidates and feature sets are\ncompared on VALID only; a richer feature set must beat the simpler one by >= 5% relative valid PR-AUC to be adopted; the\ncalibrator (isotonic vs Platt) is chosen on the second half of valid after fitting on the first, then refit on all of valid;\nTEST is touched once, for the chosen model. Rows with a missing feature are dropped (the serving contract refuses to impute).",
   "models": {
     "olist_late_at_handoff_v1": {
@@ -239,8 +239,9 @@
         "History features (seller/state/zip late rates) were evaluated and rejected: they hurt on the later period.",
         "Used by Dallal only when the case satisfies the feature contract and sits inside the training range."
       ],
-      "trained_at": "2026-10-16T15:48:15",
+      "trained_at": "2026-10-16T19:30:19",
       "sha256": "ce36b1377f3409092d293976b1be50a204cf374ecd35debbcb7b42d323cc3328",
+      "valid_domains": [],
       "extrapolation_tolerance": 0.25,
       "extra": {}
     },
@@ -496,8 +497,11 @@
         "Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.",
         "0.6-0.8% prevalence: expect many false alarms at any useful recall."
       ],
-      "trained_at": "2026-10-16T15:46:01",
+      "trained_at": "2026-10-16T19:30:42",
       "sha256": "d2bba7b0ae253951776083062d29bb60a91e644fae9b4d4eb467a4aa7250a146",
+      "valid_domains": [
+        "amazon_lmrrc"
+      ],
       "extrapolation_tolerance": 0.25,
       "extra": {}
     },
@@ -747,12 +751,22 @@
         "Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.",
         "History features need a serving-time history store (resolved-before-as_of only)."
       ],
-      "trained_at": "2026-10-16T15:46:12",
+      "trained_at": "2026-10-16T19:30:54",
       "sha256": "bb8c3b54f7dac97c8e3e4c8674463872c61dd521e8f2c2b9a7ed53b645a99467",
+      "valid_domains": [
+        "lade"
+      ],
       "extrapolation_tolerance": 0.25,
       "extra": {
         "slow_threshold_min": 216.0,
-        "city": "sh"
+        "city": "sh",
+        "history_prior_logdur": 4.3096211489916065,
+        "history_prior_n": 10.0,
+        "history_keys": {
+          "aoi": "dest_zone_id",
+          "courier": "courier_id",
+          "region": "dest_region"
+        }
       }
     }
   }

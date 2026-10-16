@@ -250,8 +250,11 @@
     "Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.",
     "0.6-0.8% prevalence: expect many false alarms at any useful recall."
   ],
-  "trained_at": "2026-10-16T15:46:01",
+  "trained_at": "2026-10-16T19:30:42",
   "sha256": "d2bba7b0ae253951776083062d29bb60a91e644fae9b4d4eb467a4aa7250a146",
+  "valid_domains": [
+    "amazon_lmrrc"
+  ],
   "extrapolation_tolerance": 0.25,
   "extra": {}
 }

@@ -70,9 +70,9 @@ def test_provider_scores_with_a_feature_row_and_falls_back_without(tmp_path):
     rs = prov.score(w, w.subject_id, {"ml_features": {"toy_v1": {"a": 2.0, "b": 5.0}}})
     assert rs.basis == "trained:toy_v1" and rs.probability is not None and rs.band in {"low", "elevated", "high"}
     fb = prov.score(w, w.subject_id, {})
-    assert fb.basis == "prototype-heuristic" and fb.meta["trained_models_considered"][0]["status"] == "no_feature_row"
+    assert fb.basis == "prototype-heuristic" and fb.meta["trained_models_considered"][0]["code"] == "not_bridged" and fb.meta["source"] == "heuristic"
     ood = prov.score(w, w.subject_id, {"ml_features": {"toy_v1": {"a": 0.0, "b": 900.0}}})
-    assert ood.basis == "prototype-heuristic" and ood.meta["trained_models_considered"][0]["status"] == "out_of_domain"
+    assert ood.basis == "prototype-heuristic" and ood.meta["trained_models_considered"][0]["code"] == "out_of_training_range"
 
 
 @pytest.mark.realdata

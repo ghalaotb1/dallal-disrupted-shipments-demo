@@ -235,8 +235,9 @@
     "History features (seller/state/zip late rates) were evaluated and rejected: they hurt on the later period.",
     "Used by Dallal only when the case satisfies the feature contract and sits inside the training range."
   ],
-  "trained_at": "2026-10-16T15:48:15",
+  "trained_at": "2026-10-16T19:30:19",
   "sha256": "ce36b1377f3409092d293976b1be50a204cf374ecd35debbcb7b42d323cc3328",
+  "valid_domains": [],
   "extrapolation_tolerance": 0.25,
   "extra": {}
 }

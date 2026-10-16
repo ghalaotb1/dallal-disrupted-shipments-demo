@@ -110,6 +110,28 @@ class Store:
     def overdue(self, now: float) -> list[dict[str, Any]]:
         return [dict(r) for r in self.q("SELECT * FROM inquiries WHERE status='awaiting' AND deadline_real<=?", (now,))]
 
+    def backup(self, dest: str | Path) -> str:
+        """Consistent online snapshot (SQLite backup API; safe while the service is writing)."""
+        import sqlite3 as _sq
+
+        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+        out = _sq.connect(str(dest))
+        try:
+            with self.lock:
+                self.db.backup(out)
+        finally:
+            out.close()
+        return str(dest)
+
+    def held_message(self, inquiry_id: str) -> dict[str, Any] | None:
+        for m in self.messages_for(inquiry_id):
+            if m["direction"] == "out" and m["status"] == "held_for_approval":
+                return m
+        return None
+
+    def finalize_message(self, message_id: int, wamid: str | None, status: str, body: dict) -> None:
+        self.x("UPDATE messages SET wamid=?, status=?, body_json=? WHERE id=?", (wamid, status, json.dumps(body, default=str), message_id))
+
     def add_message(self, inquiry_id: str | None, direction: str, provider: str, wamid: str | None, mode: str, status: str, kind: str, body: dict) -> bool:
         """Returns False if this (direction, wamid) was already stored - a duplicate."""
         try:

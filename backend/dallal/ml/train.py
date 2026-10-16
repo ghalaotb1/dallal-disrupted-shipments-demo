@@ -55,6 +55,7 @@ class TaskSpec:
     caveats: list[str]
     label: Callable[[pd.DataFrame, Split], np.ndarray] | None = None
     extra: Callable[[pd.DataFrame, Split], dict] | None = None
+    domains: tuple[str, ...] = ()
 
 
 def _estimators() -> dict[str, Callable[[], object]]:
@@ -170,7 +171,7 @@ def train_task(spec: TaskSpec) -> tuple[TrainedModel, dict]:
         split={"train": int(len(tr)), "valid": int(len(va)), "test": int(len(te)), "train_prevalence": round(float(y[tr].mean()), 5), "valid_prevalence": round(float(y[va].mean()), 5),
                "test_prevalence": round(float(y[te].mean()), 5), "cuts": sp.cuts, "time_min": float(t_all.min()), "time_max": float(t_all.max())},
         metrics=metrics, baselines=baselines, base_rate_train=float(y[tr].mean()), base_rate_valid=float(y[va].mean()), band_thresholds=thresholds, caveats=spec.caveats,
-        trained_at=pd.Timestamp.now().isoformat(timespec="seconds"), extra=(spec.extra(x, sp) if spec.extra else {}),
+        trained_at=pd.Timestamp.now().isoformat(timespec="seconds"), valid_domains=list(spec.domains), extra=(spec.extra(x, sp) if spec.extra else {}),
     )
     tm = TrainedModel(model, cal, card)
     save(tm)
@@ -213,7 +214,9 @@ def _lade_label(x: pd.DataFrame, sp: Split) -> np.ndarray:
 
 
 def _lade_extra(x: pd.DataFrame, sp: Split) -> dict:
-    return {"slow_threshold_min": round(float(np.quantile(x["_dur"].to_numpy()[sp.train], 0.9)), 1), "city": "sh"}
+    stream = F.lade_stream("sh")  # the shrinkage prior the history features used, so serving reproduces them exactly
+    return {"slow_threshold_min": round(float(np.quantile(x["_dur"].to_numpy()[sp.train], 0.9)), 1), "city": "sh", "history_prior_logdur": F.train_prior(stream["log_dur"], stream["as_of_ts"]),
+            "history_prior_n": 10.0, "history_keys": {"aoi": "dest_zone_id", "courier": "courier_id", "region": "dest_region"}}
 
 
 def specs() -> dict[str, TaskSpec]:
@@ -230,14 +233,14 @@ def specs() -> dict[str, TaskSpec]:
             "package", "planned route departure", _amazon_frame, lambda x: time_split(x, "_t", embargo=1, origin_col="_origin"),
             [("plan", AMAZON_BASE), ("plan+history", AMAZON_BASE + ["zone_past_fail_rate", "zone_past_n", "station_past_fail_rate", "station_past_n"])],
             {"load_ratio": "packages on route / stops", "svc_per_pkg": "planned service seconds per package at the stop"},
-            ["Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.", "0.6-0.8% prevalence: expect many false alarms at any useful recall."]),
+            ["Source: US urban van routes, one year. Failure reason is not observed: this is attempt-failure RISK, not a diagnosis.", "0.6-0.8% prevalence: expect many false alarms at any useful recall."], domains=("amazon_lmrrc",)),
         "lade": TaskSpec(
             "lade_slow_task_v1", "lade_slow_delivery_task", "accept-to-deliver duration above the training-period P90 (engineered)", "LaDe last-mile delivery (Cainiao), Shanghai", "Apache-2.0 per HF metadata; README restricts to research use",
             "delivery task", "courier accept time", _lade_frame, lambda x: time_split(x, "_t", origin_col="_origin"),
             [("context", LADE_BASE), ("context+history", LADE_BASE + ["aoi_past_logdur", "aoi_past_n", "courier_past_logdur", "courier_past_n", "region_past_logdur", "region_past_n"])],
             {"open_tasks_courier": "tasks the courier had accepted but not completed at accept time", "aoi_past_logdur": "shrunk mean log-duration of earlier-resolved tasks in the same AOI"},
             ["Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.", "History features need a serving-time history store (resolved-before-as_of only)."],
-            _lade_label, _lade_extra),
+            _lade_label, _lade_extra, ("lade",)),
     }
 
 

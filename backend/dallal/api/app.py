@@ -15,6 +15,7 @@ No secret is ever read from a file in the repository.
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import os
 import threading
@@ -24,24 +25,27 @@ from typing import Any
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
 from dallal.agent.frontend import to_frontend
 from dallal.agent.trace import AgentRun
 from dallal.api.frontend_case import bundle_from_frontend
+from dallal.api.security import RateLimiter, Settings
 from dallal.channels import whatsapp as wa
 from dallal.data.augment.scenarios import SCENARIOS
 from dallal.service import OpsService
 from dallal.store import Store
 
 
-def build_service() -> OpsService:
+def build_service(settings: Settings | None = None) -> OpsService:
     from dallal.config import PATHS
 
+    settings = settings or Settings.from_env()
+    settings.enforce()  # fail closed: unsafe combinations never start
     db = os.environ.get("DALLAL_DB", str(PATHS.data / "ops.sqlite"))
-    provider = wa.CloudApiProvider() if os.environ.get("WHATSAPP_MODE", "sandbox") == "cloud" else wa.SandboxProvider()
-    return OpsService(Store(db), provider, time_scale=float(os.environ.get("DALLAL_TIME_SCALE", "1")))
+    provider = wa.CloudApiProvider() if settings.whatsapp_mode == "cloud" else wa.SandboxProvider()
+    return OpsService(Store(db), provider, time_scale=float(os.environ.get("DALLAL_TIME_SCALE", "1")), settings=settings)
 
 
 class CaseRequest(BaseModel):
@@ -64,6 +68,11 @@ class OutcomeRequest(BaseModel):
 class ReviewRequest(BaseModel):
     answer_id: str | None = None
     reviewer: str
+
+
+class SendDecision(BaseModel):
+    approver: str
+    role: str
 
 
 class ScoreRequest(BaseModel):
@@ -96,15 +105,39 @@ class SandboxAdvance(BaseModel):
     status: str
 
 
-def create_app(service: OpsService | None = None, start_ticker: bool = True) -> FastAPI:
-    svc = service or build_service()
-    api_key = os.environ.get("DALLAL_API_KEY")
+def create_app(service: OpsService | None = None, start_ticker: bool = True, settings: Settings | None = None) -> FastAPI:
+    settings = settings or (service.settings if service is not None else Settings.from_env())
+    settings.enforce()
+    svc = service or build_service(settings)
+    api_key = settings.api_key
     stop = threading.Event()
+    limiter = RateLimiter(settings.rate_per_min)
+    backup_state: dict[str, Any] = {"last": None, "error": None}
+
+    def do_backup() -> str | None:
+        if not settings.backup_dir:
+            return None
+        from pathlib import Path
+
+        dest = Path(settings.backup_dir) / f"dallal-{time.strftime('%Y%m%d-%H%M%S')}.sqlite"
+        try:
+            svc.store.backup(dest)
+            for old in sorted(Path(settings.backup_dir).glob("dallal-*.sqlite"))[:-settings.backups_keep]:
+                old.unlink(missing_ok=True)
+            backup_state.update(last=str(dest), error=None, at=time.time())
+            return str(dest)
+        except Exception as e:  # noqa: BLE001 - a failed backup must be visible, never fatal
+            backup_state["error"] = f"{type(e).__name__}"
+            return None
 
     def ticker() -> None:
+        last_backup = time.time()
         while not stop.wait(2.0):
             try:
                 svc.tick()
+                if settings.backup_dir and time.time() - last_backup >= settings.backup_every_h * 3600:
+                    last_backup = time.time()
+                    do_backup()
             except Exception:  # noqa: BLE001 - the loop must survive a bad row
                 pass
 
@@ -116,14 +149,30 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
         yield
         stop.set()
 
-    app = FastAPI(title="Dallal backend", version="0.2.0", lifespan=lifespan)
-    origins = [o.strip() for o in os.environ.get("DALLAL_CORS_ORIGINS", "").split(",") if o.strip()]
-    app.add_middleware(CORSMiddleware, allow_origins=origins or ["http://localhost:3000", "http://127.0.0.1:3000"], allow_origin_regex=None if origins else r"https://.*\.vercel\.app",
-                       allow_methods=["*"], allow_headers=["*"])
+    public = {"/v1/health", "/v1/whatsapp/webhook"}  # webhook authenticity is the Meta signature / verify token, not the API key
 
-    def guard(x_api_key: str | None = Header(default=None)) -> None:
-        if api_key and x_api_key != api_key:
+    def guard(request: Request, x_api_key: str | None = Header(default=None)) -> None:
+        if request.url.path in public or not api_key:
+            return
+        if not x_api_key or not hmac.compare_digest(x_api_key.encode(), api_key.encode()):
             raise HTTPException(401, "missing or invalid X-API-Key")
+
+    app = FastAPI(title="Dallal backend", version="0.3.0", lifespan=lifespan, dependencies=[Depends(guard)],
+                  docs_url=None if settings.locked_down else "/docs", redoc_url=None, openapi_url=None if settings.locked_down else "/openapi.json")
+    origins = settings.cors_origins
+    app.add_middleware(CORSMiddleware, allow_origins=origins or ([] if settings.locked_down else ["http://localhost:3000", "http://127.0.0.1:3000"]),
+                       allow_origin_regex=None if (origins or settings.locked_down) else r"https://.*\.vercel\.app", allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-API-Key"])
+
+    @app.middleware("http")
+    async def limits(request: Request, call_next):  # noqa: ANN001
+        cl = request.headers.get("content-length")
+        if cl and cl.isdigit() and int(cl) > settings.max_body_bytes:
+            return JSONResponse({"detail": "request body too large"}, status_code=413)
+        if request.url.path != "/v1/health" and request.method != "OPTIONS":
+            fwd = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            if not limiter.allow(fwd or (request.client.host if request.client else "?")):
+                return JSONResponse({"detail": "rate limit exceeded"}, status_code=429, headers={"Retry-After": "30"})
+        return await call_next(request)
 
     def ui(run: dict[str, Any], started_at_ms: int = 0) -> dict[str, Any]:
         r = AgentRun(**{k: v for k, v in run.items() if k in AgentRun.__dataclass_fields__})
@@ -133,11 +182,33 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
     # ── meta ──
     @app.get("/v1/health")
     def health() -> dict[str, Any]:
-        return {"ok": True, "ts": time.time()}
+        try:
+            svc.store.q("SELECT 1")
+            db_ok = True
+        except Exception:  # noqa: BLE001
+            db_ok = False
+        return {"ok": db_ok, "ts": time.time(), "env": settings.env}
 
     @app.get("/v1/meta")
     def meta() -> dict[str, Any]:
-        return svc.meta()
+        return {**svc.meta(), **capabilities()}
+
+    def capabilities() -> dict[str, Any]:
+        from dallal import llm
+        from dallal.ml import registry
+
+        return {"env": settings.env, "execution": {"mode": settings.execution_mode, "note": "operational actions are recorded and simulated; no real executor is configured"},
+                "whatsapp": {"mode": svc.provider.mode, "send_requires_supervisor_approval": svc.provider.mode == "cloud" and settings.require_send_approval, "real_send_enabled": settings.allow_real_send and svc.provider.mode == "cloud"},
+                "llm": llm.capabilities(), "ml": {"models": registry.available(), "agent_scoring": "calibrated models score a case only when a point-in-time adapter supplies a complete in-domain feature row; otherwise the labelled heuristic is used"},
+                "persistence": {"db": "sqlite (WAL)", "backups": bool(settings.backup_dir), "last_backup": backup_state.get("last"), "backup_error": backup_state.get("error")},
+                "auth": {"api_key_required": bool(api_key), "roles": "asserted by the client; a single shared key does not identify individual users (add SSO before production)"}}
+
+    @app.post("/v1/admin/backup")
+    def admin_backup() -> dict[str, Any]:
+        dest = do_backup()
+        if dest is None:
+            raise HTTPException(409, backup_state.get("error") or "DALLAL_BACKUP_DIR is not configured")
+        return {"backup": dest}
 
     # ── runs ──
     @app.post("/v1/frontend/runs", dependencies=[Depends(guard)])
@@ -214,6 +285,28 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
             raise HTTPException(404, "unknown or already-closed inquiry") from None
         except ValueError as e:
             raise HTTPException(422, str(e)) from e
+        return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
+
+    @app.post("/v1/inquiries/{inquiry_id}/send/approve")
+    def send_approve(inquiry_id: str, req: SendDecision) -> dict[str, Any]:
+        try:
+            run = svc.approve_send(inquiry_id, req.approver, req.role)
+        except PermissionError as e:
+            raise HTTPException(403, str(e)) from e
+        except KeyError:
+            raise HTTPException(404, "unknown or already-closed inquiry") from None
+        except ValueError as e:
+            raise HTTPException(409, str(e)) from e
+        return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
+
+    @app.post("/v1/inquiries/{inquiry_id}/send/decline")
+    def send_decline(inquiry_id: str, req: SendDecision) -> dict[str, Any]:
+        try:
+            run = svc.decline_send(inquiry_id, req.approver, req.role)
+        except PermissionError as e:
+            raise HTTPException(403, str(e)) from e
+        except KeyError:
+            raise HTTPException(404, "unknown, closed or not-held inquiry") from None
         return {"plan": run} if "plan_id" in run else {"run": run, "ui": ui(run)}
 
     # ── trained risk models (real public data; see docs/ml/models.json) ──
@@ -363,7 +456,7 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
     # ── WhatsApp webhook (Meta) ──
     @app.get("/v1/whatsapp/webhook")
     def wh_verify(request: Request) -> PlainTextResponse:
-        challenge = wa.verify_challenge(dict(request.query_params), os.environ.get("WHATSAPP_VERIFY_TOKEN", ""))
+        challenge = wa.verify_challenge(dict(request.query_params), settings.verify_token)
         if challenge is None:
             raise HTTPException(403, "verification failed")
         return PlainTextResponse(challenge)
@@ -371,7 +464,9 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True) -> 
     @app.post("/v1/whatsapp/webhook")
     async def wh_receive(request: Request) -> dict[str, Any]:
         raw = await request.body()
-        secret = os.environ.get("WHATSAPP_APP_SECRET", "")
+        secret = settings.app_secret
+        if svc.provider.mode == "sandbox" and not secret:
+            raise HTTPException(404, "webhook is disabled in sandbox mode")  # unsigned inbound events would let anyone forge replies
         if svc.provider.mode == "cloud" or secret:
             if not wa.verify_signature(raw, request.headers.get("X-Hub-Signature-256"), secret):
                 raise HTTPException(403, "invalid signature")

@@ -117,6 +117,7 @@ def amazon_frame() -> pd.DataFrame:
         m, c = past_stat(df[key].fillna("na"), day, day, df["_label"], prior=prior, prior_n=50.0)  # same-day outcomes are NOT visible
         x[f"{name}_past_fail_rate"], x[f"{name}_past_n"] = m, c
     x["_y"], x["_t"], x["_origin"] = df["_label"].values, df["as_of_day_index"].values, df["origin"].values
+    x["_sid"], x["_route"] = df["shipment_id"].values, df["route_id"].values  # ids for train/serve parity checks (never used as features)
     return x
 
 

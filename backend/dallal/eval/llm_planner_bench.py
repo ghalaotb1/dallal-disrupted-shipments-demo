@@ -8,6 +8,10 @@ Run: python -I -m dallal.eval.llm_planner_bench N qwen3.5:4b [qwen3.5:9b ...]  -
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("DALLAL_LLM_BACKEND", "ollama")  # benchmarks talk to a local Ollama unless told otherwise
+
 import json
 import os
 import sys

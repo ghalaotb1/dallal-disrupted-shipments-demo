@@ -18,6 +18,7 @@ import json
 from collections.abc import Callable
 from typing import Any
 
+from dallal import llm as llm_api
 from dallal.agent.v2 import inquiry as iq
 from dallal.agent.v2.planner import PlannerV2, Step
 from dallal.agent.v2.state import CaseStateV2
@@ -48,7 +49,7 @@ class LLMPlanner(PlannerV2):
         assert mode in ("pure", "hybrid")
         self.model, self.llm_mode = model, mode
         self.name = f"llm-{mode}:{model}"
-        self._chat = chat or ollama.chat
+        self._chat = chat or llm_api.chat
         self.log: list[dict[str, Any]] = []
 
     # ── prompt ──

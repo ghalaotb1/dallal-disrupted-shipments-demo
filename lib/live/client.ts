@@ -56,6 +56,8 @@ export const api = {
   sandboxReply: (body: { inquiry_id: string; kind: "button" | "text" | "location" | "image"; answer_id?: string; text?: string; lat?: number; lng?: number }) =>
     request<Record<string, unknown>>("POST", "/v1/sandbox/reply", body),
   expire: (inquiryId: string) => request<RunEnvelope>("POST", `/v1/inquiries/${encodeURIComponent(inquiryId)}/expire`),
+  sendApprove: (inquiryId: string, body: { approver: string; role: string }) => request<RunEnvelope>("POST", `/v1/inquiries/${encodeURIComponent(inquiryId)}/send/approve`, body),
+  sendDecline: (inquiryId: string, body: { approver: string; role: string }) => request<RunEnvelope>("POST", `/v1/inquiries/${encodeURIComponent(inquiryId)}/send/decline`, body),
   review: (inquiryId: string, body: { answer_id: string | null; reviewer: string }) => request<RunEnvelope>("POST", `/v1/inquiries/${encodeURIComponent(inquiryId)}/review`, body),
   inquiries: (subjectId: string) => request<LiveInquiry[]>("GET", `/v1/inquiries?subject_id=${encodeURIComponent(subjectId)}`),
 };

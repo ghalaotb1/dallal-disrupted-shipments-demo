@@ -7,6 +7,10 @@ it would become evidence. Run: python -I -m dallal.eval.reply_bench qwen3.5:4b [
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("DALLAL_LLM_BACKEND", "ollama")  # benchmarks talk to a local Ollama unless told otherwise
+
 import json
 import sys
 import time

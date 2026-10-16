@@ -1,22 +1,32 @@
-# Render blueprint for the Dallal backend (Docker). The frontend stays on Vercel. See docs/deployment/DEPLOYMENT.md.
+# Render blueprint: Dallal backend, STAGING. The frontend stays on Vercel and reaches this service through its server-side /api/dallal proxy.
+# Guide: docs/deployment/STAGING.md.  Nothing here can send a real WhatsApp message or run a real operational action.
 services:
   - type: web
-    name: dallal-backend
+    name: dallal-backend-staging
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    plan: starter            # a persistent disk needs a paid instance; free instances lose SQLite state on every restart
+    plan: starter              # a persistent disk requires a paid instance; free instances lose SQLite state on every restart/deploy
     healthCheckPath: /v1/health
+    autoDeploy: false          # deploy deliberately (Manual Deploy) so a push cannot change a staging service unseen
     disk:
       name: dallal-data
-      mountPath: /data
+      mountPath: /data         # SQLite database (+ WAL) and /data/backups live here and survive restarts and redeploys
       sizeGB: 1
     envVars:
-      - key: DALLAL_CORS_ORIGINS
-        value: https://dallal-disrupted-shipments-demo.vercel.app
-      - key: DALLAL_TIME_SCALE
-        value: "20"          # demo clock: 1 real second = 20 simulated seconds for inquiry timeouts (1 = real time)
+      - key: DALLAL_ENV
+        value: staging         # fail-closed: refuses to start without a strong API key
       - key: DALLAL_API_KEY
-        sync: false          # set in the dashboard; mirror it as DALLAL_API_KEY on Vercel so the same-origin proxy can add it
-      # WhatsApp Cloud API (optional; without these the SANDBOX provider is used and nothing is ever sent to a phone):
-      # WHATSAPP_MODE=cloud, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ALLOWLIST
+        generateValue: true    # Render generates a 256-bit secret; copy it into Vercel as DALLAL_API_KEY (server-only)
+      - key: DALLAL_EXECUTION_MODE
+        value: simulated       # the only supported mode; anything else is rejected at startup
+      - key: WHATSAPP_MODE
+        value: sandbox         # no message can reach a phone. Cloud mode needs a deliberate, separate change (see WHATSAPP.md)
+      - key: DALLAL_LLM_BACKEND
+        value: none            # Render has no GPU; see docs/deployment/STAGING.md for the LLM options
+      - key: DALLAL_TIME_SCALE
+        value: "20"            # demo clock: inquiry deadlines run 20x faster than real time (1 = real time)
+      - key: DALLAL_BACKUP_EVERY_H
+        value: "24"
+      - key: DALLAL_CORS_ORIGINS
+        value: ""              # browsers never call this service directly in staging (same-origin proxy), so no origin is allowed

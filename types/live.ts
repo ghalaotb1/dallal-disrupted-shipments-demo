@@ -13,6 +13,13 @@ export interface LiveMeta {
   model_basis: string;
   assumptions: string[];
   notice: string;
+  env?: string;
+  execution?: { mode: string; note: string };
+  whatsapp?: { mode: string; send_requires_supervisor_approval: boolean; real_send_enabled: boolean };
+  llm?: { backend: string; available: boolean; interpreter_active: boolean; interpreter_model: string; planner: string; models?: string[]; endpoint?: string; note?: string };
+  ml?: { models: string[]; agent_scoring: string };
+  persistence?: { db: string; backups: boolean; last_backup?: string | null; backup_error?: string | null };
+  auth?: { api_key_required: boolean; roles: string };
 }
 
 export interface LiveMessage {

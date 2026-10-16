@@ -244,11 +244,21 @@
     "Source: Shanghai intra-city tasks (Chinese yearless timestamps); a proxy for stalled / slow deliveries - LaDe has no failure labels.",
     "History features need a serving-time history store (resolved-before-as_of only)."
   ],
-  "trained_at": "2026-10-16T15:46:12",
+  "trained_at": "2026-10-16T19:30:54",
   "sha256": "bb8c3b54f7dac97c8e3e4c8674463872c61dd521e8f2c2b9a7ed53b645a99467",
+  "valid_domains": [
+    "lade"
+  ],
   "extrapolation_tolerance": 0.25,
   "extra": {
     "slow_threshold_min": 216.0,
-    "city": "sh"
+    "city": "sh",
+    "history_prior_logdur": 4.3096211489916065,
+    "history_prior_n": 10.0,
+    "history_keys": {
+      "aoi": "dest_zone_id",
+      "courier": "courier_id",
+      "region": "dest_region"
+    }
   }
 }

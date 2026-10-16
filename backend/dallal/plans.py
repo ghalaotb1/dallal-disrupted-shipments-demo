@@ -94,10 +94,10 @@ class PlanOps:
         pend.receipt = self.svc._guard_send(pend, facts)
         now = time.time()
         self.store.save_inquiry(inquiry_id=inquiry_id, run_id=plan_id, spec_id=spec.id, target=spec.target, scope=spec.scope, recipient_hash=wa.hash_ref(pend.recipient_ref), recipient_ref=pend.recipient_ref,
-                                delivery_mode=pend.receipt.get("mode"), status="awaiting", asked_real=now, deadline_real=now + pend.timeout_min * 60.0 / self.svc.time_scale, answered_real=None, outcome=None,
+                                delivery_mode=pend.receipt.get("mode"), status="awaiting", asked_real=now, deadline_real=now + (self.svc.hold_expiry_s if pend.receipt.get("status") == "held_for_approval" else pend.timeout_min * 60.0 / self.svc.time_scale), answered_real=None, outcome=None,
                                 question=pend.question, answers_json=pend.answers, payload_json={"receipt": pend.receipt, "net_voi_at_ask": net, "p_response": p_resp, "mode": pend.mode, "template": pend.template,
-                                                                                                  "question_en": pend.question_en}, subject_id=snap.get("scopeId"))
-        self.store.emit("inquiry_sent", snap.get("scopeId"), plan_id, {"inquiry_id": inquiry_id, "target": spec.target, "spec": spec.id, "question": pend.question, "receipt": pend.receipt,
+                                                                                                  "question_en": pend.question_en, "timeout_min": pend.timeout_min}, subject_id=snap.get("scopeId"))
+        self.store.emit("inquiry_held" if pend.receipt.get("status") == "held_for_approval" else "inquiry_sent", snap.get("scopeId"), plan_id, {"inquiry_id": inquiry_id, "target": spec.target, "spec": spec.id, "question": pend.question, "receipt": pend.receipt,
                                                                        "timeout_min": pend.timeout_min, "net_voi": round(net, 2), "scope": "incident"})
         if pend.receipt.get("status") == "refused":
             self.store.update_inquiry(inquiry_id, status="send_refused")

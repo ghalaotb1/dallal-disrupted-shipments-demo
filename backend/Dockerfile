@@ -2,7 +2,8 @@
 # Runs from the source tree (paths in dallal/config.py are relative to it). No datasets, no secrets, no raw data in the image:
 # only code, the committed calibrated model artifacts and the committed experiment reports.
 FROM python:3.12-slim
-ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PORT=8000 DALLAL_DB=/data/dallal.sqlite DALLAL_AUTOSTART=1
+# Secure by default: staging mode refuses to start without DALLAL_API_KEY, forces simulated actions and sandbox WhatsApp unless explicitly configured otherwise.
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PORT=8000 DALLAL_ENV=staging DALLAL_DB=/data/dallal.sqlite DALLAL_BACKUP_DIR=/data/backups DALLAL_AUTOSTART=1
 WORKDIR /app/backend
 COPY backend/pyproject.toml ./pyproject.toml
 RUN pip install "pydantic>=2.7" "pyyaml>=6" "requests>=2.31" "numpy>=1.26" "pandas>=2.2" "pyarrow>=16" "scikit-learn>=1.5" "joblib>=1.3" "scipy>=1.11" "fastapi>=0.110" "uvicorn>=0.29"

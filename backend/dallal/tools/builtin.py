@@ -133,9 +133,10 @@ def predict_risk(ctx: ToolContext, args: dict) -> ToolResult:
         out = "low" if band == "low" else "generic_high"
         status = "alert" if band == "high" else "warn" if band == "elevated" else "ok"
         meta = rs.meta or {}
-        return ToolResult(status, f"{band.capitalize()} risk - P({meta.get('target', 'target')}) = {rs.probability:.1%} ({rs.basis}, calibrated on {meta.get('source', 'source data')})",
-                          [f"base rate in source data {meta.get('base_rate_source', 0):.1%}", "different population from SPL: ranking evidence, not an SPL probability"], outcome=out,
-                          data={"risk": {"score": rs.score, "level": band, "drivers": rs.drivers, "probability": rs.probability, "meta": meta, "band": band}},
+        return ToolResult(status, f"{band.capitalize()} risk - P({meta.get('target', 'target')}) = {rs.probability:.1%} ({rs.basis}, calibrated on {meta.get('source_name', 'source data')})",
+                          [f"MODEL (trained, calibrated): {rs.model_id}", f"features as of {meta.get('features_as_of')}", f"base rate in source data {meta.get('base_rate_source', 0):.1%}",
+                           "source population differs from SPL: ranking evidence, not an SPL probability"], outcome=out,
+                          data={"risk": {"score": rs.score, "level": band, "drivers": rs.drivers, "probability": rs.probability, "meta": meta, "band": band, "source": "model"}},
                           provenance=_prov(ctx, model_id=rs.model_id, model_basis=rs.basis))
     if rs.score < 0.35:
         out = "low"
@@ -145,8 +146,10 @@ def predict_risk(ctx: ToolContext, args: dict) -> ToolResult:
                "custody": "driver_custody", "pickup": "driver_pickup"}.get(fam, "generic_high")
     level = "critical" if rs.score >= 0.8 else "high" if rs.score >= 0.55 else "elevated" if rs.score >= 0.35 else "low"
     return ToolResult("alert" if rs.score >= 0.55 else "warn" if rs.score >= 0.35 else "ok", f"Risk {rs.score:.2f} ({level}) — {rs.basis}",
-                      [f"↑ {d['label']}" for d in rs.drivers[:3]] or ["no risk drivers"], outcome=out,
-                      data={"risk": {"score": rs.score, "level": level, "drivers": rs.drivers, "probability": rs.probability, "meta": rs.meta,
+                      [f"HEURISTIC (hand-written rules, not a trained model): {rs.model_id}"] + ([f"trained models abstained: {', '.join(n['model'].split('_v')[0] + ' [' + n['code'] + ']' for n in (rs.meta or {}).get('trained_models_considered', []))}"]
+                                                                                           if (rs.meta or {}).get("trained_models_considered") else [])
+                      + [f"↑ {d['label']}" for d in rs.drivers[:3]] or ["no risk drivers"], outcome=out,
+                      data={"risk": {"score": rs.score, "level": level, "drivers": rs.drivers, "probability": rs.probability, "meta": rs.meta, "source": "heuristic",
                                      "band": rs.band or ("high" if rs.score >= 0.55 else "elevated" if rs.score >= 0.35 else "low")}},
                       provenance=_prov(ctx, model_id=rs.model_id, model_basis=rs.basis))
 
