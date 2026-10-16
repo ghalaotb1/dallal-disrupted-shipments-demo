@@ -16,7 +16,7 @@ READ = {"get_shipment", "get_journey", "get_address_context", "get_recipient_con
         "get_pickup_context", "retrieve_policy_constraints"}
 UI_STATUS = {"ok": "ok", "warn": "warn", "alert": "alert"}
 UI_REASON = {"high_impact": "high_impact", "conflicting_evidence": "conflicting_evidence", "unknown_pattern": "unknown_pattern",
-             "insufficient_evidence": "unknown_pattern", "no_eligible_action": "high_impact"}
+             "insufficient_evidence": "unknown_pattern", "no_eligible_action": "high_impact", "delegation_preferred": "high_impact"}
 
 
 def to_frontend(run: AgentRun, started_at_ms: int = 0) -> dict[str, Any]:

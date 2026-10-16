@@ -54,12 +54,25 @@ def _approval(spec: dict[str, Any], facts: dict[str, Any]) -> tuple[str, str | N
     return level, reason
 
 
+def repeat_adjusted_suitability(spec: dict[str, Any], facts: dict[str, Any]) -> dict[str, float]:
+    """Suitability by cause after the repeat-failure rule (after N failures, re-contact is worth less and redirection more)."""
+    cat = load_catalogue()
+    suit = dict(spec["suitability"])
+    kind = next((k for k, v in cat["actions"].items() if v is spec), None)
+    rep = REPEAT_ADJUST.get(kind)
+    if rep and (facts.get("failed_attempts") or 0) >= cat["limits"]["repeat_failure_threshold"]:
+        suit = {c: min(1.0, v * rep) for c, v in suit.items()}
+    return suit
+
+
+REPEAT_ADJUST = {"verify_address": 0.6, "contact_recipient": 0.5, "offer_window": 0.5, "redirect_pickup": 1.5, "redirect_locker": 1.3}
+
+
 def rank_actions(p_cause: dict[Cause, float], facts: dict[str, Any], preds: dict[str, bool], *, top_k: int = 5) -> list[dict[str, Any]]:
     cat = load_catalogue()
     actionable = {c: p for c, p in p_cause.items() if c not in (Cause.NONE, Cause.UNKNOWN)}
     mass = sum(actionable.values()) or 1.0
-    # Rule: after repeated failures, asking the same recipient again is worth less and moving the parcel is worth more.
-    rep_adj = {"verify_address": 0.6, "contact_recipient": 0.5, "offer_window": 0.5, "redirect_pickup": 1.5, "redirect_locker": 1.3}
+    rep_adj = REPEAT_ADJUST  # after repeated failures, re-contact is worth less and moving the parcel is worth more
     out = []
     for kind, spec in cat["actions"].items():
         unmet = [r for r in spec.get("requires", []) if not preds.get(r, False)]

@@ -41,6 +41,11 @@ class AgentRun:
     escalation: dict[str, Any] | None = None
     deviations: list[dict[str, Any]] = field(default_factory=list)  # LLM choices overridden by gates
     model_basis: str = "expert_assumption_v1"
+    engine: str = "v1"
+    status: str = "completed"  # completed | awaiting_response (v2 runs can pause for an answer)
+    inquiries: list[dict[str, Any]] = field(default_factory=list)  # v2: every question asked, its channel mode and its outcome
+    utility_table: list[dict[str, Any]] = field(default_factory=list)  # v2: expected utility of each option at the final belief
+    virtual_minutes: float = 0.0  # v2: elapsed operational time (tool + answer latency)
 
     @property
     def tool_path(self) -> list[str]:

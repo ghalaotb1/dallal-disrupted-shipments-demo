@@ -129,7 +129,8 @@ def predict_risk(ctx: ToolContext, args: dict) -> ToolResult:
     level = "critical" if rs.score >= 0.8 else "high" if rs.score >= 0.55 else "elevated" if rs.score >= 0.35 else "low"
     return ToolResult("alert" if rs.score >= 0.55 else "warn" if rs.score >= 0.35 else "ok", f"Risk {rs.score:.2f} ({level}) — {rs.basis}",
                       [f"↑ {d['label']}" for d in rs.drivers[:3]] or ["no risk drivers"], outcome=out,
-                      data={"risk": {"score": rs.score, "level": level, "drivers": rs.drivers}},
+                      data={"risk": {"score": rs.score, "level": level, "drivers": rs.drivers, "probability": rs.probability, "meta": rs.meta,
+                                     "band": rs.band or ("high" if rs.score >= 0.55 else "elevated" if rs.score >= 0.35 else "low")}},
                       provenance=_prov(ctx, model_id=rs.model_id, model_basis=rs.basis))
 
 
@@ -183,9 +184,10 @@ def analyze_disruption(ctx: ToolContext, args: dict) -> ToolResult:
 def rank_recovery_actions(ctx: ToolContext, args: dict) -> ToolResult:
     st = ctx.state
     facts = st.facts or {}
-    rec = sg.recipient_signals(ctx.world, st.subject_id)
-    pk = sg.pickup_signals(ctx.world, facts)
-    preds = ranking.predicates(facts, rec, pk)
+    if hasattr(ctx.world, "action_predicates"):  # simulated / non-bundle worlds provide predicates directly
+        preds = ctx.world.action_predicates(facts)
+    else:
+        preds = ranking.predicates(facts, sg.recipient_signals(ctx.world, st.subject_id), sg.pickup_signals(ctx.world, facts))
     ranked = ranking.rank_actions(st.belief.p_cause(), facts, preds)  # type: ignore[union-attr]
     st.ranked_actions = ranked
     if not ranked:

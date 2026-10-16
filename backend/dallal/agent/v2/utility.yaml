@@ -1,0 +1,43 @@
+# Operational utility model (utility-v1). EVERY number is an EXPERT ASSUMPTION in SAR-equivalent units, chosen to be plausible and
+# documented — not estimated from SPL data (none is public). They define how much an on-time delivery is worth, how fast value
+# decays with delay, and what each intervention / question costs. All v2 decisions and all value-of-information numbers are
+# relative to this table; re-estimate it from SPL cost accounting before trusting absolute values.
+version: utility-v1
+
+value:
+  on_time_sar: 100          # value of delivering within the promise
+  fail_cost_sar: 150        # extra cost of a failed delivery (return leg, refund handling, complaint, reputation)
+  stake_factor: 0.04        # extra stake as a share of parcel value (COD counts too)
+  service_multiplier: {Standard: 1.0, Express: 1.4, Same-day: 1.8}
+
+time:
+  slack_floor_min: 30       # urgency never relaxes beyond this scale
+  default_slack_min: 240    # if the promise time is unknown
+
+# Probability the parcel is still delivered on time if nobody intervenes, by true cause.
+wait_success: {none: 0.97, address_issue: 0.10, recipient_unavailable: 0.35, attempt_not_completed: 0.20, route_disruption: 0.55,
+               facility_backlog: 0.40, pickup_point_unavailable: 0.25, custody_anomaly: 0.05, unknown: 0.25}
+
+healthy_success: 0.97       # any action on a healthy parcel: success stays this high (the action only costs money)
+
+# Escalation = delegating to a supervisor who then KNOWS the cause: success is the best achievable action for the true cause
+# (x human reliability), delayed by the hand-off plus a typical action time, costing supervisor time plus a typical action cost.
+# For causes only a human can resolve (custody anomaly, unknown) a floor applies.
+escalate: {human_reliability: 0.90, handoff_delay_min: 20, typical_action_delay_min: 30, typical_action_cost_sar: 10, supervisor_cost_sar: 12,
+           human_floor: {custody_anomaly: 0.75, unknown: 0.70}}
+
+# Approval adds delay and staff cost on top of the action's own effect time.
+approval: {none: {delay_min: 1, cost_sar: 0}, analyst: {delay_min: 10, cost_sar: 4}, supervisor: {delay_min: 20, cost_sar: 12}}
+
+action_cost_sar: {verify_address: 2, contact_recipient: 2, offer_window: 3, retry_delivery: 25, redirect_pickup: 30, reroute: 15,
+                  reassign_courier: 60, branch_escalation: 5, redirect_locker: 30, correct_exception: 3}
+irreversible_penalty_sar: 25  # extra loss when an irreversible action turns out ineffective
+
+# Cost of consulting a database tool (latency/system load, in SAR-equivalents) and its latency in minutes.
+tool_cost_sar: {default: 0.15, predict_risk: 0.10, check_incident_context: 0.30, get_route_context: 0.25}
+tool_latency_min: {default: 0.2, predict_risk: 0.1, check_incident_context: 0.3, get_route_context: 0.3}
+
+autonomy:
+  robust_effectiveness_quantile: 0.10   # lower tail across table-uncertainty particles
+  robust_effectiveness_min: 0.62        # an automated action must be effective at least this likely even in the pessimistic tail
+  min_net_voi_sar: 0.40                 # do not gather evidence unless it is worth at least this much net

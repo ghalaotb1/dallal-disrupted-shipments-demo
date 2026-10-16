@@ -19,6 +19,9 @@ class RiskScore:
     drivers: list[dict[str, Any]]  # [{family, label, weight}] strongest first
     model_id: str
     basis: str  # "prototype-heuristic" | "trained:<artifact id>"
+    band: str | None = None  # low | elevated | high, relative to the model's own calibrated base rate; derived from score if absent
+    probability: float | None = None  # calibrated probability of the model's target, only for trained+calibrated models
+    meta: dict | None = None  # target definition, domain caveats, applicability
 
 
 class RiskModel(Protocol):

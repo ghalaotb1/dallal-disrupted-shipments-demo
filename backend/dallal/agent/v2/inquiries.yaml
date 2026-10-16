@@ -1,0 +1,178 @@
+# Active-evidence inquiry catalogue (inquiry-catalogue-v1).
+#
+# Each inquiry is a question Dallal may ASK a person when the databases cannot resolve an uncertainty that matters.
+# `likelihood` rows give P(answer | true cause) for an answer given; the response model decides whether an answer comes at all.
+# ALL probabilities, latencies and costs are EXPERT ASSUMPTIONS (no public data exists on logistics inquiry response behaviour);
+# they are exposed so SPL operations can replace them with measured response rates and latencies.
+#
+# Causes, in order: none, address_issue, recipient_unavailable, attempt_not_completed, route_disruption, facility_backlog,
+#                   pickup_point_unavailable, custody_anomaly, unknown
+version: inquiry-catalogue-v1
+
+quiet_hours_local: {start: "21:30", end: "08:00"}   # recipients are never contacted in this window (policy, not a probability)
+max_recipient_messages_24h: 2
+
+inquiries:
+
+  ask_recipient_availability:
+    target: recipient
+    channel: whatsapp
+    mode: template_buttons           # business-initiated => approved TEMPLATE with <=3 quick-reply buttons
+    template: dallal_availability_check
+    requires: [recipient_contactable]
+    response: {p: 0.62, latency_median_min: 14, latency_sigma: 0.9, timeout_min: 45}
+    cost: {comm_sar: 0.25, friction_sar: 1.5}
+    scope: shipment
+    question: {en: "Will someone be at the address today between {window}?", ar: "هل سيكون أحد في العنوان اليوم بين {window}؟"}
+    answers:
+      - {id: avail_yes,  en: "Yes, available", ar: "نعم، متوفر"}
+      - {id: avail_no,   en: "Not available", ar: "غير متوفر"}
+      - {id: reschedule, en: "Another time",   ar: "موعد آخر"}
+    likelihood:
+      none:                     [0.80, 0.05, 0.15]
+      address_issue:            [0.75, 0.05, 0.20]
+      recipient_unavailable:    [0.15, 0.45, 0.40]
+      attempt_not_completed:    [0.80, 0.03, 0.17]
+      route_disruption:         [0.75, 0.05, 0.20]
+      facility_backlog:         [0.75, 0.05, 0.20]
+      pickup_point_unavailable: [0.70, 0.10, 0.20]
+      custody_anomaly:          [0.55, 0.15, 0.30]
+      unknown:                  [0.50, 0.20, 0.30]
+    response_cause_factor: {recipient_unavailable: 0.75}   # people who are away answer less
+
+  ask_recipient_location:
+    target: recipient
+    channel: whatsapp
+    mode: template_location          # template asks the recipient to share a location pin; inbound `location` message is the answer
+    template: dallal_location_check
+    requires: [recipient_contactable]
+    response: {p: 0.45, latency_median_min: 18, latency_sigma: 0.9, timeout_min: 60}
+    cost: {comm_sar: 0.25, friction_sar: 2.0}
+    scope: shipment
+    question: {en: "Please share the exact delivery location pin so we can reach you.", ar: "فضلاً شاركنا موقع التسليم الدقيق (Pin) لنتمكن من الوصول إليك."}
+    answers:
+      - {id: loc_match,  en: "Pin within 150 m of the address", ar: "الموقع يطابق العنوان"}
+      - {id: loc_unsure, en: "Pin 150-300 m away",              ar: "الموقع قريب من العنوان"}
+      - {id: loc_far,    en: "Pin more than 300 m away",        ar: "الموقع بعيد عن العنوان"}
+      - {id: address_wrong_text, en: "Recipient says the address is wrong", ar: "المستلم يفيد أن العنوان خاطئ"}
+    likelihood:
+      none:                     [0.85, 0.10, 0.03, 0.02]
+      address_issue:            [0.12, 0.13, 0.55, 0.20]
+      recipient_unavailable:    [0.85, 0.10, 0.03, 0.02]
+      attempt_not_completed:    [0.85, 0.10, 0.03, 0.02]
+      route_disruption:         [0.85, 0.10, 0.03, 0.02]
+      facility_backlog:         [0.85, 0.10, 0.03, 0.02]
+      pickup_point_unavailable: [0.85, 0.10, 0.03, 0.02]
+      custody_anomaly:          [0.80, 0.12, 0.05, 0.03]
+      unknown:                  [0.55, 0.15, 0.20, 0.10]
+    response_cause_factor: {}
+
+  ask_recipient_receipt:
+    target: recipient
+    channel: whatsapp
+    mode: template_buttons
+    template: dallal_receipt_check
+    requires: [recipient_contactable, delivered_scan_present]
+    response: {p: 0.70, latency_median_min: 10, latency_sigma: 0.8, timeout_min: 40}
+    cost: {comm_sar: 0.25, friction_sar: 1.5}
+    scope: shipment
+    question: {en: "Our records show parcel {shipment} as delivered. Did you receive it?", ar: "تُظهر سجلاتنا أن الشحنة {shipment} سُلّمت. هل استلمتها؟"}
+    answers:
+      - {id: received,     en: "Yes, received", ar: "نعم، استلمتها"}
+      - {id: not_received, en: "Not received",   ar: "لم أستلمها"}
+      - {id: unsure,       en: "Not sure",       ar: "غير متأكد"}
+    likelihood:
+      none:                     [0.85, 0.05, 0.10]
+      address_issue:            [0.80, 0.08, 0.12]
+      recipient_unavailable:    [0.80, 0.08, 0.12]
+      attempt_not_completed:    [0.75, 0.12, 0.13]
+      route_disruption:         [0.85, 0.05, 0.10]
+      facility_backlog:         [0.85, 0.05, 0.10]
+      pickup_point_unavailable: [0.85, 0.05, 0.10]
+      custody_anomaly:          [0.20, 0.65, 0.15]
+      unknown:                  [0.55, 0.25, 0.20]
+    response_cause_factor: {}
+
+  ask_courier_status:
+    target: courier
+    channel: whatsapp
+    mode: list                       # couriers hold a standing operational session (assumption) => free-form list message is allowed
+    requires: [courier_contactable]
+    response: {p: 0.85, latency_median_min: 3, latency_sigma: 0.7, timeout_min: 15}
+    cost: {comm_sar: 0.05, friction_sar: 2.0}     # interrupts a driver: safety/attention cost
+    scope: shipment
+    question: {en: "Parcel {shipment}: what is the delivery status?", ar: "الشحنة {shipment}: ما حالة التسليم؟"}
+    answers:
+      - {id: on_route_normal,     en: "On route, normal",           ar: "في الطريق بشكل طبيعي"}
+      - {id: at_address_no_answer, en: "At address, nobody answered", ar: "في العنوان ولا أحد يرد"}
+      - {id: cannot_find_address, en: "Cannot find the address",    ar: "لا أجد العنوان"}
+      - {id: road_blocked,        en: "Road blocked / heavy delay", ar: "الطريق مغلق أو تأخير كبير"}
+      - {id: never_reached,       en: "Have not reached the stop",  ar: "لم أصل إلى الموقع"}
+      - {id: delivered_handed,    en: "Delivered and handed over",  ar: "تم التسليم"}
+      - {id: parcel_missing,      en: "Parcel is not on my van",    ar: "الشحنة ليست معي"}
+    likelihood:
+      none:                     [0.78, 0.03, 0.03, 0.04, 0.01, 0.09, 0.02]
+      address_issue:            [0.08, 0.15, 0.62, 0.05, 0.02, 0.04, 0.04]
+      recipient_unavailable:    [0.08, 0.72, 0.06, 0.05, 0.01, 0.05, 0.03]
+      attempt_not_completed:    [0.15, 0.10, 0.08, 0.12, 0.45, 0.06, 0.04]
+      route_disruption:         [0.10, 0.03, 0.03, 0.78, 0.02, 0.02, 0.02]
+      facility_backlog:         [0.20, 0.02, 0.02, 0.04, 0.02, 0.05, 0.65]
+      pickup_point_unavailable: [0.35, 0.10, 0.05, 0.10, 0.05, 0.10, 0.25]
+      custody_anomaly:          [0.10, 0.05, 0.03, 0.02, 0.02, 0.40, 0.38]
+      unknown:                  [0.25, 0.15, 0.12, 0.12, 0.08, 0.14, 0.14]
+    by_systemic_s1: [0.8, 0.9, 0.9, 2.0, 1.0, 1.0, 1.5]
+    response_cause_factor: {}
+
+  ask_corridor_status:
+    target: dispatcher
+    channel: whatsapp
+    mode: list
+    requires: [corridor_known, dispatcher_contactable]
+    response: {p: 0.95, latency_median_min: 4, latency_sigma: 0.6, timeout_min: 15}
+    cost: {comm_sar: 0.05, friction_sar: 0.5}
+    scope: corridor                  # one answer is shared evidence for EVERY shipment on the corridor
+    question: {en: "Is corridor {corridor} blocked or slow right now?", ar: "هل المحور {corridor} مغلق أو بطيء حالياً؟"}
+    answers:
+      - {id: clear,        en: "Clear",                          ar: "سالك"}
+      - {id: slow_short,   en: "Slow, expected < 30 min",        ar: "بطيء، أقل من 30 دقيقة"}
+      - {id: blocked_long, en: "Blocked, expected > 30 min",     ar: "مغلق، أكثر من 30 دقيقة"}
+      - {id: dont_know,    en: "Don't know",                    ar: "لا أعلم"}
+    likelihood:
+      none:                     [0.82, 0.10, 0.01, 0.07]
+      address_issue:            [0.82, 0.10, 0.01, 0.07]
+      recipient_unavailable:    [0.82, 0.10, 0.01, 0.07]
+      attempt_not_completed:    [0.82, 0.10, 0.01, 0.07]
+      route_disruption:         [0.03, 0.15, 0.75, 0.07]
+      facility_backlog:         [0.80, 0.10, 0.02, 0.08]
+      pickup_point_unavailable: [0.82, 0.10, 0.01, 0.07]
+      custody_anomaly:          [0.82, 0.10, 0.01, 0.07]
+      unknown:                  [0.55, 0.15, 0.15, 0.15]
+    by_systemic_s1: [0.5, 1.0, 2.5, 1.0]
+    response_cause_factor: {}
+
+  ask_branch_backlog:
+    target: branch_supervisor
+    channel: whatsapp
+    mode: template_buttons
+    template: dallal_branch_check
+    requires: [branch_contactable]
+    response: {p: 0.90, latency_median_min: 6, latency_sigma: 0.7, timeout_min: 20}
+    cost: {comm_sar: 0.05, friction_sar: 1.0}
+    scope: facility
+    question: {en: "Is the sorting line at {branch} backlogged?", ar: "هل يوجد تكدس في خط الفرز في {branch}؟"}
+    answers:
+      - {id: backlog_confirmed,   en: "Backlog confirmed", ar: "التكدس مؤكد"}
+      - {id: normal_ops,          en: "Normal operations", ar: "التشغيل طبيعي"}
+      - {id: located_elsewhere,   en: "Parcel is elsewhere", ar: "الشحنة في موقع آخر"}
+    likelihood:
+      none:                     [0.05, 0.88, 0.07]
+      address_issue:            [0.05, 0.88, 0.07]
+      recipient_unavailable:    [0.05, 0.88, 0.07]
+      attempt_not_completed:    [0.06, 0.84, 0.10]
+      route_disruption:         [0.06, 0.86, 0.08]
+      facility_backlog:         [0.80, 0.05, 0.15]
+      pickup_point_unavailable: [0.05, 0.85, 0.10]
+      custody_anomaly:          [0.05, 0.55, 0.40]
+      unknown:                  [0.15, 0.55, 0.30]
+    by_systemic_s1: [2.0, 0.8, 1.0]
+    response_cause_factor: {}

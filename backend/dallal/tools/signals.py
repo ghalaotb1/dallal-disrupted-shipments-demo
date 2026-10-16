@@ -63,6 +63,12 @@ def shipment_facts(b: Bundle, sid: str) -> dict[str, Any]:
         "recorded_ts": None if exc is None else exc.get("recorded_ts"), "failed_attempts": n_failed,
         "delivered": bool((ev["event_type"] == "delivered").any()) if not ev.empty else False,
         "origin": sh.get("origin"), "scenario_id": sh.get("scenario_id"),
+        "recipient_phone": a.get("recipient_phone"), "recipient_opt_in": bool(a.get("recipient_opt_in", False)),
+        "recipient_name": a.get("recipient_name"), "window_text": a.get("window_text"),
+        "dispatcher_contactable": bool(a.get("dispatcher_contactable", True)), "branch_contactable": bool(a.get("branch_contactable", True)),
+        "courier_phone": a.get("courier_phone", True),
+        "recipient_responsiveness": (b.row("recipient_context", "shipment_id", sid) or {}).get("responsiveness"),
+        "recipient_messages_24h": int((ev["raw_code"].astype(str).str.startswith("dallal_msg").sum() if not ev.empty and "raw_code" in ev else 0)),
     }
 
 

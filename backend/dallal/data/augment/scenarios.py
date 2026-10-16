@@ -89,7 +89,9 @@ class World:
                  created_ts=self.minutes_ago(420), promised_end_ts=NOW + pd.Timedelta(hours=4), dest_lat=lat, dest_lng=lng,
                  payment_type="COD" if cod else "Prepaid", cod_amount=cod, value=value if value is not None else (cod or 180.0),
                  attrs={"corridor_id": corridor, "pickup_point_id": pickup_point, "alt_pickup_point_id": alt_pickup, "alt_route_available": alt_route,
-                        "spare_courier_available": spare_courier})
+                        "spare_courier_available": spare_courier,
+                        "recipient_phone": f"SANDBOX-{self.n_ship:04d}", "recipient_opt_in": True, "window_text": "14:00-18:00",
+                        "recipient_name": f"Recipient {self.n_ship}"})
         return sid
 
     def event(self, sid: str, etype: str, mins_ago: float, *, code: str | None = None, at: tuple[float, float] | None = None, node: str | None = None) -> None:
