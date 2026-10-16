@@ -65,7 +65,7 @@ class PlanOps:
                 "status": "awaiting_evidence" if ask else "ready", "commit_now": voi["committed_now"] if ask else {}}
         self._refresh(plan, pr, p_long)
         self.store.save_plan(plan_id, snap.get("scopeId") or "incident", plan["status"], plan)
-        self.store.emit("plan_created", snap.get("scopeId"), plan_id, {"plan_id": plan_id, "status": plan["status"], "parcels": len(pr.parcels), "asks_dispatcher": ask, "net_voi": round(voi["net"], 2)})
+        self.store.emit("plan_created", snap.get("scopeId"), plan_id, {"incident_id": snap.get("incidentId"), "plan_id": plan_id, "status": plan["status"], "parcels": len(pr.parcels), "asks_dispatcher": ask, "net_voi": round(voi["net"], 2)})
         if ask:
             self._ask(plan_id, snap, spec, p_resp, voi["net"], lang)
         return self.view(plan_id)
@@ -119,7 +119,7 @@ class PlanOps:
         plan["p_long"], plan["status"] = p_long, "ready"
         self._refresh(plan, pr, p_long)
         self.store.save_plan(plan_id, rec["scope"], "ready", plan)
-        self.store.emit("plan_ready", rec["scope"], plan_id, {"plan_id": plan_id, "answer": plan["evidence"]["answer"], "objective": plan["solution"]["objective"], "p_long": round(p_long, 3)})
+        self.store.emit("plan_ready", rec["scope"], plan_id, {"incident_id": plan["incident"]["id"], "plan_id": plan_id, "answer": plan["evidence"]["answer"], "objective": plan["solution"]["objective"], "p_long": round(p_long, 3)})
         return self.view(plan_id)
 
     # ── approval and execution ──
@@ -135,7 +135,7 @@ class PlanOps:
         if decision == "reject":
             plan["status"] = "rejected"
             self.store.save_plan(plan_id, rec["scope"], "rejected", plan, decided_by=by)
-            self.store.emit("plan_rejected", rec["scope"], plan_id, {"by": by, "note": note})
+            self.store.emit("plan_rejected", rec["scope"], plan_id, {"incident_id": plan["incident"]["id"], "plan_id": plan_id, "by": by, "note": note})
             return self.view(plan_id)
         if plan["status"] == "awaiting_evidence":
             raise ValueError("the shared question has not been answered yet; approve after the plan is ready (or let it time out)")
@@ -153,7 +153,7 @@ class PlanOps:
                 self.store.ledger_add(name, r)
         plan["status"], plan["executed"] = "executed_simulated", executed
         self.store.save_plan(plan_id, rec["scope"], "executed_simulated", plan, decided_by=by)
-        self.store.emit("plan_executed", rec["scope"], plan_id, {"by": by, "parcels": len(executed), "mode": "simulated", "external_effect": False})
+        self.store.emit("plan_executed", rec["scope"], plan_id, {"incident_id": plan["incident"]["id"], "plan_id": plan_id, "by": by, "parcels": len(executed), "mode": "simulated", "external_effect": False})
         return self.view(plan_id)
 
     def view(self, plan_id: str) -> dict[str, Any]:

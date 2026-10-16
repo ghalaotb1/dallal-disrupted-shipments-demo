@@ -10,6 +10,7 @@ import { Button } from "@/components/common/Button";
 import { SimTag } from "@/components/common/Badges";
 import { InquiryCard } from "@/components/live/InquiryCard";
 import { LiveTag } from "@/components/live/LiveTags";
+import { applyPlanToWorld } from "@/services/live/planEffects";
 import { setPlan, useLive } from "@/store/live";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -56,7 +57,9 @@ export function CoordinatedPlan({ incidentId }: { incidentId: string }) {
     setBusy(true);
     setErr(null);
     try {
-      setPlan(incidentId, await planApi.decide(plan.plan_id, { decision, by: analystName, role: "supervisor" }));
+      const next = await planApi.decide(plan.plan_id, { decision, by: analystName, role: "supervisor" });
+      setPlan(incidentId, next);
+      applyPlanToWorld(incidentId, next);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "request failed");
     } finally {

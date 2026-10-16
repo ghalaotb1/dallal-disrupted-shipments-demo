@@ -1,9 +1,10 @@
-import { api, lastEventId } from "@/lib/live/client";
+import { api, lastEventId, planApi } from "@/lib/live/client";
 import { resolveApiUrl } from "@/lib/live/config";
 import { applyLiveRun } from "@/services/live/liveAgentService";
+import { applyPlanToWorld } from "@/services/live/planEffects";
 import { addEvent, notify } from "@/services/demo/mutations";
 import { getWorld, demoNow, updateWorld } from "@/store/world";
-import { getLive, setLive } from "@/store/live";
+import { getLive, setLive, setPlan } from "@/store/live";
 import type { LiveEvent } from "@/types/live";
 
 /**
@@ -52,7 +53,27 @@ function describe(e: LiveEvent): { title: string; detail?: string; source: "agen
   }
 }
 
+const PLAN_COPY: Record<string, { title: string; tone: "info" | "warn" | "ok" }> = {
+  plan_created: { title: "Coordinated recovery plan created", tone: "info" },
+  plan_ready: { title: "Coordinated plan is ready for supervisor approval", tone: "info" },
+  plan_executed: { title: "Coordinated plan approved and executed (simulated)", tone: "ok" },
+  plan_rejected: { title: "Coordinated plan rejected by the supervisor", tone: "warn" },
+};
+
+function handlePlan(e: LiveEvent) {
+  const copy = PLAN_COPY[e.kind];
+  const p = e.payload as Record<string, string | undefined>;
+  if (!copy || !p.incident_id) return;
+  const incidentId = p.incident_id;
+  void planApi.get(String(p.plan_id)).then((plan) => { setPlan(incidentId, plan); applyPlanToWorld(incidentId, plan); }).catch(() => undefined);
+  if (e.kind === "plan_created") return; // the page that created it is already showing it
+  updateWorld((w) => {
+    if (w.incidents[incidentId]) notify(w, { at: demoNow(), kind: "agent", tone: copy.tone, title: copy.title, body: incidentId, target: { type: "incident", id: incidentId }, actor: "Dallal Agent" });
+  });
+}
+
 function handle(e: LiveEvent) {
+  handlePlan(e);
   const d = describe(e);
   if (d && e.subject_id && getWorld().shipments[e.subject_id]) {
     updateWorld((w) => {

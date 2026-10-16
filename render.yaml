@@ -1,0 +1,22 @@
+# Render blueprint for the Dallal backend (Docker). The frontend stays on Vercel. See docs/deployment/DEPLOYMENT.md.
+services:
+  - type: web
+    name: dallal-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: starter            # a persistent disk needs a paid instance; free instances lose SQLite state on every restart
+    healthCheckPath: /v1/health
+    disk:
+      name: dallal-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DALLAL_CORS_ORIGINS
+        value: https://dallal-disrupted-shipments-demo.vercel.app
+      - key: DALLAL_TIME_SCALE
+        value: "20"          # demo clock: 1 real second = 20 simulated seconds for inquiry timeouts (1 = real time)
+      - key: DALLAL_API_KEY
+        sync: false          # set in the dashboard; mirror it as DALLAL_API_KEY on Vercel so the same-origin proxy can add it
+      # WhatsApp Cloud API (optional; without these the SANDBOX provider is used and nothing is ever sent to a phone):
+      # WHATSAPP_MODE=cloud, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ALLOWLIST
