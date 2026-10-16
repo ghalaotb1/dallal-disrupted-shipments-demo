@@ -1,0 +1,207 @@
+{
+  "olist": {
+    "orders": 99441,
+    "labelled_orders": 96443,
+    "late_rate": 0.0677,
+    "delivered_with_timestamp": 96476,
+    "late_rate_strict_timestamp_definition": 0.0811,
+    "handoff_before_approval_frac": 0.014,
+    "delivered_before_handoff_frac": 0.0002,
+    "late_rate_by_month": {
+      "2016-10": 0.0,
+      "2016-11": 0.069,
+      "2016-12": 0.5,
+      "2017-01": 0.0216,
+      "2017-02": 0.0168,
+      "2017-03": 0.048,
+      "2017-04": 0.0663,
+      "2017-05": 0.0331,
+      "2017-06": 0.0284,
+      "2017-07": 0.0301,
+      "2017-08": 0.0271,
+      "2017-09": 0.0452,
+      "2017-10": 0.034,
+      "2017-11": 0.0978,
+      "2017-12": 0.1065,
+      "2018-01": 0.0567,
+      "2018-02": 0.1217,
+      "2018-03": 0.2035,
+      "2018-04": 0.056,
+      "2018-05": 0.0671,
+      "2018-06": 0.0147,
+      "2018-07": 0.0232,
+      "2018-08": 0.0666,
+      "2018-09": 1.0
+    },
+    "worst_months": {
+      "2018-09": 1.0,
+      "2016-12": 0.5,
+      "2018-03": 0.2035
+    },
+    "handoff_to_deliver_days": {
+      "p10": 1.86,
+      "p50": 7.1,
+      "p90": 18.9,
+      "p99": 40.98
+    },
+    "promised_lead_days": {
+      "p10": 13.05,
+      "p50": 23.23,
+      "p90": 34.29,
+      "p99": 50.24
+    },
+    "dest_geo_missing": 0.0028
+  },
+  "amazon_lmrrc": {
+    "routes": 6112,
+    "packages": 1455743,
+    "visits": 1457175,
+    "outcomes": {
+      "delivered": 1446129,
+      "failed": 11014,
+      "rejected": 32
+    },
+    "packages_with_failed_visit_rate": 0.00751,
+    "packages_visited_at_multiple_stops": 1422,
+    "multi_stop_pattern_top": {
+      "failed->delivered": 1304,
+      "failed->failed": 105,
+      "failed->failed->delivered": 8,
+      "delivered->failed": 2
+    },
+    "time_window_coverage": 0.0781,
+    "failed_rate_by_week": {
+      "2018-07-16/2018-07-22": 0.00988,
+      "2018-07-23/2018-07-29": 0.00756,
+      "2018-07-30/2018-08-05": 0.00763,
+      "2018-08-06/2018-08-12": 0.00788,
+      "2018-08-13/2018-08-19": 0.00664,
+      "2018-08-20/2018-08-26": 0.00563
+    },
+    "failed_rate_by_station_top": {
+      "amazon_lmrrc:station:DLA3": 0.01902,
+      "amazon_lmrrc:station:DLA8": 0.01563,
+      "amazon_lmrrc:station:DCH1": 0.01316,
+      "amazon_lmrrc:station:DCH2": 0.00979
+    },
+    "days_covered": 39,
+    "route_quality_distribution": {
+      "Medium": 3292,
+      "High": 2718,
+      "Low": 102
+    }
+  },
+  "lade": {
+    "delivery_jl": {
+      "tasks": 31365,
+      "days": 163,
+      "duration_min": {
+        "p10": 54.0,
+        "p50": 175.0,
+        "p90": 387.0,
+        "p99": 661.0
+      }
+    },
+    "delivery_yt": {
+      "tasks": 206062,
+      "days": 184,
+      "duration_min": {
+        "p10": 63.0,
+        "p50": 208.0,
+        "p90": 497.0,
+        "p99": 2053.39
+      }
+    },
+    "delivery_cq": {
+      "tasks": 926498,
+      "days": 186,
+      "duration_min": {
+        "p10": 46.0,
+        "p50": 152.0,
+        "p90": 489.0,
+        "p99": 3342.0
+      }
+    },
+    "delivery_sh": {
+      "tasks": 1480716,
+      "days": 184,
+      "duration_min": {
+        "p10": 25.0,
+        "p50": 72.0,
+        "p90": 212.0,
+        "p99": 652.0
+      }
+    },
+    "delivery_hz": {
+      "tasks": 1857087,
+      "days": 184,
+      "duration_min": {
+        "p10": 31.0,
+        "p50": 116.0,
+        "p90": 304.0,
+        "p99": 774.0
+      }
+    },
+    "pickup_jl": {
+      "tasks": 261001,
+      "late_vs_window_rate": 0.00197,
+      "late_count": 514
+    },
+    "pickup_yt": {
+      "tasks": 1143846,
+      "late_vs_window_rate": 0.00472,
+      "late_count": 5398
+    },
+    "shanghai_couriers": 1733,
+    "shanghai_aois": 15564,
+    "failure_labels_available": false
+  },
+  "route_deviation": {
+    "routes": 22269,
+    "stops": 249231,
+    "delivery_stops": 218006,
+    "drivers": 400,
+    "sentinel_time_rows_nulled": 3049,
+    "route_deviation_stop_late_rate": 0.1063,
+    "route_deviation_stop_displaced_rate": 0.5443,
+    "stops_moved_share_of_routes_with_any_move": 0.7498
+  },
+  "ocel_order_management": {
+    "packages": 1128,
+    "failed_events": 311,
+    "packages_with_a_failure": 214,
+    "max_failures_on_one_package": 7,
+    "origin": "SYNTHETIC (CPN simulation) \u2014 shape reference only"
+  },
+  "spl_open_data": {
+    "branches": 529,
+    "with_valid_coords": 491,
+    "regions": {
+      "Al Riyadh": 139,
+      "Mecca Al Mokarama": 85,
+      "Eastern Region": 73,
+      "Assir": 56,
+      "Al Qassim": 33,
+      "Jazan": 28,
+      "Al Madina Al Moawra": 25,
+      "Hail": 24,
+      "Al Baha": 21,
+      "Tabouk": 13,
+      "Najran": 12,
+      "Northern Borders": 11,
+      "Al Jouf": 9
+    }
+  },
+  "dataco": {
+    "rows": 180519,
+    "late_delivery_risk_rate": 0.5483,
+    "label_equals_status_late_delivery": true,
+    "agreement_with_real_gt_scheduled": 0.9755
+  },
+  "cargo2000": {
+    "rows": 3943,
+    "columns": 98,
+    "final_delivery_slower_than_planned_rate": 0.296,
+    "missing_cell_rate": 0.0003
+  }
+}

@@ -76,6 +76,7 @@ class EventType(StrEnum):
     CONTACT_ATTEMPT = "contact_attempt"
     RECIPIENT_CONFIRMED = "recipient_confirmed"
     PICKED_UP = "picked_up"
+    GPS_PING = "gps_ping"
 
 
 class AttemptOutcome(StrEnum):
@@ -221,6 +222,8 @@ class Shipment(Row):
     dest_lat: float | None = None
     dest_lng: float | None = None
     dest_zone_id: str | None = None
+    dest_zone_type: str | None = None
+    dest_region: str | None = None
     payment_type: str | None = None
     cod_amount: float | None = None
     value: float | None = None
@@ -252,6 +255,7 @@ class Attempt(Row):
     attempt_id: str
     shipment_id: str
     attempt_no: int | None = None  # null when the source does not number attempts
+    stop_id: str | None = None  # where the attempt happened (a package can be attempted at several stops)
     outcome: AttemptOutcome
     ts: pd.Timestamp | None = None
     ts_quality: TsQuality = TsQuality.UNKNOWN
@@ -269,6 +273,47 @@ class AddressContext(Row):
     geocode_quality: str | None = None
     past_failures_at_address: int | None = None
     first_delivery_to_address: bool | None = None
+
+
+class RecipientContext(Row):
+    """What is known about the recipient at decision time (contact history, preferences)."""
+
+    TABLE: ClassVar[str] = "recipient_context"
+    KEY: ClassVar[str] = "shipment_id"
+    shipment_id: str
+    responsiveness: str | None = None  # high | medium | low
+    preferred_channel: str | None = None  # WhatsApp | SMS | Call
+    confirmed_window_start_ts: pd.Timestamp | None = None
+    confirmed_window_end_ts: pd.Timestamp | None = None
+    missed_windows: int | None = None
+
+
+class NodeState(Row):
+    """Point-in-time state of a hub/branch/pickup point (backlog, last scan, availability)."""
+
+    TABLE: ClassVar[str] = "node_state"
+    KEY: ClassVar[str] = "node_state_id"
+    node_state_id: str
+    node_id: str
+    ts: pd.Timestamp
+    backlog_parcels: int | None = None
+    last_scan_ts: pd.Timestamp | None = None
+    status: str | None = None  # online | offline | degraded
+    baseline_backlog: float | None = None
+
+
+class CorridorState(Row):
+    """Point-in-time road-corridor telemetry and the exception baseline used for incident detection."""
+
+    TABLE: ClassVar[str] = "corridor_state"
+    KEY: ClassVar[str] = "corridor_state_id"
+    corridor_state_id: str
+    corridor_id: str
+    ts: pd.Timestamp
+    speed_kmh: float | None = None
+    typical_speed_kmh: float | None = None
+    baseline_exceptions_mean: float | None = None  # per detector window
+    baseline_exceptions_std: float | None = None
 
 
 class Exception_(Row):
@@ -367,8 +412,8 @@ class Label(Row):
 
 TABLES: dict[str, type[Row]] = {
     m.TABLE: m
-    for m in (Node, Courier, Route, Stop, Shipment, Event, Attempt, AddressContext, Exception_, Incident,
-              IncidentMember, Action, Decision, Outcome, Label)
+    for m in (Node, Courier, Route, Stop, Shipment, Event, Attempt, AddressContext, RecipientContext, NodeState,
+              CorridorState, Exception_, Incident, IncidentMember, Action, Decision, Outcome, Label)
 }
 
 
@@ -427,7 +472,7 @@ def validate_frame(table: str, df: pd.DataFrame, provides: set[str] | None = Non
         problems.append("observed/engineered rows must not carry scenario_id")
 
     if provides is not None:
-        base = set(Row.model_fields) | {model.KEY}
+        base = set(Row.model_fields) | {model.KEY} | required
         for col in set(df.columns) - base - provides:
             if df[col].notna().any():
                 problems.append(f"column {col} filled but not declared in adapter PROVIDES")

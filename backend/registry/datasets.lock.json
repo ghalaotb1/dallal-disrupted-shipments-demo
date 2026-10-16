@@ -4,16 +4,6 @@
     "sha256": "3de44067242e8fa841d4b852db8809afaa23fe852e452ee4a2f54f0f0fb77e3c",
     "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/actual_sequences.json"
   },
-  "amazon_lmrrc/eval_package_data.json": {
-    "bytes": 166201035,
-    "sha256": "612f9aae67df34e637b106a6e2b1cd627fee11fdc0107937bdb56f8c61ec7848",
-    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_package_data.json"
-  },
-  "amazon_lmrrc/eval_route_data.json": {
-    "bytes": 37777768,
-    "sha256": "dfd8a198b9df5e3b194d3a268f6f442edcd77f028870d54a8d7397a7bc366466",
-    "url": "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_route_data.json"
-  },
   "amazon_lmrrc/invalid_sequence_scores.json": {
     "bytes": 414742,
     "sha256": "265c8603ea5e658bf733b5d32a6037415324f7edb8331499e7c51e0f8ababefa",

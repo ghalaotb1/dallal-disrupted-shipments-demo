@@ -54,20 +54,19 @@ datasets:
     license: "CC BY-NC 4.0 (Amazon.com, Inc.)"
     redistribution: "Non-commercial only; attribution required; do not redistribute. Hackathon/research use is within terms; a commercial SPL deployment would need its own data."
     pinned_version: "s3://amazon-last-mile-challenges/almrrc2021/almrrc2021-data-training (no object versioning; sizes recorded)"
-    scale: "6,112 training routes (+3,072 evaluation routes), 5 US metros, 2018"
+    scale: "6,112 training routes, 1.46M packages, 5 US metros, Jul-Aug 2018"
     supports: [stop_level_delivery_outcome, attempted_vs_delivered, time_window_context, route_sequence_behavior, zone_level_aggregation]
     does_not_support: [failure_reason, attempt_count_per_package, recipient_contact, recovery_actions]
     caveats:
       - "scan_status in {DELIVERED, DELIVERY_ATTEMPTED, REJECTED}; no attempt timestamp/count and no reason."
       - "Locations are obfuscated; package/route ids regenerated."
-      - "Eval routes lack actual_sequences; package_data only is usable from them."
+      - "The 3,072 evaluation routes were audited and REJECTED as a source: their package_data has no scan_status (outcomes withheld for the challenge), so they carry no labels."
+      - "~1.4k packages appear at 2+ stops of the same route (attempted, then delivered elsewhere): genuine repeated-attempt behaviour, modelled as one shipment with several attempts."
     files:
       - {name: package_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/package_data.json", bytes: 375400000}
       - {name: route_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/route_data.json", bytes: 79000000}
       - {name: actual_sequences.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/actual_sequences.json", bytes: 9700000}
       - {name: invalid_sequence_scores.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-training/model_build_inputs/invalid_sequence_scores.json", bytes: 400000}
-      - {name: eval_package_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_package_data.json", bytes: 166200000, group: large}
-      - {name: eval_route_data.json, url: "https://amazon-last-mile-challenges.s3.us-west-2.amazonaws.com/almrrc2021/almrrc2021-data-evaluation/model_apply_inputs/eval_route_data.json", bytes: 37800000, group: large}
 
   - id: route_deviation
     name: "Last-mile delivery route deviations: planned vs. actual routes (Molde / Norway+Denmark)"
