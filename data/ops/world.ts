@@ -30,6 +30,7 @@ interface StopSpec {
 interface DriverSpec {
   id: string;
   name: string;
+  nameAr: string;
   vehicle: string;
   courierId: string;
   routeKey: string;
@@ -48,7 +49,7 @@ const S = (d: number, merchant: string, contents: string, value: number, recipie
 
 export const DRIVER_SPECS: DriverSpec[] = [
   {
-    id: "salem", name: "Salem", vehicle: "DMM-114", courierId: "C-114", routeKey: "DL-20481", corridorId: "DK-04", originId: "hub-dmm", startM: 6800,
+    id: "salem", name: "Salem", nameAr: "سالم", vehicle: "DMM-114", courierId: "C-114", routeKey: "DL-20481", corridorId: "DK-04", originId: "hub-dmm", startM: 6800,
     stops: [
       S(1800, "Nabta Toys", "Toys · 2 pcs", 260, "F. Al-Subaie", "Al Faisaliyah", "Dammam", "Bldg 5520, King Abdullah St"),
       S(3600, "Zahra Beauty", "Skincare set", 310, "R. Al-Anazi", "Al Shula", "Dammam", "Bldg 2204, 15th St"),
@@ -59,7 +60,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "nawaf", name: "Nawaf", vehicle: "DMM-131", courierId: "C-131", routeKey: "DL-20334", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-dmm-west", startM: 4000,
+    id: "nawaf", name: "Nawaf", nameAr: "نواف", vehicle: "DMM-131", courierId: "C-131", routeKey: "DL-20334", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-dmm-west", startM: 4000,
     stops: [
       S(1500, "Sahab Fashion", "Clothing · 2 pcs", 290, "T. Al-Mutairi", "Al Faisaliyah", "Dammam", "Bldg 7710, Omar Ibn Al Khattab St"),
       S(3200, "Zahra Beauty", "Perfume · 1 pc", 520, "D. Al-Ghamdi", "Al Nuzha", "Dammam", "Bldg 3302, 18th St"),
@@ -70,7 +71,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "majid", name: "Majid", vehicle: "DMM-142", courierId: "C-142", routeKey: "DL-20352", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-khobar", startM: 1500,
+    id: "majid", name: "Majid", nameAr: "ماجد", vehicle: "DMM-142", courierId: "C-142", routeKey: "DL-20352", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-khobar", startM: 1500,
     stops: [
       S(1200, "Nabta Toys", "Toys · 1 pc", 120, "G. Al-Rashidi", "Al Shula", "Dammam", "Bldg 6402, 12th St"),
       S(3000, "Sahab Fashion", "Jacket · 1 pc", 350, "F. Al-Anazi", "Al Faisaliyah", "Dammam", "Bldg 2290, King Khalid St"),
@@ -80,7 +81,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "yousef", name: "Yousef", vehicle: "DMM-207", courierId: "C-207", routeKey: "DL-20417", corridorId: "DM-05", originId: "br-dmm-central", startM: 3000,
+    id: "yousef", name: "Yousef", nameAr: "يوسف", vehicle: "DMM-207", courierId: "C-207", routeKey: "DL-20417", corridorId: "DM-05", originId: "br-dmm-central", startM: 3000,
     stops: [
       S(700, "Zahra Beauty", "Cosmetics", 240, "H. Al-Mutairi", "Al Faisaliyah", "Dammam", "Bldg 7001, Omar Ibn Al Khattab St"),
       S(1500, "Sahab Fashion", "Dress · 1 pc", 420, "N. Al-Ghamdi", "Al Faisaliyah", "Dammam", "Bldg 7120, Omar Ibn Al Khattab St"),
@@ -91,7 +92,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "turki", name: "Turki", vehicle: "DMM-212", courierId: "C-212", routeKey: "DL-20507", corridorId: "DM-07", originId: "br-dmm-central", parcelOrigin: "br-dmm-north", startM: 7200,
+    id: "turki", name: "Turki", nameAr: "تركي", vehicle: "DMM-212", courierId: "C-212", routeKey: "DL-20507", corridorId: "DM-07", originId: "br-dmm-central", parcelOrigin: "br-dmm-north", startM: 7200,
     stops: [
       S(1400, "Sahab Fashion", "Shoes · 1 pair", 310, "K. Al-Shammari", "Al Badi", "Dammam", "Bldg 4210, 9th St"),
       S(3000, "Zahra Beauty", "Skincare", 190, "A. Al-Dossari", "Al Andalus", "Dammam", "Bldg 1308, 11th St"),
@@ -102,7 +103,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "waleed", name: "Waleed", vehicle: "KHB-311", courierId: "C-311", routeKey: "DL-20910", corridorId: "KH-01", originId: "br-khobar", startM: 2200,
+    id: "waleed", name: "Waleed", nameAr: "وليد", vehicle: "KHB-311", courierId: "C-311", routeKey: "DL-20910", corridorId: "KH-01", originId: "br-khobar", startM: 2200,
     stops: [
       S(900, "Zahra Beauty", "Perfume", 480, "Q. Al-Otaibi", "Al Andalus", "Al Khobar", "Bldg 2206, Makkah St"),
       S(2000, "Waraq Office Supplies", "Documents", 70, "E. Al-Ghamdi", "Al Hizam Al Akhdar", "Al Khobar", "Bldg 305, Prince Faisal bin Fahd St", { service: "Express" }),
@@ -112,7 +113,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "hamad", name: "Hamad", vehicle: "KHB-305", courierId: "C-305", routeKey: "DL-20533", corridorId: "KH-01", originId: "br-khobar", startM: 4300,
+    id: "hamad", name: "Hamad", nameAr: "حمد", vehicle: "KHB-305", courierId: "C-305", routeKey: "DL-20533", corridorId: "KH-01", originId: "br-khobar", startM: 4300,
     stops: [
       S(1300, "Bait Matbakh", "Cookware", 360, "X. Al-Mutairi", "Al Hizam Al Akhdar", "Al Khobar", "Bldg 702, 20th St"),
       S(3000, "Qamar Electronics", "Charger", 130, "C. Al-Shehri", "Al Aqrabiyah", "Al Khobar", "Bldg 2810, Khalid St"),
@@ -174,7 +175,7 @@ export function buildWorld(now: number = SCENARIO_START): BuiltWorld {
   let n = 0;
   for (const spec of DRIVER_SPECS) {
     const route = routes[spec.routeKey];
-    drivers[spec.id] = { id: spec.id, name: spec.name, vehicle: spec.vehicle, routeKey: spec.routeKey, corridorId: spec.corridorId, originId: spec.originId, nav: { distanceM: spec.startM, speedMps: SPEED_MPS, updatedAt: now } };
+    drivers[spec.id] = { id: spec.id, name: spec.name, nameAr: spec.nameAr, vehicle: spec.vehicle, routeKey: spec.routeKey, corridorId: spec.corridorId, originId: spec.originId, nav: { distanceM: spec.startM, speedMps: SPEED_MPS, updatedAt: now } };
     spec.stops.forEach((st, idx) => {
       n += 1;
       const id = st.id ?? nextPlainId();

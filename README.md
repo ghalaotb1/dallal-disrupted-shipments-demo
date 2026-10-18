@@ -16,7 +16,7 @@ Dallal is organised the way a last-mile operation really works: a **driver** car
 | **Routes** (left) | One card per driver and van: a bar with one segment per parcel (coloured by status), "N of M done", next stop and ETA. Problems rise to the top and say how many parcels are affected. Expand a card for its parcels; click a parcel for its journey. |
 | **Map** (centre) | Real roads, moving vans, parcels as stops. Disruptions, blockages and recoveries are drawn on the routes they affect. |
 | **Cases** (right) | Open cases. Opening one starts Dallal automatically: *What happened → What Dallal found → Who it asked → What changed → Decision*. *Technical details* is collapsed. |
-| **Assistant** (right) | Ask in plain words: "What needs attention?", "Where is DL-20417?", "Why is DL-20655 delayed?". Answers are computed from the live operation and link to the case, parcel or driver. |
+| **Assistant** (right) | Ask in Arabic or English: "Why did DL-20655 fail and what did Dallal do?", "هل هناك شيء ينتظر موافقة المدير؟". The **local Qwen** model (Ollama) answers from the live operation and the agent's own records (runs, questions and replies, plans) and shows what it was based on; it only explains, never decides or acts. If Qwen is unavailable, a basic deterministic answer is shown with a note. |
 | **Manager** (top right) | Group plans and escalations that policy reserves for a supervisor: reason, evidence, Approve / Reject. |
 
 ## Use cases (three open cases)

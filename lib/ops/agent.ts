@@ -2,6 +2,7 @@ import { places } from "@/data/network";
 import { SCENARIO_START } from "@/lib/time";
 import { api, ApiError, planApi, type RunEnvelope } from "@/lib/live/client";
 import { buildCase, buildPlanSnapshot } from "@/lib/ops/case";
+import { cancelAssistant } from "@/lib/ops/assistantChat";
 import { revealTotal } from "@/lib/ops/narrative";
 import { freshWorld, getOps, getUi, opsNow, runtime, setUi, toast, updateOps } from "@/store/ops";
 import { setLive } from "@/store/live";
@@ -37,6 +38,7 @@ export async function resetDemo(): Promise<void> {
     toast("warn", `Backend history was not cleared: ${errText(e)}`);
   }
   executed.clear();
+  cancelAssistant();
   const g = gen() + 1;
   const w = freshWorld(g);
   w.clock = { ...w.clock, baseReal: Date.now(), running: true };

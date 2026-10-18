@@ -107,3 +107,26 @@ export function remainingMin(p: Parcel, d: Driver, now: DemoTime): number {
 export function originName(id: string) {
   return places[id]?.name ?? id;
 }
+
+export interface Kpis {
+  active: number;
+  atRisk: number;
+  disrupted: number;
+  review: number;
+  resolved: number;
+  open: number;
+}
+
+export function computeKpis(w: Pick<OpsWorld, "drivers" | "parcels" | "cases">, now: DemoTime): Kpis {
+  let active = 0, atRisk = 0, disrupted = 0, review = 0, resolved = 0;
+  for (const p of Object.values(w.parcels)) {
+    const h = parcelHealth(p, w.drivers[p.driverId], now);
+    if (!isDone(h)) active += 1;
+    if (h === "at_risk") atRisk += 1;
+    else if (h === "disrupted") disrupted += 1;
+    else if (h === "review") review += 1;
+    else if (h === "prevented" || h === "recovered") resolved += 1;
+  }
+  const open = w.cases.filter((c) => ["attempt_failed", "at_risk", "awaiting_manager"].includes(w.parcels[c.parcelId].state)).length;
+  return { active, atRisk, disrupted, review, resolved, open };
+}

@@ -13,7 +13,7 @@ from typing import Any
 from dallal.llm import ollama, openai_compat
 from dallal.llm.ollama import ChatResult, LLMError
 
-__all__ = ["ChatResult", "LLMError", "backend", "capabilities", "chat"]
+__all__ = ["ChatResult", "LLMError", "assistant_model", "backend", "capabilities", "chat", "chat_stream", "warm"]
 
 _CACHE: dict[str, Any] = {"t": 0.0, "v": None}
 
@@ -34,6 +34,23 @@ def chat(model: str, messages: list[dict[str, Any]], **kw: Any) -> ChatResult:
     if b == "openai":
         return openai_compat.chat(model, messages, **kw)
     raise LLMError("no LLM backend configured (DALLAL_LLM_BACKEND=none)")
+
+
+def assistant_model() -> str:
+    """The local model that powers the operator assistant (a conversational interface only; it never decides)."""
+    return os.environ.get("DALLAL_ASSISTANT_MODEL") or os.environ.get("DALLAL_LLM_INTERPRET_MODEL") or "qwen3.5:4b"
+
+
+def chat_stream(model: str, messages: list[dict[str, Any]], **kw: Any):
+    if backend() != "ollama":
+        raise LLMError("the assistant needs the local Ollama backend (DALLAL_LLM_BACKEND=ollama)")
+    return ollama.chat_stream(model, messages, **kw)
+
+
+def warm(model: str) -> float:
+    if backend() != "ollama":
+        raise LLMError("the assistant needs the local Ollama backend (DALLAL_LLM_BACKEND=ollama)")
+    return ollama.warm(model)
 
 
 def capabilities(max_age_s: float = 30.0) -> dict[str, Any]:

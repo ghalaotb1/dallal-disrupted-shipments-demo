@@ -36,6 +36,8 @@ export interface UiState {
   /** KPI card filter on the routes list. */
   kpiFilter: "all" | "at_risk" | "disrupted" | "review" | "cases" | "resolved";
   assistant: AssistantMessage[];
+  /** Local Qwen: unknown until the tab is opened, then loading / ready / unavailable (basic answers). */
+  assistantModel: { state: "unknown" | "loading" | "ready" | "unavailable"; model?: string; reason?: string };
   selectedDriverId: string | null;
   selectedParcelId: string | null;
   expandedDriverIds: string[];
@@ -48,7 +50,7 @@ export interface UiState {
 }
 
 export const useOps = create<OpsWorld>()(immer(() => freshWorld()));
-export const useOpsUi = create<UiState>(() => ({ role: "operator", tab: "cases", openCaseId: null, kpiFilter: "all", assistant: [], selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, toast: null }));
+export const useOpsUi = create<UiState>(() => ({ role: "operator", tab: "cases", openCaseId: null, kpiFilter: "all", assistant: [], assistantModel: { state: "unknown" }, selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, toast: null }));
 
 export const getOps = () => useOps.getState();
 export const updateOps = (recipe: (draft: OpsWorld) => void) => useOps.setState(recipe);

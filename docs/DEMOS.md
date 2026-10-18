@@ -23,7 +23,7 @@ Memory: the launcher starts Ollama with one loaded model and a 10-minute keep-al
 - **Top: KPI strip.** Active parcels, at risk, disrupted, with manager, open cases, resolved by Dallal. Click a card to filter the routes.
 - **Left: Routes.** One card per driver and van; one bar segment per parcel (grey = delivered, amber = at risk, red = failed, violet = with manager, blue = recovering, green = resolved). Cards with problems rise to the top. Click a card for its parcels, a parcel for its journey.
 - **Centre: map.** Real roads, moving vans, parcels as stops. The camera follows the open case.
-- **Right: Cases / Assistant.** Three open cases are listed. Opening one starts Dallal by itself: *What happened → What Dallal found → Who it asked → What changed → Decision*. The Assistant answers questions from the live data and links to the case, parcel or driver.
+- **Right: Cases / Assistant.** Three open cases are listed. Opening one starts Dallal by itself: *What happened → What Dallal found → Who it asked → What changed → Decision*. The Assistant answers in Arabic or English using the local Qwen model, grounded in the live data (see below).
 - **Top right: Operations | Manager, Reset.** Manager shows what needs approval. Reset restores the same starting point and clears the backend's demo history, so a replay is identical.
 
 ## The three cases
@@ -48,9 +48,17 @@ Open the case. Dallal finds 4 failures on the corridor against a normal 0.4 and 
 | 0:28 | Open **Customer not answering**, tap the highlighted reply. | "Here the records can't say why, so it asks the driver. The answer changes its belief and its action." |
 | 0:50 | Open **Road blockage**; the dispatcher replies by itself. | "One blockage, three drivers: one plan, one question. The reply updates the plan." |
 | 1:10 | Switch to **Manager**, **Approve plan**. | "Group actions need a manager. Routes update." |
-| 1:20 | Open **Assistant**, ask "What did Dallal do today?". | "Operators can ask anything about the operation." |
+| 1:20 | Open **Assistant**, ask in Arabic: "لماذا فشل تسليم الطرد DL-20655 وماذا فعل دلّال؟". | "Operators can ask in Arabic or English; it answers from live data and shows its sources." |
 
 Tips: use **Reset** to retake; use a window of 1440x900 or larger; the basemap needs internet (routes and parcels still show without it); give the page two seconds after loading.
+
+## The Assistant (local Qwen)
+
+- **What it does:** a conversational interface over the operation. Ask about drivers, routes, parcels, disruptions, Dallal's investigations (what it checked, whom it asked, what they replied, how its belief changed) and recovery decisions, in Arabic or English. Answers stream in; *Based on* chips link to the parcel, driver or case used.
+- **Grounding:** the backend (`backend/dallal/assistant.py`) builds a context from the operation snapshot the screen sends (drivers, parcels, cases, KPIs, activity) plus its **own records**: agent runs, WhatsApp questions and replies, coordinated plans, the ledger. Only what the question needs is sent to the model (about 1,000 tokens). The prompt forbids anything outside it, and every answer is checked: an unknown parcel / run / plan id or a percentage that is not in the context discards the answer and shows a verified basic answer instead.
+- **It never decides:** the deterministic agent, the policy gates and the manager approval are untouched. Asked to approve, it explains where it is done.
+- **Local and graceful:** Qwen3.5-4B through Ollama (`DALLAL_ASSISTANT_MODEL` overrides it). The model is loaded when the tab opens ("Loading the local model…"), the first token takes about 4-8 s, and the status line shows whether Qwen is ready. If Ollama or the model is missing, or an answer takes too long, the chat answers in basic mode with a note.
+- **Limit:** a 4B model can still mis-summarise (for example a count); the *Based on* chips and the Technical details let you check. `npm run demo:assistant` runs a live check in Arabic and English against the real model.
 
 ## What is real, what is simulated
 
@@ -68,6 +76,7 @@ The steps in the case panel are shown at a readable pace; the backend run itself
 
 ```bash
 npm run demo:scenarios   # headless: same code as the browser, real backend. Asserts for each scenario the decision, the question (or its absence), sandbox delivery, role enforcement, determinism on replay and pending outcomes
+npm run demo:assistant   # live Qwen assistant check in Arabic and English (needs Ollama with qwen3.5:4b)
 npm run demo:check       # backend-only traces of the same ideas (docs/demos/DEMO_TRACES.md)
 ```
 

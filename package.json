@@ -15,7 +15,8 @@
     "demo:reset": "./scripts/demo.sh --reset",
     "demo:stop": "./scripts/demo.sh --stop",
     "demo:check": "backend/.venv/bin/python -I backend/scripts/demo_check.py",
-    "demo:scenarios": "NEXT_PUBLIC_DALLAL_API_URL=http://localhost:8000 tsx scripts/scenario_check.ts"
+    "demo:scenarios": "NEXT_PUBLIC_DALLAL_API_URL=http://localhost:8000 tsx scripts/scenario_check.ts",
+    "demo:assistant": "NEXT_PUBLIC_DALLAL_API_URL=http://localhost:8000 tsx scripts/assistant_check.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -24,6 +24,7 @@ export type RecoveryKind = "spare" | "pickup" | "wait" | "reroute" | "defer" | "
 export interface Driver {
   id: string;
   name: string;
+  nameAr: string;
   vehicle: string;
   routeKey: string;
   corridorId: string;
@@ -127,6 +128,14 @@ export interface AssistantMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
+  /** Answer lifecycle: reading data / loading the model → streaming tokens → done. */
+  status?: "thinking" | "streaming" | "done";
+  phase?: string;
+  /** "qwen" = the local model answered from live data; "basic" = deterministic fallback. */
+  mode?: "qwen" | "basic";
+  note?: string;
+  meta?: { model: string; latencyS: number; firstTokenS?: number | null };
+  sources?: { type: "parcel" | "driver" | "run" | "plan" | "overview"; id: string; label: string }[];
   /** Things the operator can open from the answer (a case, a parcel, a driver). */
   links?: { label: string; sub?: string; target: { kind: "case"; id: ScenarioId } | { kind: "parcel"; id: string } | { kind: "driver"; id: string } }[];
 }

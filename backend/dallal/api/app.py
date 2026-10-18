@@ -26,7 +26,7 @@ from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from dallal.agent.frontend import to_frontend
 from dallal.agent.trace import AgentRun
@@ -98,6 +98,12 @@ class SandboxReply(BaseModel):
     text: str | None = None
     lat: float | None = None
     lng: float | None = None
+
+
+class AssistantRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=800)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=12)
+    snapshot: dict[str, Any]
 
 
 class SandboxAdvance(BaseModel):
@@ -210,6 +216,41 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True, set
         if dest is None:
             raise HTTPException(409, backup_state.get("error") or "DALLAL_BACKUP_DIR is not configured")
         return {"backup": dest}
+
+    # ── operator assistant (local Qwen as a conversational interface; never decides anything) ──
+    @app.get("/v1/assistant/status")
+    def assistant_status() -> dict[str, Any]:
+        from dallal import llm
+
+        cap = llm.capabilities(max_age_s=5.0)
+        model = llm.assistant_model()
+        return {"model": model, "backend": cap.get("backend"), "available": bool(cap.get("available")) and model in (cap.get("models") or []), "reason": None if cap.get("available") and model in (cap.get("models") or []) else ("Ollama is not reachable" if not cap.get("available") else f"{model} is not installed")}
+
+    @app.post("/v1/assistant/warmup", dependencies=[Depends(guard)])
+    def assistant_warmup() -> dict[str, Any]:
+        """Load the model before the first question so the chat does not wait for a cold start."""
+        from dallal import llm
+
+        st = assistant_status()
+        if not st["available"]:
+            return {**st, "loaded": False}
+        try:
+            return {**st, "loaded": True, "seconds": llm.warm(st["model"])}
+        except llm.LLMError as e:
+            return {**st, "available": False, "loaded": False, "reason": str(e)}
+
+    @app.post("/v1/assistant/chat", dependencies=[Depends(guard)])
+    def assistant_chat(req: AssistantRequest) -> StreamingResponse:
+        from dallal import assistant
+
+        def gen():
+            try:
+                for ev in assistant.stream(svc, req.question, req.history, req.snapshot):
+                    yield json.dumps(ev, ensure_ascii=False) + "\n"
+            except Exception as e:  # noqa: BLE001 - the UI falls back to its deterministic answers
+                yield json.dumps({"type": "error", "code": "assistant_failed", "message": f"{type(e).__name__}: {e}"}) + "\n"
+
+        return StreamingResponse(gen(), media_type="application/x-ndjson", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     @app.post("/v1/admin/demo-reset", dependencies=[Depends(guard)])
     def demo_reset() -> dict[str, Any]:

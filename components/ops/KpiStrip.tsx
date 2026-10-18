@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Activity, BadgeCheck, FolderOpen, OctagonAlert, TriangleAlert, UserRoundSearch, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useOpsNow } from "@/hooks/useOpsNow";
-import { parcelHealth, isDone } from "@/lib/ops/derive";
+import { computeKpis } from "@/lib/ops/derive";
 import { setUi, useOps, useOpsUi, type UiState } from "@/store/ops";
 
 type Key = UiState["kpiFilter"];
@@ -15,19 +15,7 @@ export function KpiStrip() {
   const cases = useOps((s) => s.cases);
   const filter = useOpsUi((s) => s.kpiFilter);
   const now = useOpsNow(1000);
-  const k = useMemo(() => {
-    let active = 0, atRisk = 0, disrupted = 0, review = 0, resolved = 0;
-    for (const p of Object.values(parcels)) {
-      const h = parcelHealth(p, drivers[p.driverId], now);
-      if (!isDone(h)) active += 1;
-      if (h === "at_risk") atRisk += 1;
-      else if (h === "disrupted") disrupted += 1;
-      else if (h === "review") review += 1;
-      else if (h === "prevented" || h === "recovered") resolved += 1;
-    }
-    const open = cases.filter((c) => ["attempt_failed", "at_risk", "awaiting_manager"].includes(parcels[c.parcelId].state)).length;
-    return { active, atRisk, disrupted, review, resolved, open };
-  }, [drivers, parcels, cases, now]);
+  const k = useMemo(() => computeKpis({ drivers, parcels, cases }, now), [drivers, parcels, cases, now]);
   const items: { key: Key; label: string; value: number; sub: string; icon: LucideIcon; tone: string }[] = [
     { key: "all", label: "Active parcels", value: k.active, sub: `${Object.keys(drivers).length} drivers`, icon: Activity, tone: "text-brand-600" },
     { key: "at_risk", label: "At risk", value: k.atRisk, sub: "may miss window", icon: TriangleAlert, tone: "text-warn-600" },

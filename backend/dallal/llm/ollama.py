@@ -60,3 +60,34 @@ def chat(model: str, messages: list[dict[str, Any]], *, tools: list[dict[str, An
     msg = d.get("message", {})
     calls = [{"name": c["function"]["name"], "arguments": c["function"].get("arguments", {})} for c in msg.get("tool_calls", []) or []]
     return ChatResult(msg.get("content", "") or "", calls, round(time.time() - t0, 3), int(d.get("prompt_eval_count", 0)), int(d.get("eval_count", 0)), d)
+
+
+def chat_stream(model: str, messages: list[dict[str, Any]], *, temperature: float = 0.1, seed: int = 0, num_predict: int = 420, timeout: float = 120.0, url: str = DEFAULT_URL):
+    """Yield content chunks as the model produces them (first yield may take a while when the model has to be loaded). Raises LLMError."""
+    body = {"model": model, "messages": messages, "stream": True, "think": False, "keep_alive": "20m", "options": {"temperature": temperature, "seed": seed, "num_predict": num_predict, "num_ctx": 8192}}
+    try:
+        with requests.post(f"{url}/api/chat", json=body, timeout=timeout, stream=True) as r:
+            r.raise_for_status()
+            for line in r.iter_lines():
+                if not line:
+                    continue
+                d = json.loads(line)
+                if d.get("error"):
+                    raise LLMError(str(d["error"]))
+                chunk = (d.get("message") or {}).get("content") or ""
+                if chunk:
+                    yield chunk
+                if d.get("done"):
+                    return
+    except requests.RequestException as e:
+        raise LLMError(f"ollama request failed: {e}") from e
+
+
+def warm(model: str, url: str = DEFAULT_URL, timeout: float = 120.0) -> float:
+    """Load the model into memory (empty prompt) and keep it for 20 minutes. Returns seconds taken."""
+    t0 = time.time()
+    try:
+        requests.post(f"{url}/api/generate", json={"model": model, "prompt": "", "stream": False, "keep_alive": "20m"}, timeout=timeout).raise_for_status()
+    except requests.RequestException as e:
+        raise LLMError(f"ollama warm-up failed: {e}") from e
+    return round(time.time() - t0, 2)
