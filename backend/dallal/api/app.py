@@ -211,6 +211,13 @@ def create_app(service: OpsService | None = None, start_ticker: bool = True, set
             raise HTTPException(409, backup_state.get("error") or "DALLAL_BACKUP_DIR is not configured")
         return {"backup": dest}
 
+    @app.post("/v1/admin/demo-reset", dependencies=[Depends(guard)])
+    def demo_reset() -> dict[str, Any]:
+        """Start a demonstration from a clean slate. Allowed only in a dev, sandbox-WhatsApp, simulated-execution deployment."""
+        if settings.env != "dev" or svc.provider.mode != "sandbox" or settings.execution_mode != "simulated":
+            raise HTTPException(403, "demo reset is only available in a dev deployment with sandbox WhatsApp and simulated execution")
+        return {"cleared": svc.reset_demo()}
+
     # ── runs ──
     @app.post("/v1/frontend/runs", dependencies=[Depends(guard)])
     def frontend_run(req: CaseRequest) -> dict[str, Any]:

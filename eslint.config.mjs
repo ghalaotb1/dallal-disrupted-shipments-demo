@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Python backend: its virtualenv ships JS/CSS (matplotlib, torch) that is not ours to lint.
     "backend/**",
+    // Copied from node_modules by scripts/copy-maplibre-worker.mjs.
+    "public/vendor/**",
     "docs/**",
   ]),
 ]);

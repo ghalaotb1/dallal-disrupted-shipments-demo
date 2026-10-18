@@ -60,6 +60,17 @@ class OpsService:
         with self._glock:
             return self.locks.setdefault(run_id, threading.Lock())
 
+    def reset_demo(self) -> dict[str, Any]:
+        """Dev/sandbox only (the API refuses otherwise): clear persisted demo state and the sandbox provider's memory."""
+        counts = self.store.reset_demo()
+        prov = self.provider
+        if getattr(prov, "mode", "") == "sandbox":
+            prov.outbox.clear()
+            prov.window_open_until.clear()
+            prov.standing_sessions.clear()
+        self.store.emit("demo_reset", None, None, {"cleared": counts})
+        return counts
+
     def response_stats(self):
         """Learned responsiveness from this deployment's own closed inquiries (catalogue values are only the prior)."""
         from dallal.agent.v2.response_stats import ResponseStats

@@ -110,6 +110,15 @@ class Store:
     def overdue(self, now: float) -> list[dict[str, Any]]:
         return [dict(r) for r in self.q("SELECT * FROM inquiries WHERE status='awaiting' AND deadline_real<=?", (now,))]
 
+    def reset_demo(self) -> dict[str, int]:
+        """Wipe runs, inquiries, messages, plans, ledger and opt-outs so a demonstration replays from the same starting point.
+        The audit timeline is kept (ids keep increasing) so connected browsers do not miss or replay events."""
+        counts: dict[str, int] = {}
+        with self.lock:
+            for table in ("messages", "inquiries", "runs", "plans", "ledger", "optouts", "webhook_events"):
+                counts[table] = self.db.execute(f"DELETE FROM {table}").rowcount  # noqa: S608 - fixed table names
+        return counts
+
     def backup(self, dest: str | Path) -> str:
         """Consistent online snapshot (SQLite backup API; safe while the service is writing)."""
         import sqlite3 as _sq

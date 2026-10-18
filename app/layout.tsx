@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { AppShell } from "@/components/layout/AppShell";
-import { SimulationProvider } from "@/components/providers/SimulationProvider";
 import { TooltipProvider } from "@/components/common/Tooltip";
 import "./globals.css";
 
@@ -10,8 +8,8 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const plexArabic = IBM_Plex_Sans_Arabic({ variable: "--font-plex-arabic", subsets: ["arabic"], weight: ["500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: { default: "Dallal · دلّال — Disrupted shipment intelligence", template: "%s · Dallal" },
-  description: "Operations prototype for predicting, diagnosing and recovering disrupted last-mile shipments in the Eastern Province. Simulated scenario data.",
+  title: { default: "Dallal · دلّال — Last-mile control", template: "%s · Dallal" },
+  description: "An AI agent that investigates disrupted last-mile deliveries, asks the right person only when it is worth it, recovers parcels across drivers, and knows when to involve a manager. Simulated operation.",
 };
 
 export const viewport: Viewport = { themeColor: "#ffffff", colorScheme: "light" };
@@ -20,11 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable} ${plexArabic.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <TooltipProvider>
-          <SimulationProvider>
-            <AppShell>{children}</AppShell>
-          </SimulationProvider>
-        </TooltipProvider>
+        <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
   );

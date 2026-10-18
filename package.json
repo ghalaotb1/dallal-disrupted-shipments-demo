@@ -14,7 +14,8 @@
     "demo": "./scripts/demo.sh",
     "demo:reset": "./scripts/demo.sh --reset",
     "demo:stop": "./scripts/demo.sh --stop",
-    "demo:check": "backend/.venv/bin/python -I backend/scripts/demo_check.py"
+    "demo:check": "backend/.venv/bin/python -I backend/scripts/demo_check.py",
+    "demo:scenarios": "NEXT_PUBLIC_DALLAL_API_URL=http://localhost:8000 tsx scripts/scenario_check.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -38,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

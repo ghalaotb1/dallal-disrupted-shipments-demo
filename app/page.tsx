@@ -1,5 +1,5 @@
-import { OverviewScreen } from "@/components/overview/OverviewScreen";
+import { OpsApp } from "@/components/ops/OpsApp";
 
-export default function OverviewPage() {
-  return <OverviewScreen />;
+export default function Page() {
+  return <OpsApp />;
 }

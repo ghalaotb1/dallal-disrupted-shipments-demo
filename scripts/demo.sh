@@ -46,9 +46,7 @@ curl -sf "localhost:$API_PORT/v1/health" >/dev/null || { echo "backend did not s
 for _ in $(seq 1 90); do curl -sf "localhost:$WEB_PORT" >/dev/null && break; sleep 1; done
 echo
 echo "Dallal is running"
-echo "  operator UI : http://localhost:$WEB_PORT/?demo=manual          (top bar should read: Live backend / WA SANDBOX)"
-echo "  Demo B      : http://localhost:$WEB_PORT/shipments/DL-20764?demo=manual"
-echo "  Demo C      : http://localhost:$WEB_PORT/incidents/INC-2417?demo=manual   (click 'Advance demo to detection' first)"
-echo "  Demo A / Model Lab : http://localhost:$WEB_PORT/models?demo=manual"
+echo "  operator UI : http://localhost:$WEB_PORT          (top bar should read: Live backend / WhatsApp sandbox; pick scenario A, B or C)"
+echo "  model evidence : http://localhost:$WEB_PORT/models"
 echo "  backend     : http://localhost:$API_PORT/v1/meta    logs: $LOGS"
 echo "  stop        : ./scripts/demo.sh --stop     reset data: ./scripts/demo.sh --reset"

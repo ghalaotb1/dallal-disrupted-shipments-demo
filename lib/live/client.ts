@@ -46,6 +46,7 @@ export interface RunEnvelope {
 }
 
 export const api = {
+  demoReset: () => request<{ cleared: Record<string, number> }>("POST", "/v1/admin/demo-reset", undefined, 8000),
   meta: () => request<LiveMeta>("GET", "/v1/meta", undefined, 4000),
   frontendRun: (c: LiveCase, lang = "ar") => request<RunEnvelope>("POST", "/v1/frontend/runs", { case: c, lang }),
   run: (id: string, startedAtMs: number) => request<RunEnvelope>("GET", `/v1/runs/${encodeURIComponent(id)}?started_at_ms=${Math.round(startedAtMs)}`),

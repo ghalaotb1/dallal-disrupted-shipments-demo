@@ -145,3 +145,14 @@ def test_backup_is_a_consistent_copy(tmp_path):
     rid, _ = _start(svc)
     dest = svc.store.backup(tmp_path / "bk" / "copy.sqlite")
     assert Store(dest).get_run(rid) is not None
+
+
+def test_demo_reset_is_dev_only_and_clears_state():
+    dev = Settings(env="dev", rate_per_min=1000)
+    svc = OpsService(Store(":memory:"), wa.SandboxProvider(), settings=dev)
+    c = TestClient(create_app(svc, start_ticker=False, settings=dev))
+    svc.store.x("INSERT INTO optouts(recipient_hash, ts) VALUES('h', 1)")
+    out = c.post("/v1/admin/demo-reset")
+    assert out.status_code == 200 and out.json()["cleared"]["optouts"] == 1
+    assert svc.store.q("SELECT COUNT(*) AS n FROM optouts")[0]["n"] == 0
+    assert _client().post("/v1/admin/demo-reset", headers={"X-API-Key": KEY}).status_code == 403  # staging: never
