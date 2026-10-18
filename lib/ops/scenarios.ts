@@ -8,18 +8,16 @@ const MIN = 60_000;
 
 export interface ScenarioMeta {
   id: ScenarioId;
-  title: string;
-  short: string;
-  shows: string;
-  tag: string;
+  /** Use case the situation illustrates, in product words. */
+  useCase: string;
   tone: "ok" | "info" | "review";
 }
 
-/** What each demonstration proves, in the words used on screen. The behaviour itself comes from the real agent and policy, never from this table. */
+/** Presentation labels only. What actually happens in each case comes from the real agent and policy, never from this table. */
 export const SCENARIOS: ScenarioMeta[] = [
-  { id: "A", title: "Address doubt", short: "Yousef · DL-20417", shows: "Dallal diagnoses a failed delivery from evidence alone, decides no question is worth asking, and fixes it within its safety limits.", tag: "Resolved by Dallal", tone: "ok" },
-  { id: "B", title: "Ask the driver", short: "Turki · DL-20655", shows: "The records are not enough, so Dallal asks the right person. The reply changes its understanding, and the action it takes.", tag: "Asks, then resolves", tone: "info" },
-  { id: "C", title: "Road blocked", short: "3 drivers · 10 parcels", shows: "One disruption hits several drivers. Dallal plans all of them together, asks the dispatcher once, and a manager must approve.", tag: "Needs the manager", tone: "review" },
+  { id: "A", useCase: "Resolved automatically", tone: "ok" },
+  { id: "B", useCase: "Asks, then resolves", tone: "info" },
+  { id: "C", useCase: "Escalates to manager", tone: "review" },
 ];
 
 const ev = (parcelId: string, at: number, title: string, detail: string | undefined, code: string): JourneyEvent => ({ id: `${parcelId}-ex-${at}`, shipmentId: parcelId, at, title, detail, source: "courier", tone: "crit", code });
@@ -51,10 +49,10 @@ function stageA(w: OpsWorld, now: number) {
   ctx.telemetry = { attempt: { at: t, distanceToAddressM: 320, dwellSec: 150, callAttempts: 1 } };
   w.journeys[hero.id].push(ev(hero.id, t, "Delivery attempt failed · ADR", "Door dwell 2m 30s · customer pin 320 m from the address", "ADR"));
   log(w, t, `${van.name} could not find the address for ${hero.id}`, "warn", hero.id);
-  w.active = {
-    scenario: "A", parcelId: hero.id, driverId: van.id, affectedDriverIds: [van.id], exposedParcelIds: [],
-    problem: { title: `${van.name} could not find the address for ${hero.id}`, detail: `Express order from ${hero.merchant}, SAR ${hero.valueSar}. First delivery to this address; the attempt failed at ${fmtTime(t)}.` },
-  };
+  w.cases.push({
+    scenario: "A", label: "Address not found", parcelId: hero.id, driverId: van.id, affectedDriverIds: [van.id], exposedParcelIds: [],
+    problem: { title: "Address not found", detail: `${van.name} · stop ${hero.seq} · ${hero.service}, SAR ${hero.valueSar} · failed ${fmtTime(t)}` },
+  });
 }
 
 function stageB(w: OpsWorld, now: number) {
@@ -73,10 +71,10 @@ function stageB(w: OpsWorld, now: number) {
   ctx.telemetry = { attempt: { at: t, distanceToAddressM: 35, dwellSec: 150, callAttempts: 2 } };
   w.journeys[hero.id].push(ev(hero.id, t, "Delivery attempt failed · RNA", "Door dwell 2m 30s · 2 calls unanswered", "RNA"));
   log(w, t, `${van.name}: nobody answered for ${hero.id}`, "warn", hero.id);
-  w.active = {
-    scenario: "B", parcelId: hero.id, driverId: van.id, affectedDriverIds: [van.id], exposedParcelIds: [],
-    problem: { title: `Nobody answered for ${hero.id} on ${van.name}'s route`, detail: `Standard order from ${hero.merchant}, SAR ${hero.valueSar}. Two calls went unanswered at ${fmtTime(t)}; the records do not say why.` },
-  };
+  w.cases.push({
+    scenario: "B", label: "Customer not answering", parcelId: hero.id, driverId: van.id, affectedDriverIds: [van.id], exposedParcelIds: [],
+    problem: { title: "Customer not answering", detail: `${van.name} · stop ${hero.seq} · ${hero.service}, SAR ${hero.valueSar} · failed ${fmtTime(t)}` },
+  });
 }
 
 /** Parcels of a driver by stop distance (stable even though plain ids are generated). */
@@ -114,14 +112,16 @@ function stageC(w: OpsWorld, now: number) {
   const hero = at(w, "salem", 7700);
   const r = routes[w.drivers.salem.routeKey];
   w.blockage = { coord: r ? pointAt(r, 8360) : [50.19, 26.35], radiusM: 340, label: "King Fahd Rd · lane blockage" };
-  w.active = {
-    scenario: "C", parcelId: hero.id, driverId: "salem", affectedDriverIds: ["salem", "nawaf", "majid"], exposedParcelIds: exposed.map(([d, m]) => at(w, d, m).id),
-    problem: { title: "Traffic is building on King Fahd Rd", detail: "4 deliveries on 3 different drivers are already delayed and 6 more are heading into the same stretch." },
-  };
+  w.cases.push({
+    scenario: "C", label: "Road blockage", parcelId: hero.id, driverId: "salem", affectedDriverIds: ["salem", "nawaf", "majid"], exposedParcelIds: exposed.map(([d, m]) => at(w, d, m).id),
+    problem: { title: "Road blockage · King Fahd Rd", detail: "3 drivers · 4 delayed · 6 exposed" },
+  });
 }
 
-export function stage(w: OpsWorld, id: ScenarioId, now: number) {
-  if (id === "A") stageA(w, now);
-  else if (id === "B") stageB(w, now);
-  else stageC(w, now);
+/** The operation as the product opens: three situations are already open on three different routes. */
+export function stageAll(w: OpsWorld, now: number) {
+  w.cases = [];
+  stageA(w, now);
+  stageB(w, now);
+  stageC(w, now);
 }

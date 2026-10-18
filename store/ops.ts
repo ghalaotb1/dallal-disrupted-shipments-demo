@@ -3,31 +3,39 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { buildWorld } from "@/data/ops/world";
+import { stageAll } from "@/lib/ops/scenarios";
 import { SCENARIO_START } from "@/lib/time";
 import type { DemoTime } from "@/types/domain";
-import type { OpsWorld } from "@/types/ops";
+import type { AssistantMessage, OpsWorld } from "@/types/ops";
 
 /** Demo clock speed: one real second advances the operations clock by this many seconds (vans cross a stop in ~half a minute of screen time). */
 export const OPS_TIME_SCALE = 4;
 
 export function freshWorld(generation = 0): OpsWorld {
-  const w = buildWorld(SCENARIO_START);
-  return {
+  const world: OpsWorld = {
     generation,
     clock: { baseDemo: SCENARIO_START, baseReal: 0, scale: OPS_TIME_SCALE, running: false },
-    ...w,
+    ...buildWorld(SCENARIO_START),
     runs: {},
     plans: {},
     planBefore: {},
     events: [],
-    active: null,
+    cases: [],
     blockage: null,
   };
+  stageAll(world, SCENARIO_START); // the operation starts with its three open situations already on the board
+  return world;
 }
 
 export interface UiState {
   /** Which persona is looking: the desk operator or the manager (approvals). */
   role: "operator" | "manager";
+  /** Right panel tab and the open case. */
+  tab: "cases" | "assistant";
+  openCaseId: "A" | "B" | "C" | null;
+  /** KPI card filter on the routes list. */
+  kpiFilter: "all" | "at_risk" | "disrupted" | "review" | "cases" | "resolved";
+  assistant: AssistantMessage[];
   selectedDriverId: string | null;
   selectedParcelId: string | null;
   expandedDriverIds: string[];
@@ -40,7 +48,7 @@ export interface UiState {
 }
 
 export const useOps = create<OpsWorld>()(immer(() => freshWorld()));
-export const useOpsUi = create<UiState>(() => ({ role: "operator", selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, toast: null }));
+export const useOpsUi = create<UiState>(() => ({ role: "operator", tab: "cases", openCaseId: null, kpiFilter: "all", assistant: [], selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, toast: null }));
 
 export const getOps = () => useOps.getState();
 export const updateOps = (recipe: (draft: OpsWorld) => void) => useOps.setState(recipe);

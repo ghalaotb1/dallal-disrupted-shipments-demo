@@ -64,6 +64,8 @@ export interface Parcel {
 
 export interface ScenarioCase {
   scenario: ScenarioId;
+  /** Short product label, e.g. "Address not found". */
+  label: string;
   /** The parcel whose problem Dallal investigates (the one that shows the problem first). */
   parcelId: string;
   driverId: string;
@@ -74,8 +76,10 @@ export interface ScenarioCase {
   runId?: string;
   planId?: string;
   startedAt?: number;
-  /** Plain-language problem statement shown before anything is investigated. */
+  /** One-line problem statement. */
   problem: { title: string; detail: string };
+  /** True while the agent run for this case is in flight. */
+  running?: boolean;
   error?: string;
 }
 
@@ -109,9 +113,18 @@ export interface OpsWorld {
   /** Parcel states before a plan was applied, to show what the single dispatcher answer changed. */
   planBefore: Record<string, Record<string, string>>;
   events: OpsEvent[];
-  active: ScenarioCase | null;
+  /** The open cases of the operation (one per situation Dallal is handling). */
+  cases: ScenarioCase[];
   /** The blocked road section (scenario C), shown on the map. */
   blockage: { coord: LngLat; radiusM: number; label: string } | null;
 }
 
 export type { ShipmentHealth };
+
+export interface AssistantMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  /** Things the operator can open from the answer (a case, a parcel, a driver). */
+  links?: { label: string; sub?: string; target: { kind: "case"; id: ScenarioId } | { kind: "parcel"; id: string } | { kind: "driver"; id: string } }[];
+}

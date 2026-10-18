@@ -8,24 +8,26 @@ Dallal is organised the way a last-mile operation really works: a **driver** car
 
 ---
 
-## The experience
+## The product
 
-| Area | What it shows |
+| Area | What it does |
 |---|---|
-| **Drivers & routes** (left) | One card per driver and van: segmented progress bar (one segment per parcel, coloured by status), "N of M done", next stop and ETA, and a one-line note when something is wrong ("Slow traffic on King Fahd Rd"). Expand a card to see every parcel on the route; click a parcel to inspect it. Cards with problems rise to the top and say how many parcels are affected. |
-| **Map** (centre) | Real roads. Each route is a line, each van a labelled marker that moves, each parcel a stop coloured by status. A disruption shows as a blockage zone with the affected routes highlighted; after a plan, parcels that left a route are drawn as dashed links to their spare courier or pickup point. The camera follows the story. |
-| **Dallal** (right) | Idle: the three situations to try. During a case: **What happened → What Dallal found → Who it asked and why → What changed → Decision and action**, told in plain language. An optional *Technical details* section holds the trace, probabilities and policy. |
-| **Operations / Manager** (top right) | The manager view collects what policy reserves for a supervisor (group plans, escalations) with the reasons, the evidence and Approve / Reject. |
+| **KPI strip** | Active parcels, at risk, disrupted, with manager, open cases, resolved by Dallal. Click a card to filter the routes. |
+| **Routes** (left) | One card per driver and van: a bar with one segment per parcel (coloured by status), "N of M done", next stop and ETA. Problems rise to the top and say how many parcels are affected. Expand a card for its parcels; click a parcel for its journey. |
+| **Map** (centre) | Real roads, moving vans, parcels as stops. Disruptions, blockages and recoveries are drawn on the routes they affect. |
+| **Cases** (right) | Open cases. Opening one starts Dallal automatically: *What happened → What Dallal found → Who it asked → What changed → Decision*. *Technical details* is collapsed. |
+| **Assistant** (right) | Ask in plain words: "What needs attention?", "Where is DL-20417?", "Why is DL-20655 delayed?". Answers are computed from the live operation and link to the case, parcel or driver. |
+| **Manager** (top right) | Group plans and escalations that policy reserves for a supervisor: reason, evidence, Approve / Reject. |
 
-## The three demonstration scenarios
+## Use cases (three open cases)
 
-Each runs the real backend agent on deterministic simulated inputs, and can be reset and replayed (the backend's demo history is cleared on every start, so a replay is identical).
+Each case runs the real backend agent on deterministic inputs; **Reset** (top right) restores the same starting point and clears the backend's demo history.
 
-| | Situation | What it proves | Who decides |
+| Case | Use case | What happens | Who decides |
 |---|---|---|---|
-| **A · Address doubt** | Yousef cannot find the address for `DL-20417` (Express, SAR 740, first delivery there). | The agent diagnoses from evidence alone, judges that no question is worth asking, and fixes it within its safety limits. | **Dallal**, automatically (policy gates all pass) |
-| **B · Ask the driver** | Nobody answers for `DL-20655` on Turki's route; the records cannot say why. | The agent reads the records, then asks the **driver** (the person who can see the door). The reply moves its belief from 64% to 91% "customer not available" and the action it takes; a different reply gives a different decision. | **Dallal**, automatically after the reply |
-| **C · Road blocked** | A lane blockage on King Fahd Rd delays 4 parcels on 3 drivers and exposes 6 more. | The agent recognises one shared incident, plans all 10 parcels **together** over shared spare couriers and pickup points, asks the dispatcher **once** (not once per parcel), and the answer changes the plan for 5 parcels. | **Manager** (policy: group actions need a supervisor; the backend refuses an operator) |
+| **Address not found** · Yousef · `DL-20417` | Resolved automatically | Diagnoses from evidence (address problem, 93%), judges no question is worth asking, confirms the delivery pin with the customer. | **Dallal** |
+| **Customer not answering** · Turki · `DL-20655` | Asks, then resolves | Records are ambiguous (64%); asks the driver. The reply lifts belief to 91% and Dallal contacts the customer. Another reply, another decision. | **Dallal** after the reply |
+| **Road blockage** · King Fahd Rd · 3 drivers | Escalates to manager | Sees one incident, plans 10 parcels together, asks the dispatcher once; the answer changes 5 parcels; policy requires a manager (the backend refuses an operator). | **Manager** |
 
 ## Run it
 
@@ -37,18 +39,18 @@ cd backend && uv venv && uv pip install -e ".[dev,api,report]" && cd ..
 npm run demo            # backend :8000 + frontend :3000 (+ Ollama if installed); open http://localhost:3000
 npm run demo:reset      # same, after wiping the demo database
 npm run demo:stop
-npm run demo:scenarios  # headless end-to-end check of A, B and C against the running backend
+npm run demo:scenarios  # headless end-to-end check of the three cases against the running backend
 ```
 
-The top bar must read **Live backend** and **WhatsApp sandbox**. Full launch, recording and troubleshooting guide: [docs/DEMOS.md](docs/DEMOS.md).
+The top bar must read **Live** and **Sandbox**. Full launch, recording and troubleshooting guide: [docs/DEMOS.md](docs/DEMOS.md).
 
 ## Architecture of the front end
 
 ```
 app/page.tsx              the operations screen (app/models: the real-data model evidence page)
-components/ops/           TopBar · RoutesPanel · OpsMap (MapLibre) · CasePanel · Story · PlanCard · ReplyDevice · ManagerPanel
+components/ops/           TopBar · KpiStrip · RoutesPanel · OpsMap (MapLibre) · CasePanel · Story · PlanCard · ReplyDevice · Assistant · ManagerPanel
 data/ops/world.ts         the simulated operation: 7 drivers, 40 parcels on real road geometry (data/geo/*)
-lib/ops/                  scenarios (deterministic staging) · case (backend payloads) · agent (runs, replies, approvals, execution) · narrative · derive
+lib/ops/                  scenarios (deterministic staging) · case (backend payloads) · agent (runs, replies, approvals, execution) · assistant · narrative · derive
 lib/live/                 typed client for the backend API
 store/ops.ts              zustand store: world, runs, plans, UI state
 scripts/scenario_check.ts the same code driven headlessly against the real backend
@@ -78,7 +80,7 @@ cd backend && uv venv && source .venv/bin/activate && uv pip install -e ".[dev,a
 python -I -m pytest -q
 DALLAL_TIME_SCALE=30 python -m uvicorn dallal.api.app:app --port 8000     # sandbox WhatsApp; no secrets needed
 npm run demo           # one command: Ollama (optional) + backend :8000 + frontend :3000; npm run demo:reset / demo:stop / demo:check / demo:scenarios
-# open http://localhost:3000 and pick scenario A, B or C; /models has the real-data model evidence
+# open http://localhost:3000 and open a case; /models has the real-data model evidence
 ```
 
 Datasets are never committed: `python -I -m dallal.data.cli fetch selected --all` reproduces them (hash-verified); training needs them (`python -I -m dallal.ml.train`), serving does not (the three small calibrated artifacts are committed and SHA-256 checked on load).

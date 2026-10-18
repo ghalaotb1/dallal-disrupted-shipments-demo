@@ -11,7 +11,7 @@ import type { LiveInquiry, LiveMessage } from "@/types/live";
 
 function delivery(m: LiveMessage): string {
   if (m.status === "held_for_approval") return "Held - not sent until a manager approves";
-  if (m.mode === "sandbox") return "Sandbox · recorded, not sent to a real phone";
+  if (m.mode === "sandbox") return "Sandbox · not sent to a phone";
   return m.status;
 }
 
@@ -63,10 +63,10 @@ export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { i
 
         {review ? (
           <div className="rounded-lg border border-warn-200 bg-warn-50 px-3 py-2">
-            <p className="text-xs font-medium text-warn-700">The reply could not be read safely, so a person decides how it is used.</p>
+            <p className="text-xs font-medium text-warn-700">Unclear reply. A person decides.</p>
             {suggestion && suggestedAns ? (
               <div className="mt-2 rounded-md bg-surface px-2.5 py-2 text-xs text-ink-2 ring-1 ring-line">
-                A local language model ({suggestion.model}) suggests <b>{suggestedAns.title_en ?? suggestedAns.title}</b>. It only suggests - you confirm.
+                Local model ({suggestion.model}) suggests <b>{suggestedAns.title_en ?? suggestedAns.title}</b>. You confirm.
                 <Button className="mt-1.5 ml-2" size="xs" variant="primary" disabled={busy} onClick={() => reviewReply(inquiry.inquiry_id, run, plan, suggestion.answer_id)}>
                   Accept suggestion
                 </Button>
@@ -84,7 +84,7 @@ export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { i
 
         {awaiting && !review ? (
           <div className="rounded-lg border border-dashed border-line-strong bg-surface px-3 py-2.5">
-            <p className="text-[10.5px] font-semibold tracking-[0.06em] text-ink-4 uppercase">Simulated device · reply as {who}</p>
+            <p className="text-[10.5px] font-semibold tracking-[0.06em] text-ink-4 uppercase">Reply as {who}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {inquiry.answers.map((a) => (
                 <button
@@ -107,7 +107,7 @@ export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { i
                 void sendReply(inquiry.inquiry_id, { run, plan }, { kind: "text", text }).then(() => setText(""));
               }}
             >
-              <input dir="auto" value={text} onChange={(e) => setText(e.target.value)} placeholder="…or type a reply in Arabic or English" aria-label="Free-text reply" className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-subtle px-2.5 text-xs outline-none focus:border-brand-400" />
+              <input dir="auto" value={text} onChange={(e) => setText(e.target.value)} placeholder="Or type a reply (Arabic / English)" aria-label="Free-text reply" className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-subtle px-2.5 text-xs outline-none focus:border-brand-400" />
               <Button size="sm" variant="secondary" type="submit" disabled={busy || !text.trim()}>
                 <Send /> Send
               </Button>

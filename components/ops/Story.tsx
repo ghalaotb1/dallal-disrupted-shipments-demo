@@ -24,18 +24,24 @@ function Stage({ n, title, children, active = true }: { n: number; title: string
   );
 }
 
-function BeliefBars({ top, label }: { top: [string, number][]; label: string }) {
+function BeliefBars({ top, before, label }: { top: [string, number][]; before?: [string, number][]; label?: string }) {
+  const prior = new Map(before ?? []);
   return (
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-medium text-ink-4">{label}</p>
-      <ul className="mt-1 space-y-1">
+      {label ? <p className="text-[11px] font-medium text-ink-4">{label}</p> : null}
+      <ul className="mt-1 space-y-1.5">
         {top.slice(0, 3).map(([c, p], i) => (
-          <li key={c} className="flex items-center gap-2 text-xs">
-            <span className={cn("w-32 shrink-0 truncate", i === 0 ? "font-semibold text-ink" : "text-ink-3")}>{CAUSE[c] ?? c}</span>
-            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <li key={c} className="text-xs">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className={cn("truncate", i === 0 ? "font-semibold text-ink" : "text-ink-3")}>{CAUSE[c] ?? c}</span>
+              <span className="shrink-0 tabular text-ink-2">
+                {before ? <span className="text-ink-4">{prior.has(c) ? pct(prior.get(c)!) : "<5%"} → </span> : null}
+                <b className={i === 0 ? "text-ink" : "font-medium"}>{pct(p)}</b>
+              </span>
+            </div>
+            <span className="mt-0.5 block h-1.5 overflow-hidden rounded-full bg-muted">
               <span className={cn("block h-full rounded-full transition-all duration-700", i === 0 ? "bg-brand-500" : "bg-ink-5")} style={{ width: `${Math.round(p * 100)}%` }} />
             </span>
-            <span className="w-9 text-right tabular text-ink-2">{pct(p)}</span>
           </li>
         ))}
       </ul>
@@ -61,7 +67,10 @@ export function InvestigationStory({ runId, valueSar }: { runId: string; valueSa
     return () => clearTimeout(t);
   }, [run, revealed, total, runId]);
 
-  const planStatus = useOps((s) => (s.active?.planId ? s.plans[s.active.planId]?.status : undefined));
+  const planStatus = useOps((s) => {
+    const pid = s.cases.find((c) => c.runId === runId)?.planId;
+    return pid ? s.plans[pid]?.status : undefined;
+  });
   const tail = useRef<HTMLDivElement>(null);
   const follow = `${revealed}:${run?.status}:${run?.inquiries[0]?.status}:${planStatus}:${parcelState?.state}`;
   useEffect(() => {
@@ -97,29 +106,28 @@ export function InvestigationStory({ runId, valueSar }: { runId: string; valueSa
           ))}
           {thinking && !beliefShown ? (
             <li className="flex items-center gap-2 px-1 text-xs text-ink-3">
-              <Loader2 className="size-3.5 animate-spin" aria-hidden /> Dallal is checking the records…
+              <Loader2 className="size-3.5 animate-spin" aria-hidden /> Checking…
             </li>
           ) : null}
         </ul>
       </Stage>
 
       {askShown || (done && !ask) ? (
-        <Stage n={3} title={ask ? "Who it asked, and why" : "Did it need to ask anyone?"}>
+        <Stage n={3} title={ask ? "Who it asked" : "Question needed?"}>
           {ask && inq ? (
             <div className="space-y-2">
               <p className="text-xs leading-5 text-ink-2">
-                The records could not settle it, and the answer was expected to change the best action. Dallal asked <b>{inq.target === "courier" && driverName ? `${driverName}, the driver` : (WHO[inq.target] ?? inq.target)}</b> - the person who can see it - because a
-                reply is quick and costs little.
-                {inq.net_voi != null ? <span className="text-ink-3"> Worth asking: +{inq.net_voi.toFixed(1)} SAR-eq net, {Math.round((inq.p_response ?? 0) * 100)}% chance of a reply.</span> : null}
+                Records were not enough. Asked <b>{inq.target === "courier" && driverName ? `${driverName} (driver)` : (WHO[inq.target] ?? inq.target)}</b>
+                {inq.net_voi != null ? <span className="text-ink-3"> · worth +{inq.net_voi.toFixed(1)} SAR-eq · {Math.round((inq.p_response ?? 0) * 100)}% reply chance</span> : null}.
               </p>
               <ReplyDevice inquiry={inq} run={runId} suggested="at_address_no_answer" who={inq.target === "courier" && driverName ? driverName : undefined} />
             </div>
           ) : (
             <p className="text-xs leading-5 text-ink-2">
-              <b>No.</b> The records were enough, so Dallal asked nobody.
+              <b>No.</b> The records were enough.
               {(() => {
                 const q = bestUnaskedQuestion(run.decision);
-                return q ? <span className="text-ink-3"> The best question it considered was not worth its cost (net {q.net.toFixed(1)} SAR-eq).</span> : null;
+                return q ? <span className="text-ink-3"> Best question: not worth its cost ({q.net.toFixed(1)} SAR-eq).</span> : null;
               })()}
             </p>
           )}
@@ -127,17 +135,15 @@ export function InvestigationStory({ runId, valueSar }: { runId: string; valueSa
       ) : null}
 
       {beliefShown && bs.before && bs.after ? (
-        <Stage n={4} title={bs.asked ? "What the answer changed" : "What Dallal concluded"}>
-          <div className="flex gap-4 rounded-lg bg-subtle px-3 py-2.5 ring-1 ring-line-soft">
-            {bs.asked ? <BeliefBars top={bs.before.top} label="Before the question" /> : null}
-            {bs.asked ? <span className="self-center text-ink-4">→</span> : null}
-            <BeliefBars top={bs.after.top} label={bs.asked ? "After the reply" : "Most likely cause"} />
+        <Stage n={4} title={bs.asked ? "What changed" : "Conclusion"}>
+          <div className="rounded-lg bg-subtle px-3 py-2.5 ring-1 ring-line-soft">
+            <BeliefBars top={bs.after.top} before={bs.asked ? bs.before.top : undefined} label={bs.asked ? "Before → after the reply" : "Most likely cause"} />
           </div>
         </Stage>
       ) : null}
 
       {decisionShown ? (
-        <Stage n={5} title="Decision and action">
+        <Stage n={5} title="Decision">
           <DecisionBlock run={run} valueSar={valueSar} busy={busy === "execute"} stateLabel={parcelState?.headline} />
         </Stage>
       ) : null}
@@ -165,8 +171,8 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
   const title = String(run.decision.action_title ?? run.decision.headline ?? "");
   const parcelId = run.ui.shipmentId;
   const p = useOps((s) => s.parcels[parcelId]);
-  const plan = useOps((s) => (s.active?.planId ? s.plans[s.active.planId] : undefined));
-  const active = useOps((s) => s.active);
+  const c = useOps((s) => s.cases.find((x) => x.runId === run.ui.id));
+  const plan = useOps((s) => (c?.planId ? s.plans[c.planId] : undefined));
   const affectedCount = useOps((s) => Object.values(s.parcels).filter((q) => q.exception && q.incident).length);
 
   if (type === "auto_eligible") {
@@ -175,23 +181,20 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
       <div className="space-y-2.5 rounded-xl border border-ok-200 bg-ok-50 p-3.5">
         <div className="flex items-center gap-2">
           <Bot className="size-4 text-ok-700" aria-hidden />
-          <b className="text-13 text-ok-700">Dallal resolved this on its own</b>
+          <b className="text-13 text-ok-700">Resolved by Dallal</b>
           <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-ok-700 ring-1 ring-ok-200">No manager needed</span>
         </div>
         <p className="text-13 text-ink">{title}</p>
         <p className="flex items-center gap-1.5 text-xs text-ink-2">
           {busy && !sent ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Check className="size-3.5 text-ok-600" aria-hidden />}
-          {sent ? stateLabel : busy ? "Sending…" : "Ready"}{" "}
-          {p?.state === "recovering" ? <span className="text-ink-3">· sent in the sandbox, waiting for the customer</span> : null}
+          {sent ? stateLabel : busy ? "Sending…" : "Ready"}
         </p>
-        {p?.simOutcome ? <p className="rounded-md bg-white px-2.5 py-1.5 text-xs text-ok-700 ring-1 ring-ok-200">Outcome in the simulated world: {p.simOutcome.label}.</p> : null}
         <div>
           <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-[0.05em] text-ink-3 uppercase">
-            <ShieldCheck className="size-3.5" aria-hidden /> Why no manager was needed
+            <ShieldCheck className="size-3.5" aria-hidden /> Safety checks
           </p>
           <ChecksList run={run} valueSar={valueSar} />
         </div>
-        <p className="text-[11px] text-ink-3">Executed in simulation · WhatsApp is sandbox only · the outcome is observed afterwards, never assumed.</p>
       </div>
     );
   }
@@ -200,15 +203,15 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
       <div className="space-y-2.5 rounded-xl border border-brand-200 bg-brand-25 p-3.5">
         <div className="flex items-center gap-2">
           <UserRoundSearch className="size-4 text-brand-700" aria-hidden />
-          <b className="text-13 text-brand-700">Dallal recommends - an operator confirms</b>
+          <b className="text-13 text-brand-700">Needs your confirmation</b>
         </div>
         <p className="text-13 text-ink">{title}</p>
         <ChecksList run={run} valueSar={valueSar} />
         {p?.state === "recovering" || p?.state === "prevented" || p?.state === "recovered" ? (
-          <p className="text-xs text-ok-700">Confirmed and sent (simulated). {p.simOutcome ? `Outcome: ${p.simOutcome.label}.` : "Waiting for the customer."}</p>
+          <p className="text-xs text-ok-700">Confirmed and sent. {p.simOutcome ? `Outcome: ${p.simOutcome.label}.` : "Waiting for the customer."}</p>
         ) : (
           <Button variant="primary" loading={busy} onClick={() => executeRun(run.ui.id, "Desk operator", "analyst")}>
-            Confirm as operator
+            Confirm
           </Button>
         )}
       </div>
@@ -219,10 +222,9 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
       <div className="space-y-2 rounded-xl border border-review-200 bg-review-50 p-3.5">
         <div className="flex items-center gap-2">
           <TriangleAlert className="size-4 text-review-700" aria-hidden />
-          <b className="text-13 text-review-700">Dallal is escalating to the manager</b>
+          <b className="text-13 text-review-700">Escalated to manager</b>
         </div>
         <p className="text-xs leading-5 text-ink-2">{String(run.decision.rationale ?? "")}</p>
-        {run.decision.question ? <p className="text-xs text-ink-2"><b>Question for the manager:</b> {String(run.decision.question)}</p> : null}
         <Button size="sm" variant="review" onClick={() => setUi({ role: "manager" })}>
           Open manager view
         </Button>
@@ -235,11 +237,11 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
         <div className="rounded-xl border border-crit-200 bg-crit-50 p-3.5">
           <div className="flex items-center gap-2">
             <TriangleAlert className="size-4 text-crit-700" aria-hidden />
-            <b className="text-13 text-crit-700">One disruption is behind several delays</b>
+            <b className="text-13 text-crit-700">Shared incident</b>
           </div>
-          <p className="mt-1 text-xs leading-5 text-ink-2">{incidentSentence(String(run.decision.rationale ?? ""), affectedCount, active?.affectedDriverIds.length ?? 0, active?.exposedParcelIds.length ?? 0)} Dallal stops treating them one by one and plans them together.</p>
+          <p className="mt-1 text-xs leading-5 text-ink-2">{incidentSentence(String(run.decision.rationale ?? ""), affectedCount, c?.affectedDriverIds.length ?? 0, c?.exposedParcelIds.length ?? 0)}</p>
         </div>
-        {active?.planId && plan ? <PlanCard planId={active.planId} mode="operator" /> : <p className="flex items-center gap-2 text-xs text-ink-3"><Loader2 className="size-3.5 animate-spin" aria-hidden /> Building the coordinated plan…</p>}
+        {c?.planId && plan ? <PlanCard planId={c.planId} mode="operator" /> : <p className="flex items-center gap-2 text-xs text-ink-3"><Loader2 className="size-3.5 animate-spin" aria-hidden /> Planning…</p>}
       </div>
     );
   }
@@ -249,7 +251,6 @@ function DecisionBlock({ run, valueSar, busy, stateLabel }: { run: RunRecord; va
         <CircleHelp className="size-4 text-ink-3" aria-hidden />
         <b className="text-13 text-ink">{String(run.decision.headline ?? "No action needed")}</b>
       </div>
-      <p className="mt-1 text-xs text-ink-2">{String(run.decision.rationale ?? "Dallal keeps watching this parcel.")}</p>
     </div>
   );
 }
@@ -297,9 +298,7 @@ export function TechnicalDetails({ runId }: { runId: string }) {
               </ul>
             </div>
           ) : null}
-          <p className="text-[11px] leading-4 text-ink-4">
-            Every number comes from the real backend run {run.ui.id}. Likelihoods and costs are expert assumptions (no public SPL outcome data). Steps are shown at a readable pace; the run itself completes in well under a second. The language model never makes this decision: it only suggests how to read an unclear reply, and a person confirms.
-          </p>
+          <p className="text-[11px] leading-4 text-ink-4">Run {run.ui.id}. Likelihoods and costs are expert assumptions. Steps are shown at a readable pace. A language model never decides; it only suggests how to read an unclear reply.</p>
         </div>
       ) : null}
     </div>

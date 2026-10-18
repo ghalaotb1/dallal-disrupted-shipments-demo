@@ -1,4 +1,4 @@
-import { routes } from "@/data/network";
+import { places, routes } from "@/data/network";
 import { pointAt } from "@/lib/geo";
 import { at, SCENARIO_START } from "@/lib/time";
 import type { JourneyEvent, LngLat, ShipmentContext } from "@/types/domain";
@@ -59,7 +59,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "nawaf", name: "Nawaf", vehicle: "DMM-131", courierId: "C-131", routeKey: "DL-20334", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-dmm-central", startM: 4000,
+    id: "nawaf", name: "Nawaf", vehicle: "DMM-131", courierId: "C-131", routeKey: "DL-20334", corridorId: "DK-04", originId: "hub-dmm", parcelOrigin: "br-dmm-west", startM: 4000,
     stops: [
       S(1500, "Sahab Fashion", "Clothing · 2 pcs", 290, "T. Al-Mutairi", "Al Faisaliyah", "Dammam", "Bldg 7710, Omar Ibn Al Khattab St"),
       S(3200, "Zahra Beauty", "Perfume · 1 pc", 520, "D. Al-Ghamdi", "Al Nuzha", "Dammam", "Bldg 3302, 18th St"),
@@ -91,7 +91,7 @@ export const DRIVER_SPECS: DriverSpec[] = [
     ],
   },
   {
-    id: "turki", name: "Turki", vehicle: "DMM-212", courierId: "C-212", routeKey: "DL-20507", corridorId: "DM-05", originId: "br-dmm-central", startM: 7200,
+    id: "turki", name: "Turki", vehicle: "DMM-212", courierId: "C-212", routeKey: "DL-20507", corridorId: "DM-07", originId: "br-dmm-central", parcelOrigin: "br-dmm-north", startM: 7200,
     stops: [
       S(1400, "Sahab Fashion", "Shoes · 1 pair", 310, "K. Al-Shammari", "Al Badi", "Dammam", "Bldg 4210, 9th St"),
       S(3000, "Zahra Beauty", "Skincare", 190, "A. Al-Dossari", "Al Andalus", "Dammam", "Bldg 1308, 11th St"),
@@ -139,7 +139,7 @@ function nextPlainId() {
 
 function journeyFor(parcelId: string, merchant: string, service: string, now: number, origin: string, vehicle: string): JourneyEvent[] {
   const mk = (t: number, title: string, source: JourneyEvent["source"], tone: JourneyEvent["tone"], detail?: string): JourneyEvent => ({ id: `${parcelId}-${t}`, shipmentId: parcelId, at: t, title, detail, source, tone });
-  const place = origin === "hub-dmm" ? "Dammam Distribution Hub" : origin === "br-khobar" ? "Khobar Branch" : "Dammam Central Branch";
+  const place = places[origin]?.name ?? "Dammam Distribution Hub";
   return [
     mk(at("08:40"), "Order created", "system", "neutral", `${merchant} · ${service}`),
     mk(at("10:20"), `Received at ${place}`, "scan", "neutral"),

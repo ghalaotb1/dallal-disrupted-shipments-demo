@@ -46,39 +46,35 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
       <div className="flex items-center gap-2">
         <Network className="size-4 text-brand-600" aria-hidden />
         <h3 className="text-sm font-semibold text-ink">
-          One plan for {total} parcels on {groups.length} drivers
+          One plan · {total} parcels · {groups.length} drivers
         </h3>
         <StatusPill plan={plan} />
       </div>
 
       <p className="text-xs leading-5 text-ink-2">
-        Spare couriers and pickup capacity are shared, so Dallal chooses every parcel&apos;s option <b>together</b>. Chance the blockage is long: <b>{Math.round(plan.p_long_prior * 100)}%</b>
+        Chance the blockage is long: <b>{Math.round(plan.p_long_prior * 100)}%</b>
         {answered && plan.p_long !== plan.p_long_prior ? (
           <>
             {" "}
             <ArrowRight className="inline size-3" aria-hidden /> <b>{Math.round(plan.p_long * 100)}%</b> after the dispatcher answered
           </>
         ) : null}
-        .
       </p>
 
       {q ? (
         <div className="space-y-1.5">
-          <p className="text-xs text-ink-3">
-            {plan.evidence.asked ? (
-              <>
-                <b className="text-ink">One question</b> to the dispatcher covers all {total} parcels (instead of {cmp.messages_independent_equivalent} separate messages). Worth asking: +{plan.evidence.voi.net.toFixed(0)} SAR-eq net, {Math.round(plan.evidence.p_response * 100)}% chance of a reply.
-              </>
-            ) : null}
-          </p>
-          {mode === "operator" || q.status !== "awaiting" ? <ReplyDevice inquiry={q} plan={planId} suggested="blocked_long" /> : <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">Waiting for the dispatcher&apos;s answer.</p>}
+          {plan.evidence.asked ? (
+            <p className="text-xs text-ink-3">
+              <b className="text-ink">One question</b> to the dispatcher covers all {total} parcels (not {cmp.messages_independent_equivalent} messages).
+            </p>
+          ) : null}
+          {mode === "operator" || q.status !== "awaiting" ? <ReplyDevice inquiry={q} plan={planId} suggested="blocked_long" /> : <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">Waiting for the dispatcher.</p>}
         </div>
       ) : null}
 
       {answered && before ? (
         <p className="rounded-lg bg-brand-25 px-3 py-2 text-xs text-ink-2 ring-1 ring-brand-100">
-          The dispatcher&apos;s answer changed the plan for <b>{changed.length}</b> of {total} parcels
-          {changed.length ? ` (${changed.slice(0, 3).map((k) => `${k.replace("DL-", "")}: ${(before[k] ?? "").split(":")[0]} → ${plan.solution.per_parcel[k].option.split(":")[0]}`).join(", ")}${changed.length > 3 ? "…" : ""})` : ""}.
+          The answer changed <b>{changed.length}</b> of {total} parcels.
         </p>
       ) : null}
 
@@ -114,14 +110,14 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
       </div>
 
       <p className="text-xs leading-5 text-ink-3">
-        Expected value <b className="text-ink">{sar(cmp.coordinated_utility)}</b> planned together vs <b className="text-ink">{sar(cmp.independent_utility)}</b> handling each parcel on its own. Spare couriers, pickup points and promise windows are demo assumptions <SimTag />.
+        Value <b className="text-ink">{sar(cmp.coordinated_utility)}</b> planned together vs <b className="text-ink">{sar(cmp.independent_utility)}</b> one by one. Spare and pickup capacity are simulated <SimTag />.
       </p>
 
       {plan.status === "ready" ? (
         mode === "manager" ? (
           <div className="rounded-xl border border-review-200 bg-review-50 p-3">
             <p className="text-xs text-review-700">
-              <b>Why a manager?</b> {plan.approval.why}. Policy requires supervisor approval for group actions.
+              <b>Manager approval required</b> for group actions.
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               <Button variant="review" size="md" loading={busy} onClick={() => decidePlan(planId, "approve")}>
@@ -137,7 +133,7 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
           <div className="flex items-center gap-3 rounded-xl border border-review-200 bg-review-50 p-3">
             <UserCheck className="size-5 shrink-0 text-review-600" aria-hidden />
             <p className="flex-1 text-xs text-review-700">
-              <b>Waiting for the manager.</b> A group plan needs supervisor approval; an operator cannot approve it.
+              <b>Waiting for the manager.</b>
             </p>
             <Button size="sm" variant="review" onClick={() => setUi({ role: "manager" })}>
               Open manager view
@@ -147,10 +143,10 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
       ) : null}
       {plan.status === "executed_simulated" ? (
         <p className="rounded-lg bg-ok-50 px-3 py-2 text-xs text-ok-700 ring-1 ring-ok-100">
-          Approved and executed <b>in simulation</b>: {summary(plan)}. {plan.executed?.length ?? total} actions are in the ledger; delivery outcomes are still pending.
+          Approved · executed in simulation: {summary(plan)}. Outcomes pending.
         </p>
       ) : null}
-      {plan.status === "rejected" ? <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">The manager rejected this plan. Nothing was executed.</p> : null}
+      {plan.status === "rejected" ? <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">Rejected. Nothing executed.</p> : null}
     </div>
   );
 }

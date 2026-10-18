@@ -64,7 +64,9 @@ export default function OpsMap() {
   const drivers = useOps((s) => s.drivers);
   const parcels = useOps((s) => s.parcels);
   const blockage = useOps((s) => s.blockage);
-  const active = useOps((s) => s.active);
+  const cases = useOps((s) => s.cases);
+  const openId = useOpsUi((s) => s.openCaseId);
+  const active = cases.find((c) => c.scenario === openId) ?? null;
   const generation = useOps((s) => s.generation);
   const selDriver = useOpsUi((s) => s.selectedDriverId);
   const selParcel = useOpsUi((s) => s.selectedParcelId);
@@ -173,13 +175,13 @@ export default function OpsMap() {
     // numbered stops of the selected route and the case parcel
     const showIds = new Set<string>();
     if (selDriver) Object.values(parcels).filter((p) => p.driverId === selDriver).forEach((p) => showIds.add(p.id));
-    if (active) showIds.add(active.parcelId);
+    for (const c of cases) showIds.add(c.parcelId);
     for (const id of showIds) {
       const p: Parcel | undefined = parcels[id];
       if (!p) continue;
       const d = drivers[p.driverId];
       const h = parcelHealth(p, d, now);
-      const hero = active?.parcelId === id;
+      const hero = cases.some((c) => c.parcelId === id);
       const sel = selParcel === id;
       upsert(
         `stop:${id}`,
@@ -210,7 +212,7 @@ export default function OpsMap() {
       );
     }
     layer.end();
-  }, [ready, drivers, parcels, blockage, now, selDriver, selParcel, active]);
+  }, [ready, drivers, parcels, blockage, now, selDriver, selParcel, cases]);
 
   // ── camera: follow the story ──────────────────────────────────────────────────────────────────────────────────────
   const focusKey = `${generation}:${selDriver ?? ""}:${active?.scenario ?? ""}`;

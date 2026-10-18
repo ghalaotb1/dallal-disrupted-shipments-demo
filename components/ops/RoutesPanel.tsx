@@ -30,20 +30,25 @@ export function RoutesPanel() {
   const now = useOpsNow(700);
   const selectedDriver = useOpsUi((s) => s.selectedDriverId);
   const expanded = useOpsUi((s) => s.expandedDriverIds);
+  const filter = useOpsUi((s) => s.kpiFilter);
+  const cases = useOps((s) => s.cases);
   const rows = useMemo(() => {
     const order = Object.keys(drivers);
-    return summarize({ drivers, parcels }, now).sort((a, b) => RANK[b.worst] - RANK[a.worst] || order.indexOf(a.driver.id) - order.indexOf(b.driver.id));
-  }, [drivers, parcels, now]);
+    const keep = (r: DriverSummary) =>
+      filter === "all" ? true : filter === "at_risk" ? r.atRisk > 0 : filter === "disrupted" ? r.disrupted > 0 : filter === "review" ? r.review > 0 : filter === "cases" ? cases.some((c) => c.affectedDriverIds.includes(r.driver.id)) : r.parcels.some((p) => p.state === "prevented" || p.state === "recovered");
+    return summarize({ drivers, parcels }, now).filter(keep).sort((a, b) => RANK[b.worst] - RANK[a.worst] || order.indexOf(a.driver.id) - order.indexOf(b.driver.id));
+  }, [drivers, parcels, now, filter, cases]);
   const attention = rows.reduce((n, r) => n + r.disrupted + r.atRisk + r.review, 0);
   const total = rows.reduce((n, r) => n + r.total, 0);
+  const driverCount = Object.keys(drivers).length;
 
   return (
     <section aria-label="Drivers and routes" className="flex min-h-0 flex-col border-r border-line bg-surface">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
         <Truck className="size-4 text-ink-3" aria-hidden />
-        <h2 className="text-sm font-semibold text-ink">Drivers &amp; routes</h2>
+        <h2 className="text-sm font-semibold whitespace-nowrap text-ink">Routes</h2>
         <span className="ml-auto text-xs text-ink-3">
-          {rows.length} drivers · {total} parcels
+          {filter === "all" ? `${rows.length} drivers` : `${rows.length} of ${driverCount} drivers`} · {total} parcels
           {attention ? <b className="ml-1 text-warn-700">· {attention} need attention</b> : null}
         </span>
       </header>

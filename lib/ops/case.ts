@@ -2,7 +2,7 @@ import { places } from "@/data/network";
 import { COURIER_ID } from "@/data/ops/world";
 import { remainingMin, vanPosition } from "@/lib/ops/derive";
 import type { PlanSnapshot, LiveCase } from "@/types/live";
-import type { OpsWorld } from "@/types/ops";
+import type { OpsWorld, ScenarioCase } from "@/types/ops";
 
 /**
  * Snapshot of the simulated world in the shape the backend adapter expects (backend/dallal/api/frontend_case.py).
@@ -52,9 +52,7 @@ export function buildCase(w: OpsWorld, parcelId: string, now: number, trigger: L
  * RESOURCES (spare couriers, pickup capacity, whether an alternative road is usable) and the prior on blockage duration are
  * ASSUMPTIONS of this demonstration: the simulated operation has no dispatch-capacity feed. The screens label them SIM.
  */
-export function buildPlanSnapshot(w: OpsWorld, now: number, incidentId: string): PlanSnapshot {
-  const a = w.active;
-  if (!a) throw new Error("no active scenario");
+export function buildPlanSnapshot(w: OpsWorld, a: ScenarioCase, now: number, liveNow: number, incidentId: string): PlanSnapshot {
   const ids = [...a.affectedDriverIds.flatMap((d) => Object.values(w.parcels).filter((p) => p.driverId === d && p.exception && p.state === "at_risk").map((p) => p.id)), ...a.exposedParcelIds];
   const parcels = ids.map((id) => {
     const p = w.parcels[id];
@@ -64,7 +62,7 @@ export function buildPlanSnapshot(w: OpsWorld, now: number, incidentId: string):
       van: d.vehicle,
       value: p.valueSar,
       slackMin: Math.max(5, (p.window.end - now) / 60_000),
-      remainingMin: remainingMin(p, d, now),
+      remainingMin: remainingMin(p, d, liveNow),
       service: p.service,
       exposed: a.exposedParcelIds.includes(id),
       pickupOk: p.service !== "Same-day",

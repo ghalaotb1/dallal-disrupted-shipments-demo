@@ -2,11 +2,10 @@ import { places } from "@/data/network";
 import { SCENARIO_START } from "@/lib/time";
 import { api, ApiError, planApi, type RunEnvelope } from "@/lib/live/client";
 import { buildCase, buildPlanSnapshot } from "@/lib/ops/case";
-import { stage } from "@/lib/ops/scenarios";
 import { freshWorld, getOps, getUi, opsNow, setUi, toast, updateOps } from "@/store/ops";
 import { setLive } from "@/store/live";
 import type { LivePlan } from "@/types/live";
-import type { OpsWorld, Parcel, ScenarioId } from "@/types/ops";
+import type { OpsWorld, Parcel, ScenarioCase, ScenarioId } from "@/types/ops";
 
 const MIN = 60_000;
 const SPARE_ETA: Record<string, number> = { S1: 20, S2: 28 };
@@ -41,18 +40,27 @@ export async function resetDemo(): Promise<void> {
   const w = freshWorld(g);
   w.clock = { ...w.clock, baseReal: Date.now(), running: true };
   updateOps(() => w);
-  setUi({ selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, role: "operator" });
+  setUi({ selectedDriverId: null, selectedParcelId: null, expandedDriverIds: [], detailsOpen: false, revealed: {}, busy: null, role: "operator", tab: "cases", openCaseId: null, kpiFilter: "all", assistant: [] });
 }
 
-export async function startScenario(id: ScenarioId): Promise<void> {
-  await resetDemo();
-  const now = opsNow();
+const caseOf = (id: ScenarioId): ScenarioCase | undefined => getOps().cases.find((c) => c.scenario === id);
+const caseOfRun = (runId: string): ScenarioCase | undefined => getOps().cases.find((c) => c.runId === runId);
+const updateCase = (id: ScenarioId, fn: (c: ScenarioCase) => void) =>
   updateOps((w) => {
-    stage(w, id, now);
+    const c = w.cases.find((x) => x.scenario === id);
+    if (c) fn(c);
   });
-  const a = getOps().active;
-  if (!a) return;
-  setUi({ selectedDriverId: a.driverId, selectedParcelId: a.parcelId, expandedDriverIds: [a.driverId], role: "operator" });
+
+/** Open a case: Dallal starts investigating on its own. */
+export function openCase(id: ScenarioId): void {
+  const c = caseOf(id);
+  if (!c) return;
+  setUi({ openCaseId: id, tab: "cases", selectedDriverId: c.driverId, selectedParcelId: c.parcelId, expandedDriverIds: [c.driverId], role: "operator" });
+  if (!c.runId && !c.running) void investigateCase(id);
+}
+
+export function closeCase(): void {
+  setUi({ openCaseId: null, selectedParcelId: null });
 }
 
 // ── backend runs ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -80,38 +88,53 @@ export async function connectBackend(): Promise<void> {
   }
 }
 
-/** Investigate the scenario's parcel, or - with an id - any single parcel (the individual-shipment view). */
-export async function investigate(parcelId?: string): Promise<void> {
-  const a = getOps().active;
-  const id = parcelId ?? a?.parcelId;
-  if (!id || getUi().busy) return;
-  const isCase = !!a && id === a.parcelId;
-  if (isCase && a.runId) return;
+/** The backend reasons over the moment the disruption was detected, not over the wall clock that keeps the vans moving. */
+const CASE_NOW = SCENARIO_START;
+
+async function runFor(parcelId: string, g: number): Promise<string> {
+  const p = getOps().parcels[parcelId];
+  const trigger = p.exception ? { kind: "exception_recorded", detail: p.exception.label } : { kind: "analyst_request" };
+  const env = await api.frontendRun(buildCase(getOps(), parcelId, CASE_NOW, trigger));
+  if (gen() !== g) throw new Error("superseded");
+  applyEnvelope(env, g);
+  setLive({ status: "connected" });
+  return env.ui.id;
+}
+
+export async function investigateCase(id: ScenarioId): Promise<void> {
+  const c = caseOf(id);
+  if (!c || c.runId || c.running) return;
   const g = gen();
-  setUi({ busy: "investigate" });
-  updateOps((w) => {
-    if (w.active) w.active.error = undefined;
+  updateCase(id, (x) => {
+    x.running = true;
+    x.error = undefined;
   });
   try {
-    const p = getOps().parcels[id];
-    const trigger = p.exception ? { kind: "exception_recorded", detail: p.exception.label } : { kind: "analyst_request" };
-    const env = await api.frontendRun(buildCase(getOps(), id, opsNow(), trigger));
-    if (gen() !== g) return;
-    applyEnvelope(env, g);
-    updateOps((w) => {
-      if (isCase && w.active) {
-        w.active.runId = env.ui.id;
-        w.active.startedAt = Date.now();
-      }
-      note(w, `Dallal started investigating ${id}`, "info", id);
+    const runId = await runFor(c.parcelId, g);
+    updateCase(id, (x) => {
+      x.runId = runId;
+      x.running = false;
     });
-    setLive({ status: "connected" });
-    await afterRun(env.ui.id, g);
+    updateOps((w) => note(w, `Dallal investigated ${c.parcelId}`, "info", c.parcelId));
+    await afterRun(runId, g);
   } catch (e) {
-    if (gen() === g) {
-      if (isCase) updateOps((w) => void (w.active && (w.active.error = errText(e))));
-      else toast("warn", errText(e));
-    }
+    if (gen() === g) updateCase(id, (x) => {
+      x.running = false;
+      x.error = errText(e);
+    });
+  }
+}
+
+/** Check any single parcel (the individual-shipment view). */
+export async function investigateParcel(parcelId: string): Promise<void> {
+  if (getUi().busy) return;
+  const g = gen();
+  setUi({ busy: "investigate" });
+  try {
+    const runId = await runFor(parcelId, g);
+    await afterRun(runId, g);
+  } catch (e) {
+    if (gen() === g) toast("warn", errText(e));
   } finally {
     if (gen() === g) setUi({ busy: null });
   }
@@ -126,12 +149,12 @@ async function afterRun(runId: string, g: number) {
     void pollRun(runId, g);
     return;
   }
-  const a = getOps().active;
+  const a = caseOfRun(runId);
   if (type === "auto_eligible" && !executed.has(runId)) {
     executed.add(runId);
     await executeRun(runId, undefined, undefined);
   } else if (type === "incident" && a && !a.planId) {
-    await createPlan(g);
+    await createPlan(g, a);
   } else if (type === "escalate" || type === "recommend") {
     updateOps((w) => {
       const p = w.parcels[w.runs[runId].ui.shipmentId];
@@ -278,21 +301,21 @@ export function takeOver(parcelId: string): void {
 
 // ── coordinated plan (scenario C) ─────────────────────────────────────────────────────────────────────────────────
 
-async function createPlan(g: number) {
-  const a = getOps().active;
-  if (!a) return;
+async function createPlan(g: number, c: ScenarioCase) {
   try {
-    const plan = await planApi.create(buildPlanSnapshot(getOps(), opsNow(), `INC-${a.scenario}-${SCENARIO_START % 1000}`));
+    const plan = await planApi.create(buildPlanSnapshot(getOps(), c, CASE_NOW, opsNow(), `INC-${c.scenario}-${SCENARIO_START % 1000}`));
     if (gen() !== g) return;
     storePlan(plan);
-    updateOps((w) => {
-      if (w.active) w.active.planId = plan.plan_id;
-      note(w, `Dallal grouped ${Object.keys(plan.solution.per_parcel).length} affected parcels from ${a.affectedDriverIds.length} drivers into one coordinated plan`, "info");
+    updateCase(c.scenario, (x) => {
+      x.planId = plan.plan_id;
     });
+    updateOps((w) => note(w, `Dallal grouped ${Object.keys(plan.solution.per_parcel).length} parcels from ${c.affectedDriverIds.length} drivers into one plan`, "info"));
     if (plan.status === "awaiting_evidence") void pollPlan(plan.plan_id, g);
     else onPlanReady(plan);
   } catch (e) {
-    updateOps((w) => void (w.active && (w.active.error = errText(e))));
+    updateCase(c.scenario, (x) => {
+      x.error = errText(e);
+    });
   }
 }
 
@@ -384,14 +407,13 @@ function applyPlan(plan: LivePlan) {
       apply(p, kind, ref, text, now);
       w.journeys[pid]?.push({ id: `${pid}-plan-${now}`, shipmentId: pid, at: now, title: text, detail: `Coordinated plan ${plan.plan_id} · approved by ${MANAGER_NAME}`, source: "supervisor", tone: "ok" });
     }
-    for (const id of w.active?.affectedDriverIds ?? []) {
+    for (const id of w.cases.find((x) => x.planId === plan.plan_id)?.affectedDriverIds ?? []) {
       const d = w.drivers[id];
       d.nav = { distanceM: Math.min(d.nav.holdAtM ?? d.nav.distanceM, d.nav.distanceM + (d.nav.speedMps * Math.max(0, now - d.nav.updatedAt)) / 1000), speedMps: 4, updatedAt: now };
       d.note = "Moving through the managed lane";
     }
     const summary = Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ");
     note(w, `${MANAGER_NAME} approved the coordinated plan: ${summary} (simulated execution)`, "ok");
-    if (w.active) w.active.problem = { ...w.active.problem };
   });
 }
 

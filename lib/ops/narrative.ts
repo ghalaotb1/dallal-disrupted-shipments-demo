@@ -1,6 +1,6 @@
 import type { AgentStep } from "@/types/domain";
 import type { LiveInquiry } from "@/types/live";
-import type { RunRecord } from "@/types/ops";
+import type { OpsWorld, RunRecord, ScenarioCase } from "@/types/ops";
 
 export const CAUSE: Record<string, string> = {
   address_issue: "Address problem",
@@ -92,15 +92,15 @@ export interface SafetyCheck {
 export function safetyChecks(decision: Record<string, unknown>, valueSar: number): SafetyCheck[] {
   const failed = ((decision.gates as string[] | undefined) ?? []).join(" | ");
   const has = (k: string) => failed.includes(k);
-  const rob = typeof decision.robust_effectiveness === "number" ? Math.round(decision.robust_effectiveness * 100) : undefined;
-  const post = typeof decision.posterior === "number" ? Math.round(decision.posterior * 100) : undefined;
+  const rob = typeof decision.robust_effectiveness === "number" ? ` · ${Math.round(decision.robust_effectiveness * 100)}%` : "";
+  const post = typeof decision.posterior === "number" ? ` · ${Math.round(decision.posterior * 100)}%` : "";
   return [
-    { label: "Reversible, low-impact action", pass: !has("reversible") && !has("automatable") },
-    { label: `Parcel value SAR ${valueSar.toLocaleString("en-US")} is within the SAR 1,500 limit`, pass: !has("parcel value") },
-    { label: "No more than 2 earlier failed attempts", pass: !has("prior failed") },
-    { label: `Confident in the cause${post ? ` (${post}%)` : ""} and nothing unexplained`, pass: !has("outside the known") },
-    { label: `Works even in the pessimistic case${rob ? ` (${rob}%)` : ""}`, pass: !has("robust effectiveness") },
-    { label: "Evidence agrees with the recorded reason", pass: !has("conflict") },
+    { label: "Reversible, low impact", pass: !has("reversible") && !has("automatable") },
+    { label: `Value SAR ${valueSar.toLocaleString("en-US")} within SAR 1,500`, pass: !has("parcel value") },
+    { label: "At most 2 earlier failures", pass: !has("prior failed") },
+    { label: `Confident in the cause${post}`, pass: !has("outside the known") },
+    { label: `Safe in the worst case${rob}`, pass: !has("robust effectiveness") },
+    { label: "Matches the recorded reason", pass: !has("conflict") },
   ];
 }
 
@@ -108,9 +108,35 @@ export function pct(n: number) {
   return `${Math.round(n * 100)}%`;
 }
 
-/** The detector's numbers are the backend's; the counts of parcels and drivers are the simulated operation's own (the backend also counts delivered peers). */
+/** The detector's numbers are the backend's; the counts of parcels and drivers are the operation's own (the backend also counts delivered peers). */
 export function incidentSentence(rationale: string, affected: number, drivers: number, exposed: number): string {
-  const m = /(\d+) related failures in (\d+) min vs baseline ([\d.]+) \(z=([\d.]+)\)/.exec(rationale);
-  const head = m ? `${m[1]} related failures in ${m[2]} minutes against a normal ${m[3]} (z=${m[4]}) on the same corridor.` : "Several deliveries on the same corridor failed at once.";
-  return `${head} ${affected} deliveries on ${drivers} drivers are delayed and ${exposed} more are heading into the same stretch.`;
+  const m = /(\d+) related failures in (\d+) min vs baseline ([\d.]+)/.exec(rationale);
+  const head = m ? `${m[1]} failures in ${m[2]} min (normal ${m[3]}).` : "Several failures on one corridor.";
+  return `${head} ${affected} delayed on ${drivers} drivers · ${exposed} more exposed.`;
+}
+
+export interface CaseStatus {
+  label: string;
+  tone: "new" | "work" | "wait" | "ok" | "manager";
+}
+
+/** One-word state of a case for lists and headers, from the real run and plan. */
+export function caseStatus(w: OpsWorld, c: ScenarioCase): CaseStatus {
+  if (c.running) return { label: "Investigating", tone: "work" };
+  const run = c.runId ? w.runs[c.runId] : undefined;
+  if (!run) return { label: "New", tone: "new" };
+  const hero = w.parcels[c.parcelId];
+  const type = String(run.decision.type ?? "");
+  if (run.status === "awaiting_response") return { label: "Waiting for a reply", tone: "wait" };
+  if (type === "incident") {
+    const plan = c.planId ? w.plans[c.planId] : undefined;
+    if (!plan || plan.status === "awaiting_evidence") return { label: "Asking the dispatcher", tone: "wait" };
+    if (plan.status === "ready") return { label: "Needs manager", tone: "manager" };
+    if (plan.status === "executed_simulated") return { label: "Plan executed", tone: "ok" };
+    return { label: "Rejected", tone: "new" };
+  }
+  if (type === "escalate") return { label: hero.state === "recovering" ? "Manager took over" : "Needs manager", tone: hero.state === "recovering" ? "ok" : "manager" };
+  if (type === "recommend") return hero.state === "scheduled" || hero.state === "attempt_failed" ? { label: "Needs confirmation", tone: "wait" } : { label: "Resolved", tone: "ok" };
+  if (type === "auto_eligible") return hero.state === "prevented" || hero.state === "recovered" ? { label: "Resolved by Dallal", tone: "ok" } : { label: "Resolving", tone: "work" };
+  return { label: "Checked", tone: "ok" };
 }

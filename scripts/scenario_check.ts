@@ -7,7 +7,7 @@
  *   npm run demo:scenarios            (needs `npm run demo` running: backend on :8000)
  */
 import { planApi, api, ApiError } from "@/lib/live/client";
-import { decidePlan, executeRun, investigate, resetDemo, sendReply, startScenario } from "@/lib/ops/agent";
+import { decidePlan, executeRun, openCase, resetDemo, sendReply } from "@/lib/ops/agent";
 import { getOps, getUi } from "@/store/ops";
 
 let fails = 0;
@@ -25,19 +25,27 @@ async function waitFor(cond: () => boolean, ms = 30_000, step = 150): Promise<bo
   }
   return cond();
 }
-const run = () => {
-  const id = getOps().active?.runId;
-  return id ? getOps().runs[id] : undefined;
+type Id = "A" | "B" | "C";
+let cur: Id = "A";
+const theCase = (id: Id = cur) => getOps().cases.find((c) => c.scenario === id)!;
+const run = (id: Id = cur) => {
+  const r = theCase(id).runId;
+  return r ? getOps().runs[r] : undefined;
 };
+/** Fresh operation, then open the case: Dallal starts investigating by itself (no click). */
+async function start(id: Id) {
+  await resetDemo();
+  cur = id;
+  openCase(id);
+}
 const dtype = () => String(run()?.decision.type ?? "");
 const parcel = (id: string) => getOps().parcels[id];
 
 async function scenarioA() {
   log("\nScenario A - Dallal resolves an address failure without a manager");
-  await startScenario("A");
-  const a = getOps().active!;
-  check("problem is staged on the driver's route", parcel(a.parcelId).state === "attempt_failed" && a.driverId === "yousef", `${a.parcelId} on ${a.driverId}`);
-  await investigate();
+  await start("A");
+  const a = theCase();
+  check("problem is on the driver's route; the agent starts by itself", parcel(a.parcelId).state === "attempt_failed" && a.driverId === "yousef", `${a.parcelId} on ${a.driverId}`);
   check("agent completed", await waitFor(() => run()?.status === "completed"), `status ${run()?.status}`);
   check("decision is auto_eligible (policy permits autonomy)", dtype() === "auto_eligible", `${dtype()} / ${run()?.decision.action}`);
   check("action is the address confirmation", run()?.decision.action === "verify_address");
@@ -47,18 +55,16 @@ async function scenarioA() {
   check("outcome recorded only after the simulated world observes it", await waitFor(() => parcel(a.parcelId).state === "prevented", 12_000) && !!parcel(a.parcelId).simOutcome);
   const decision = `${dtype()}/${run()?.decision.action}`;
   // replay determinism
-  await startScenario("A");
-  await investigate();
+  await start("A");
   await waitFor(() => run()?.status === "completed");
   check("replay gives the same decision", `${dtype()}/${run()?.decision.action}` === decision);
 }
 
 async function scenarioB() {
   log("\nScenario B - Dallal asks the driver, the reply changes the decision");
-  await startScenario("B");
-  const a = getOps().active!;
-  await investigate();
-  check("agent paused to ask a person", await waitFor(() => run()?.status === "awaiting_response"), `status ${run()?.status}`);
+  await start("B");
+  const a = theCase();
+  check("agent started on its own and paused to ask a person", await waitFor(() => run()?.status === "awaiting_response"), `status ${run()?.status}`);
   const inq = run()?.inquiries[0];
   check("it asked the driver (not the customer) after reading the records", inq?.target === "courier" && run()!.ui.steps.length >= 6, `${inq?.target}, ${run()?.ui.steps.length} steps`);
   check("message is sandbox only - no real delivery", inq?.delivery_mode === "sandbox" && inq?.real_delivery === false);
@@ -70,11 +76,10 @@ async function scenarioB() {
   check("executed automatically in simulation", await waitFor(() => ["recovering", "recovered"].includes(parcel(a.parcelId).state), 8000));
 
   // the same question, a different answer -> a different decision (the answer really matters)
-  await startScenario("B");
-  await investigate();
+  await start("B");
   await waitFor(() => run()?.status === "awaiting_response");
   const inq2 = run()!.inquiries[0];
-  await sendReply(inq2.inquiry_id, { run: getOps().active!.runId }, { kind: "button", answer_id: "cannot_find_address" });
+  await sendReply(inq2.inquiry_id, { run: theCase().runId }, { kind: "button", answer_id: "cannot_find_address" });
   await waitFor(() => run()?.status === "completed");
   check("a different reply changes the decision", `${dtype()}/${run()?.decision.action}` !== "auto_eligible/contact_recipient", `${dtype()} / ${run()?.decision.action}`);
   if (dtype() === "recommend") {
@@ -87,14 +92,13 @@ async function scenarioB() {
 
 async function scenarioC() {
   log("\nScenario C - one road blockage, three drivers, manager approval");
-  await startScenario("C");
-  const a = getOps().active!;
+  await start("C");
+  const a = theCase();
   check("problem spans several drivers", a.affectedDriverIds.length === 3 && a.exposedParcelIds.length === 6);
-  await investigate();
   check("agent completed", await waitFor(() => run()?.status === "completed"));
   check("agent recognised a shared incident, not a single failure", dtype() === "incident", String(run()?.decision.headline));
-  check("coordinated plan created for all parcels", await waitFor(() => !!getOps().active?.planId), "");
-  const planId = getOps().active!.planId!;
+  check("coordinated plan created for all parcels", await waitFor(() => !!theCase().planId), "");
+  const planId = theCase().planId!;
   check("plan covers 10 parcels on 3 drivers", Object.keys(getOps().plans[planId].solution.per_parcel).length === 10);
   const plan0 = getOps().plans[planId];
   check("one shared question to the dispatcher (sandbox)", plan0.status === "awaiting_evidence" && plan0.inquiries.length === 1 && plan0.inquiries[0].target === "dispatcher" && plan0.inquiries[0].real_delivery === false);
@@ -125,16 +129,38 @@ async function scenarioC() {
   // replay determinism: the same situation gives the same plan before and after the answer
   const firstBefore = JSON.stringify(Object.entries(before).sort());
   const firstAfter = JSON.stringify(Object.entries(plan1.solution.per_parcel).map(([k, v]) => [k, v.option]).sort());
-  await startScenario("C");
-  await investigate();
-  await waitFor(() => !!getOps().active?.planId);
-  const p2 = getOps().active!.planId!;
+  await start("C");
+  await waitFor(() => !!theCase().planId);
+  const p2 = theCase().planId!;
   const before2 = JSON.stringify(Object.entries(getOps().planBefore[p2]).sort());
   await sleep(400);
   await sendReply(getOps().plans[p2].inquiries[0].inquiry_id, { plan: p2 }, { kind: "button", answer_id: "blocked_long" });
   await waitFor(() => getOps().plans[p2].status === "ready", 20_000);
   const after2 = JSON.stringify(Object.entries(getOps().plans[p2].solution.per_parcel).map(([k, v]) => [k, v.option]).sort());
   check("replay gives the same plan before and after the dispatcher's answer", before2 === firstBefore && after2 === firstAfter);
+}
+
+async function allInOneOperation() {
+  log("\nAll three cases in ONE operation, opened in a different order (C, B, A)");
+  await resetDemo();
+  check("three cases are open from the start", getOps().cases.length === 3);
+  cur = "C";
+  openCase("C");
+  await waitFor(() => !!theCase("C").planId);
+  const plan = getOps().plans[theCase("C").planId!];
+  await sendReply(plan.inquiries[0].inquiry_id, { plan: plan.plan_id }, { kind: "button", answer_id: "blocked_long" });
+  check("C: incident plan ready for the manager", await waitFor(() => getOps().plans[plan.plan_id].status === "ready", 20_000));
+  openCase("B");
+  await waitFor(() => run("B")?.status === "awaiting_response");
+  await sendReply(run("B")!.inquiries[0].inquiry_id, { run: theCase("B").runId }, { kind: "button", answer_id: "at_address_no_answer" });
+  await waitFor(() => run("B")?.status === "completed");
+  check("B: same decision when other cases were handled first", run("B")?.decision.type === "auto_eligible" && run("B")?.decision.action === "contact_recipient", String(run("B")?.decision.action));
+  openCase("A");
+  await waitFor(() => run("A")?.status === "completed");
+  check("A: same decision, no question, no false incident", run("A")?.decision.type === "auto_eligible" && run("A")?.decision.action === "verify_address" && (run("A")?.inquiries.length ?? 0) === 0, String(run("A")?.decision.type));
+  check("C is still waiting for the manager while A and B were resolved", getOps().plans[plan.plan_id].status === "ready");
+  await decidePlan(plan.plan_id, "approve");
+  check("manager approval still works", getOps().plans[plan.plan_id].status === "executed_simulated");
 }
 
 async function main() {
@@ -147,6 +173,7 @@ async function main() {
   await scenarioA();
   await scenarioB();
   await scenarioC();
+  await allInOneOperation();
   await resetDemo();
   log(`\n${fails === 0 ? "ALL SCENARIO CHECKS PASSED" : `${fails} CHECK(S) FAILED`}`);
   process.exit(fails === 0 ? 0 : 1);

@@ -7,6 +7,7 @@ import { connectBackend } from "@/lib/ops/agent";
 import { updateOps, useOps, useOpsUi } from "@/store/ops";
 import { useLive } from "@/store/live";
 import { CasePanel } from "@/components/ops/CasePanel";
+import { KpiStrip } from "@/components/ops/KpiStrip";
 import { LazyOpsMap } from "@/components/ops/LazyOpsMap";
 import { MapLegend } from "@/components/ops/MapLegend";
 import { RoutesPanel } from "@/components/ops/RoutesPanel";
@@ -34,7 +35,8 @@ export function OpsApp() {
           <TriangleAlert className="size-3.5" aria-hidden /> The Dallal backend is not reachable, so no investigation can run. Start everything with <code className="rounded bg-white px-1 font-mono">npm run demo</code>.
         </div>
       ) : null}
-      <main className="grid min-h-0 flex-1 grid-cols-[340px_minmax(0,1fr)_440px] grid-rows-[minmax(0,1fr)]" key={generation}>
+      <KpiStrip />
+      <main className="grid min-h-0 flex-1 grid-cols-[330px_minmax(0,1fr)_420px] grid-rows-[minmax(0,1fr)]" key={generation}>
         <RoutesPanel />
         <div className="relative min-w-0">
           <LazyOpsMap />
