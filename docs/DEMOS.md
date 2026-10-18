@@ -37,7 +37,7 @@ Open the case. Findings appear (address weak, one failed attempt, no customer-si
 Open the case. The records are ambiguous, so Dallal asks **Turki, the driver**, with the reason and the value of asking. Tap the highlighted reply **At address, nobody answered** (or type Arabic free text: rules cannot read it, a local model suggests an answer, a person confirms). *What changed:* customer not available 64% → 91%; Dallal contacts the customer (sandbox). Replay and tap **Cannot find the address**: the decision becomes a recommendation an operator confirms. Proves: value-of-information questioning, whom to ask, belief update from a reply.
 
 ### Road blockage: escalates to the manager
-Open the case. Dallal finds 4 failures on the corridor against a normal 0.4 and treats them as **one incident**: one plan for 10 parcels on 3 drivers (wait, spare courier, pickup point), and **one** question to the dispatcher (not 20). Tap **Blocked, expected > 30 min**: the answer changes 5 parcels. The case now needs the manager; an operator cannot approve it. Switch to **Manager**, review the reason, evidence and plan by driver, **Approve plan**. Parcels move to spare couriers and pickup points, outcomes stay pending. Proves: route-level impact, coordination across drivers, human approval where policy requires it.
+Open the case. Dallal finds 4 failures on the corridor against a normal 0.4 and treats them as **one incident**: one plan for 10 parcels on 3 drivers (wait, spare courier, pickup point), and **one** question to the dispatcher (not 20). The sandbox dispatcher then **replies by itself** (a short typing indicator, then a tap on *Blocked, expected > 30 min*): the tap goes through the backend's real inbound path (webhook, interpreter, belief update, re-planning). The belief moves 30% → 88% and a *Plan updated* list shows each parcel that changed (for example Wait → Pickup). It is labelled a sandbox simulation and nothing reaches a phone. The case then needs the manager; an operator cannot approve it. Switch to **Manager**, review the reason, evidence and plan by driver, **Approve plan**. Parcels move to spare couriers and pickup points, outcomes stay pending. Proves: route-level impact, coordination across drivers, human approval where policy requires it.
 
 ## Recommended 60-90 second recording
 
@@ -46,7 +46,7 @@ Open the case. Dallal finds 4 failures on the corridor against a normal 0.4 and 
 | 0:00 | Open Dallal. Point at the KPIs, routes and map. | "Dallal monitors every driver and route and detects problems." |
 | 0:10 | Open **Address not found**. | "It investigates on its own, decides no question is needed, and resolves it within safety limits." |
 | 0:28 | Open **Customer not answering**, tap the highlighted reply. | "Here the records can't say why, so it asks the driver. The answer changes its belief and its action." |
-| 0:50 | Open **Road blockage**, tap the dispatcher reply. | "One blockage, three drivers: one plan, one question." |
+| 0:50 | Open **Road blockage**; the dispatcher replies by itself. | "One blockage, three drivers: one plan, one question. The reply updates the plan." |
 | 1:10 | Switch to **Manager**, **Approve plan**. | "Group actions need a manager. Routes update." |
 | 1:20 | Open **Assistant**, ask "What did Dallal do today?". | "Operators can ask anything about the operation." |
 

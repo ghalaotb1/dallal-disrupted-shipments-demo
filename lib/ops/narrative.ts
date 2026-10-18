@@ -140,3 +140,8 @@ export function caseStatus(w: OpsWorld, c: ScenarioCase): CaseStatus {
   if (type === "auto_eligible") return hero.state === "prevented" || hero.state === "recovered" ? { label: "Resolved by Dallal", tone: "ok" } : { label: "Resolving", tone: "work" };
   return { label: "Checked", tone: "ok" };
 }
+
+/** How many story items a run reveals (findings, the question, the conclusion and the decision); the story shows them one by one. */
+export function revealTotal(run: RunRecord): number {
+  return findings(run).length + (askStep(run) ? 1 : 0) + (run.status === "awaiting_response" ? 0 : 2);
+}

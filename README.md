@@ -27,7 +27,7 @@ Each case runs the real backend agent on deterministic inputs; **Reset** (top ri
 |---|---|---|---|
 | **Address not found** · Yousef · `DL-20417` | Resolved automatically | Diagnoses from evidence (address problem, 93%), judges no question is worth asking, confirms the delivery pin with the customer. | **Dallal** |
 | **Customer not answering** · Turki · `DL-20655` | Asks, then resolves | Records are ambiguous (64%); asks the driver. The reply lifts belief to 91% and Dallal contacts the customer. Another reply, another decision. | **Dallal** after the reply |
-| **Road blockage** · King Fahd Rd · 3 drivers | Escalates to manager | Sees one incident, plans 10 parcels together, asks the dispatcher once; the answer changes 5 parcels; policy requires a manager (the backend refuses an operator). | **Manager** |
+| **Road blockage** · King Fahd Rd · 3 drivers | Escalates to manager | Sees one incident, plans 10 parcels together, asks the dispatcher once (the sandbox dispatcher replies by itself through the real inbound path); the reply changes 5 parcels; policy requires a manager (the backend refuses an operator). | **Manager** |
 
 ## Run it
 

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { CheckCircle2, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { connectBackend } from "@/lib/ops/agent";
-import { updateOps, useOps, useOpsUi } from "@/store/ops";
+import { runtime, updateOps, useOps, useOpsUi } from "@/store/ops";
 import { useLive } from "@/store/live";
 import { CasePanel } from "@/components/ops/CasePanel";
 import { KpiStrip } from "@/components/ops/KpiStrip";
@@ -19,12 +19,16 @@ export function OpsApp() {
   const generation = useOps((s) => s.generation);
 
   useEffect(() => {
+    runtime.ui = true;
     updateOps((w) => {
       if (!w.clock.running) w.clock = { ...w.clock, baseReal: Date.now(), running: true };
     });
     void connectBackend();
     const t = setInterval(() => void connectBackend(), 15_000);
-    return () => clearInterval(t);
+    return () => {
+      runtime.ui = false;
+      clearInterval(t);
+    };
   }, []);
 
   return (

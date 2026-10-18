@@ -12,6 +12,11 @@ import { SimTag } from "@/components/ops/Chips";
 import type { LivePlan } from "@/types/live";
 
 const refLabel = (kind: string, ref: string) => (kind === "pickup" ? (places[ref]?.short ?? ref) : ref);
+const optLabel = (o: string) => {
+  const [k, r] = o.split(":");
+  const short: Record<string, string> = { pickup: "Pickup", spare: "Spare" };
+  return `${short[k] ?? KIND_LABEL[k] ?? k}${r ? ` ${refLabel(k, r).replace(/ (PUP|Lockers)$/, "")}` : ""}`;
+};
 const sar = (n: number) => `${n < 0 ? "-" : ""}${Math.abs(Math.round(n)).toLocaleString("en-US")}`;
 const KIND_STYLE: Record<string, string> = {
   wait: "bg-ok-50 text-ok-700 ring-ok-100",
@@ -28,6 +33,7 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
   const parcels = useOps((s) => s.parcels);
   const drivers = useOps((s) => s.drivers);
   const before = useOps((s) => s.planBefore[planId]);
+  const reply = useOps((s) => s.cases.find((c) => c.planId === planId)?.reply);
   const busy = useOpsUi((s) => s.busy === "plan");
   const groups = useMemo(() => {
     if (!plan) return [];
@@ -68,14 +74,33 @@ export function PlanCard({ planId, mode }: { planId: string; mode: "operator" | 
               <b className="text-ink">One question</b> to the dispatcher covers all {total} parcels (not {cmp.messages_independent_equivalent} messages).
             </p>
           ) : null}
-          {mode === "operator" || q.status !== "awaiting" ? <ReplyDevice inquiry={q} plan={planId} suggested="blocked_long" /> : <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">Waiting for the dispatcher.</p>}
+          {mode === "operator" || q.status !== "awaiting" ? <ReplyDevice inquiry={q} plan={planId} suggested="blocked_long" auto={reply} /> : <p className="rounded-lg bg-muted px-3 py-2 text-xs text-ink-3">Waiting for the dispatcher.</p>}
         </div>
       ) : null}
 
       {answered && before ? (
-        <p className="rounded-lg bg-brand-25 px-3 py-2 text-xs text-ink-2 ring-1 ring-brand-100">
-          The answer changed <b>{changed.length}</b> of {total} parcels.
-        </p>
+        <div className="overflow-hidden rounded-lg border border-brand-200 bg-brand-25">
+          <p className="px-3 py-2 text-xs font-medium text-brand-800">
+            Plan updated after the reply: <b>{changed.length}</b> of {total} parcels changed
+          </p>
+          {changed.length ? (
+            <ul className="divide-y divide-brand-100 border-t border-brand-100 bg-surface text-xs">
+              {changed.map((pid) => {
+                const was = before[pid] ?? "";
+                const now = plan.solution.per_parcel[pid].option;
+                return (
+                  <li key={pid} className="flex items-center gap-2 px-3 py-1.5">
+                    <span className="w-[64px] shrink-0 font-mono whitespace-nowrap text-ink-4">{pid}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-3">{parcels[pid]?.address.district}</span>
+                    <span className="shrink-0 text-ink-3">{optLabel(was)}</span>
+                    <ArrowRight className="size-3 shrink-0 text-ink-4" aria-hidden />
+                    <span className="shrink-0 font-medium text-ink">{optLabel(now)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="space-y-2">

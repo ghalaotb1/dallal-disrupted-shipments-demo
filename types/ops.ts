@@ -78,6 +78,8 @@ export interface ScenarioCase {
   startedAt?: number;
   /** One-line problem statement. */
   problem: { title: string; detail: string };
+  /** The sandbox dispatcher's automatic reply to the plan question: typing, delivered through the real inbound path, or failed (manual fallback). */
+  reply?: "typing" | "sent" | "failed";
   /** True while the agent run for this case is in flight. */
   running?: boolean;
   error?: string;

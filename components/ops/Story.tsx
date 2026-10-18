@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { Bot, Check, ChevronDown, CircleHelp, Loader2, ShieldCheck, TriangleAlert, UserRoundSearch, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { executeRun } from "@/lib/ops/agent";
-import { askStep, beliefStory, bestUnaskedQuestion, CAUSE, findings, incidentSentence, inquiryFor, pct, safetyChecks, WHO } from "@/lib/ops/narrative";
+import { askStep, beliefStory, bestUnaskedQuestion, CAUSE, findings, incidentSentence, inquiryFor, pct, revealTotal, safetyChecks, WHO } from "@/lib/ops/narrative";
 import { getUi, setUi, useOps, useOpsUi } from "@/store/ops";
 import { Button } from "@/components/common/Button";
 import { PlanCard } from "@/components/ops/PlanCard";
@@ -59,7 +59,7 @@ export function InvestigationStory({ runId, valueSar }: { runId: string; valueSa
   const f = run ? findings(run) : [];
   const ask = run ? askStep(run) : undefined;
   const done = !!run && run.status !== "awaiting_response";
-  const total = f.length + (ask ? 1 : 0) + (done ? 2 : 0);
+  const total = run ? revealTotal(run) : 0;
 
   useEffect(() => {
     if (!run || revealed >= total) return;
@@ -69,7 +69,7 @@ export function InvestigationStory({ runId, valueSar }: { runId: string; valueSa
 
   const planStatus = useOps((s) => {
     const pid = s.cases.find((c) => c.runId === runId)?.planId;
-    return pid ? s.plans[pid]?.status : undefined;
+    return pid ? `${s.plans[pid]?.status}:${s.plans[pid]?.inquiries[0]?.status}:${s.cases.find((c) => c.planId === pid)?.reply}` : undefined;
   });
   const tail = useRef<HTMLDivElement>(null);
   const follow = `${revealed}:${run?.status}:${run?.inquiries[0]?.status}:${planStatus}:${parcelState?.state}`;

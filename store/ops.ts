@@ -68,3 +68,6 @@ export function toast(tone: "ok" | "warn" | "info", text: string) {
     if (getUi().toast?.id === id) setUi({ toast: null });
   }, 4500);
 }
+
+/** Set while the browser UI is mounted; headless checks have no story to wait for. */
+export const runtime = { ui: false };

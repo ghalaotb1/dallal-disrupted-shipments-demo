@@ -2,7 +2,8 @@ import { places } from "@/data/network";
 import { SCENARIO_START } from "@/lib/time";
 import { api, ApiError, planApi, type RunEnvelope } from "@/lib/live/client";
 import { buildCase, buildPlanSnapshot } from "@/lib/ops/case";
-import { freshWorld, getOps, getUi, opsNow, setUi, toast, updateOps } from "@/store/ops";
+import { revealTotal } from "@/lib/ops/narrative";
+import { freshWorld, getOps, getUi, opsNow, runtime, setUi, toast, updateOps } from "@/store/ops";
 import { setLive } from "@/store/live";
 import type { LivePlan } from "@/types/live";
 import type { OpsWorld, Parcel, ScenarioCase, ScenarioId } from "@/types/ops";
@@ -310,12 +311,52 @@ async function createPlan(g: number, c: ScenarioCase) {
       x.planId = plan.plan_id;
     });
     updateOps((w) => note(w, `Dallal grouped ${Object.keys(plan.solution.per_parcel).length} parcels from ${c.affectedDriverIds.length} drivers into one plan`, "info"));
-    if (plan.status === "awaiting_evidence") void pollPlan(plan.plan_id, g);
-    else onPlanReady(plan);
+    if (plan.status === "awaiting_evidence") {
+      void pollPlan(plan.plan_id, g);
+      void simulateDispatcherReply(plan, c.scenario, g);
+    } else onPlanReady(plan);
   } catch (e) {
     updateCase(c.scenario, (x) => {
       x.error = errText(e);
     });
+  }
+}
+
+/**
+ * SANDBOX SIMULATION of the dispatcher answering the question. The blockage in this operation really is long, so a dispatcher would tap
+ * "Blocked, expected > 30 min". The tap is delivered through the backend's real inbound path (a Meta-shaped webhook -> interpreter ->
+ * belief update -> re-planning); only the person is simulated, and nothing reaches a phone. The delay lets the question be read first.
+ */
+const DISPATCHER_REPLY_DELAY_MS = 4000;
+const DISPATCHER_ANSWER = "blocked_long";
+
+async function simulateDispatcherReply(plan: LivePlan, caseId: ScenarioId, g: number) {
+  const q = plan.inquiries[0];
+  if (!q) return;
+  updateCase(caseId, (x) => {
+    x.reply = "typing";
+  });
+  // The dispatcher "reads" the question only once the operator can: wait until the story has revealed the plan, then a short typing delay.
+  const runId = getOps().cases.find((x) => x.scenario === caseId)?.runId;
+  for (let i = 0; runtime.ui && i < 100 && gen() === g; i++) {
+    const rec = runId ? getOps().runs[runId] : undefined;
+    if (!rec || (getUi().revealed[runId!] ?? 0) >= revealTotal(rec)) break;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  await new Promise((r) => setTimeout(r, DISPATCHER_REPLY_DELAY_MS));
+  if (gen() !== g) return;
+  try {
+    await api.sandboxReply({ inquiry_id: q.inquiry_id, kind: "button", answer_id: DISPATCHER_ANSWER });
+    updateCase(caseId, (x) => {
+      x.reply = "sent";
+    });
+    await refreshPlan(plan.plan_id);
+  } catch (e) {
+    if (gen() !== g) return;
+    updateCase(caseId, (x) => {
+      x.reply = "failed";
+    });
+    toast("warn", `Sandbox reply failed: ${errText(e)}`);
   }
 }
 

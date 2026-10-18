@@ -19,7 +19,7 @@ function delivery(m: LiveMessage): string {
  * The WhatsApp question Dallal sent (SANDBOX: nothing reaches a phone) and a simulated device to answer it as the person asked.
  * Free text goes through the real reply interpreter; an unclear reply is held for a person, with an optional local-model suggestion.
  */
-export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { inquiry: LiveInquiry; run?: string; plan?: string; suggested?: string; who?: string }) {
+export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName, auto }: { inquiry: LiveInquiry; run?: string; plan?: string; suggested?: string; who?: string; auto?: "typing" | "sent" | "failed" }) {
   const busy = useOpsUi((s) => s.busy === "reply");
   const [text, setText] = useState("");
   const out = inquiry.messages.find((m) => m.direction === "out");
@@ -52,10 +52,11 @@ export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { i
         ) : null}
         {incoming.map((m, i) => (
           <div key={i} className="ml-auto max-w-[88%] rounded-xl rounded-tr-sm bg-ok-50 px-3 py-2 text-13 text-ink ring-1 ring-ok-200">
-            <p dir="auto">{m.text ?? "(reply)"}</p>
+            <p dir="auto">{inquiry.answers.find((a) => a.id === m.interpretation?.answer_id)?.title ?? m.text ?? "(reply)"}</p>
             {m.interpretation ? (
               <p className="mt-0.5 text-[10.5px] text-ink-3">
-                read as <b>{inquiry.answers.find((a) => a.id === m.interpretation?.answer_id)?.title_en ?? m.interpretation.answer_id ?? "unclear"}</b> · {m.interpretation.method}
+                read as <b>{inquiry.answers.find((a) => a.id === m.interpretation?.answer_id)?.title_en ?? m.interpretation.answer_id ?? "unclear"}</b>
+                {auto ? " · simulated reply (sandbox)" : ""}
               </p>
             ) : null}
           </div>
@@ -82,7 +83,20 @@ export function ReplyDevice({ inquiry, run, plan, suggested, who: whoName }: { i
           </div>
         ) : null}
 
-        {awaiting && !review ? (
+        {awaiting && !review && (auto === "typing" || auto === "sent") ? (
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-line-strong bg-surface px-3 py-2.5 text-xs text-ink-3">
+            <span className="flex gap-0.5" aria-hidden>
+              {[0, 1, 2].map((i) => (
+                <span key={i} className="size-1.5 animate-pulse rounded-full bg-ink-4" style={{ animationDelay: `${i * 200}ms` }} />
+              ))}
+            </span>
+            <span>
+              {who} is replying · <b className="font-medium text-ink-2">sandbox simulation</b>, not WhatsApp
+            </span>
+          </div>
+        ) : null}
+
+        {awaiting && !review && auto !== "typing" && auto !== "sent" ? (
           <div className="rounded-lg border border-dashed border-line-strong bg-surface px-3 py-2.5">
             <p className="text-[10.5px] font-semibold tracking-[0.06em] text-ink-4 uppercase">Reply as {who}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">

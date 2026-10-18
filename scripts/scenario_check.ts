@@ -103,9 +103,14 @@ async function scenarioC() {
   const plan0 = getOps().plans[planId];
   check("one shared question to the dispatcher (sandbox)", plan0.status === "awaiting_evidence" && plan0.inquiries.length === 1 && plan0.inquiries[0].target === "dispatcher" && plan0.inquiries[0].real_delivery === false);
   const before = { ...getOps().planBefore[planId] };
-  await sendReply(plan0.inquiries[0].inquiry_id, { plan: planId }, { kind: "button", answer_id: "blocked_long" });
-  check("plan became ready for approval", await waitFor(() => getOps().plans[planId].status === "ready", 20_000), getOps().plans[planId].status);
+  check("sandbox dispatcher is 'typing' first (nothing is answered instantly)", theCase().reply === "typing");
+  check("plan became ready for approval with NO manual reply", await waitFor(() => getOps().plans[planId].status === "ready", 30_000), getOps().plans[planId].status);
   const plan1 = getOps().plans[planId];
+  const inbound = plan1.inquiries[0].messages.find((m) => m.direction === "in");
+  check("the reply went through the backend inbound pipeline and was interpreted", inbound?.interpretation?.answer_id === "blocked_long" && plan1.inquiries[0].status === "answered", `${inbound?.interpretation?.method}`);
+  check("the reply is sandbox-only (no real delivery)", plan1.inquiries[0].real_delivery === false && plan1.inquiries[0].delivery_mode === "sandbox");
+  check("belief about the blockage moved (30% -> 88%)", plan1.p_long_prior === 0.3 && plan1.p_long > 0.8, `${plan1.p_long_prior} -> ${plan1.p_long}`);
+  check("the plan was re-optimised after the reply", plan1.evidence.answer?.id === "blocked_long");
   const changed = Object.entries(plan1.solution.per_parcel).filter(([k, v]) => before[k] !== v.option).length;
   check("the single answer changed several parcels' decisions", changed >= 3, `${changed} of 10 changed`);
   check("policy requires a supervisor", plan1.approval.required === "supervisor", plan1.approval.why);
@@ -133,8 +138,6 @@ async function scenarioC() {
   await waitFor(() => !!theCase().planId);
   const p2 = theCase().planId!;
   const before2 = JSON.stringify(Object.entries(getOps().planBefore[p2]).sort());
-  await sleep(400);
-  await sendReply(getOps().plans[p2].inquiries[0].inquiry_id, { plan: p2 }, { kind: "button", answer_id: "blocked_long" });
   await waitFor(() => getOps().plans[p2].status === "ready", 20_000);
   const after2 = JSON.stringify(Object.entries(getOps().plans[p2].solution.per_parcel).map(([k, v]) => [k, v.option]).sort());
   check("replay gives the same plan before and after the dispatcher's answer", before2 === firstBefore && after2 === firstAfter);
@@ -148,7 +151,6 @@ async function allInOneOperation() {
   openCase("C");
   await waitFor(() => !!theCase("C").planId);
   const plan = getOps().plans[theCase("C").planId!];
-  await sendReply(plan.inquiries[0].inquiry_id, { plan: plan.plan_id }, { kind: "button", answer_id: "blocked_long" });
   check("C: incident plan ready for the manager", await waitFor(() => getOps().plans[plan.plan_id].status === "ready", 20_000));
   openCase("B");
   await waitFor(() => run("B")?.status === "awaiting_response");
@@ -163,6 +165,18 @@ async function allInOneOperation() {
   check("manager approval still works", getOps().plans[plan.plan_id].status === "executed_simulated");
 }
 
+async function resetDuringTyping() {
+  log("\nReset while the dispatcher is 'typing'");
+  await start("C");
+  await waitFor(() => !!theCase().planId);
+  const stale = theCase().planId!;
+  await resetDemo(); // clears the backend and the world before the reply was sent
+  await sleep(6000);
+  check("no stale reply or plan leaks into the fresh operation", Object.keys(getOps().plans).length === 0 && theCase("C").reply === undefined && theCase("C").planId === undefined, stale);
+  openCase("C");
+  check("replaying works: plan, automatic reply, ready", await waitFor(() => !!theCase("C").planId && getOps().plans[theCase("C").planId!].status === "ready", 40_000));
+}
+
 async function main() {
   const meta = await api.meta().catch(() => null);
   if (!meta) {
@@ -173,6 +187,7 @@ async function main() {
   await scenarioA();
   await scenarioB();
   await scenarioC();
+  await resetDuringTyping();
   await allInOneOperation();
   await resetDemo();
   log(`\n${fails === 0 ? "ALL SCENARIO CHECKS PASSED" : `${fails} CHECK(S) FAILED`}`);
